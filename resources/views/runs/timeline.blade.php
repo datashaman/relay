@@ -48,13 +48,23 @@
         </div>
     @endif
 
-    <div class="space-y-8">
+    @php $latestIteration = max(array_keys($iterations ?: [0])); @endphp
+    <div class="space-y-4">
         @foreach ($iterations as $iterationNum => $stages)
-            <div>
-                <div class="flex items-center gap-3 mb-4">
+            @php
+                $isLatest = $iterationNum === $latestIteration;
+                $stageCount = is_countable($stages) ? count($stages) : 0;
+                $eventCount = collect($stages)->sum(fn ($s) => $s->events->count());
+            @endphp
+            <details {{ $isLatest ? 'open' : '' }} class="group">
+                <summary class="flex items-center gap-3 mb-3 cursor-pointer list-none">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded text-outline group-open:rotate-90 transition-transform font-label text-xs">▸</span>
                     <h2 class="text-lg font-headline font-semibold">Iteration {{ $iterationNum }}</h2>
+                    <span class="font-label text-[10px] text-outline uppercase tracking-widest">
+                        {{ $stageCount }} {{ \Illuminate\Support\Str::plural('stage', $stageCount) }} · {{ $eventCount }} {{ \Illuminate\Support\Str::plural('event', $eventCount) }}
+                    </span>
                     <div class="flex-1 border-t border-outline-variant/40"></div>
-                </div>
+                </summary>
 
                 @if (empty($stages))
                     <p class="text-sm text-on-surface-variant italic">No stages recorded yet.</p>
@@ -136,7 +146,7 @@
                         @endforeach
                     </div>
                 @endif
-            </div>
+            </details>
         @endforeach
     </div>
 @endsection
