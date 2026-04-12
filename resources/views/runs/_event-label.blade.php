@@ -44,6 +44,21 @@
     @case('tool_call')
         Tool call
         @break
+    @case('clarification_requested')
+        Clarification requested
+        @break
+    @case('clarification_answered')
+        Clarification answered
+        @break
+    @case('escalation_rule_fired')
+        Escalation rule fired
+        @break
+    @case('approval_requested')
+        Approval requested
+        @break
+    @case('approved')
+        Approved
+        @break
     @case('release_started')
         Release started
         @break

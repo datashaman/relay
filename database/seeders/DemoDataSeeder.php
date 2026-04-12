@@ -159,6 +159,7 @@ class DemoDataSeeder extends Seeder
             ['source' => $acme, 'external_id' => '9024', 'title' => 'Add cache-busting for asset manifest after deploy', 'labels' => ['enhancement'], 'status' => IssueStatus::InProgress, 'assignee' => 'relay-bot', 'age_hours' => 14, 'pipeline' => 'verify_running'],
             ['source' => $ingest, 'external_id' => '461', 'title' => 'Batch sync should respect GitHub secondary rate limits', 'labels' => ['bug'], 'status' => IssueStatus::InProgress, 'assignee' => 'relay-bot', 'age_hours' => 42, 'pipeline' => 'release_awaiting'],
             ['source' => $jira, 'external_id' => 'PAY-192', 'title' => 'Add Idempotency-Key support to charge creation endpoint', 'labels' => ['feature'], 'status' => IssueStatus::InProgress, 'assignee' => 'relay-bot', 'age_hours' => 7, 'pipeline' => 'preflight_clarifying'],
+            ['source' => $jira, 'external_id' => 'PAY-188', 'title' => 'Persist refund webhook retries with exponential backoff', 'labels' => ['feature'], 'status' => IssueStatus::InProgress, 'assignee' => 'relay-bot', 'age_hours' => 4, 'pipeline' => 'preflight_clarified'],
 
             // Stuck (each one exercises a different StuckState)
             ['source' => $acme, 'external_id' => '9018', 'title' => 'Bouncing test: ChartRenderer snapshots differ on ARM macs', 'labels' => ['bug', 'flaky-test'], 'status' => IssueStatus::Stuck, 'assignee' => 'relay-bot', 'age_hours' => 66, 'pipeline' => 'stuck_iteration'],
@@ -264,6 +265,7 @@ class DemoDataSeeder extends Seeder
 
         match ($shape) {
             'preflight_clarifying' => $this->stagesPreflightClarifying($run, $runStart),
+            'preflight_clarified' => $this->stagesPreflightClarified($run, $runStart),
             'implement_running' => $this->stagesImplementRunning($run, $runStart),
             'verify_running' => $this->stagesVerifyRunning($run, $runStart),
             'release_awaiting' => $this->stagesReleaseAwaiting($run, $runStart),
@@ -348,6 +350,27 @@ MD;
         $this->event($stage, 'clarification_requested', 'preflight_agent', ['questions' => 3], $start->copy()->addMinutes(1));
     }
 
+    private function stagesPreflightClarified(Run $run, \Carbon\Carbon $start): void
+    {
+        $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(6));
+        $this->event($pre, 'started', 'preflight_agent', ['confidence' => 'low'], $start);
+        $this->event($pre, 'clarification_requested', 'preflight_agent', ['questions' => 3], $start->copy()->addMinutes(1));
+        $this->event($pre, 'clarification_answered', 'user', [
+            'user' => 'Test User',
+            'answers' => [
+                'scope' => 'Only refunds',
+                'storage' => 'Redis (TTL 24h)',
+                'notes' => 'Match existing webhook retry envelope in WebhookAttempt model.',
+            ],
+        ], $start->copy()->addMinutes(3));
+        $this->event($pre, 'completed', 'preflight_agent', ['doc_sections' => 7], $start->copy()->addMinutes(6));
+
+        $imp = $this->stage($run, StageName::Implement, StageStatus::Running, 1, $start->copy()->addMinutes(6), null);
+        $this->event($imp, 'started', 'implement_agent', ['autonomy_level' => 'supervised'], $start->copy()->addMinutes(6));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'read_file', 'path' => 'app/Models/WebhookAttempt.php'], $start->copy()->addMinutes(7));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'write_file', 'path' => 'app/Jobs/RetryRefundWebhook.php'], $start->copy()->addMinutes(8));
+    }
+
     private function stagesImplementRunning(Run $run, \Carbon\Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(3));
@@ -402,7 +425,14 @@ MD;
         $this->event($ver, 'completed', 'verify_agent', ['tests' => '214 passed'], $start->copy()->addMinutes(13));
 
         $rel = $this->stage($run, StageName::Release, StageStatus::AwaitingApproval, 1, $start->copy()->addMinutes(13), null);
-        $this->event($rel, 'approval_requested', 'release_agent', ['reason' => 'stage override: manual'], $start->copy()->addMinutes(14));
+        $this->event($rel, 'escalation_rule_fired', 'system', [
+            'rule_name' => 'Large diffs require human eyes',
+            'condition' => 'diff_size >= 500',
+            'observed_value' => 624,
+            'from_level' => 'automated',
+            'to_level' => 'supervised',
+        ], $start->copy()->addMinutes(13));
+        $this->event($rel, 'approval_requested', 'release_agent', ['reason' => 'escalation rule: large diff'], $start->copy()->addMinutes(14));
     }
 
     private function stagesStuckIteration(Run $run, \Carbon\Carbon $start): void

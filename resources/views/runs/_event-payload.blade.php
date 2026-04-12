@@ -78,5 +78,40 @@
         @if (! empty($event->payload['reason']) && $event->type === 'failed')
             <p class="text-xs text-error mt-1">{{ $event->payload['reason'] }}</p>
         @endif
+
+        {{-- Escalation rule details --}}
+        @if ($event->type === 'escalation_rule_fired')
+            <div class="rounded bg-stage-stuck/10 border-l-2 border-stage-stuck px-3 py-2 mt-1 space-y-0.5 font-label text-[11px]">
+                @if (! empty($event->payload['rule_name']))
+                    <div><span class="text-outline">RULE:</span> <span class="text-stage-stuck">{{ $event->payload['rule_name'] }}</span></div>
+                @endif
+                @if (! empty($event->payload['condition']))
+                    <div><span class="text-outline">WHEN:</span> <span class="text-on-surface">{{ $event->payload['condition'] }}</span>
+                        @if (isset($event->payload['observed_value']))
+                            <span class="text-outline">(observed: {{ $event->payload['observed_value'] }})</span>
+                        @endif
+                    </div>
+                @endif
+                @if (! empty($event->payload['from_level']) && ! empty($event->payload['to_level']))
+                    <div><span class="text-outline">LEVEL:</span>
+                        <span class="text-on-surface-variant">{{ strtoupper($event->payload['from_level']) }}</span>
+                        <span class="text-outline">→</span>
+                        <span class="text-stage-stuck">{{ strtoupper($event->payload['to_level']) }}</span>
+                    </div>
+                @endif
+            </div>
+        @endif
+
+        {{-- Clarification answers --}}
+        @if ($event->type === 'clarification_answered' && ! empty($event->payload['answers']))
+            <dl class="mt-1 rounded bg-secondary-container/20 px-3 py-2 space-y-1 text-xs">
+                @foreach ($event->payload['answers'] as $qid => $answer)
+                    <div class="flex gap-2">
+                        <dt class="font-label text-[10px] text-outline uppercase tracking-widest shrink-0 min-w-16">{{ $qid }}</dt>
+                        <dd class="text-on-surface">{{ $answer }}</dd>
+                    </div>
+                @endforeach
+            </dl>
+        @endif
     </div>
 @endif
