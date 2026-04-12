@@ -10,9 +10,33 @@
             <p class="text-sm mt-1">Accept issues from the <a href="{{ route('intake.index') }}" class="text-primary hover:underline">queue</a> to see them here.</p>
         </div>
     @else
+        {{-- Mobile-only issue switcher: opens an inline sheet listing other issues --}}
+        <details class="lg:hidden rounded-xl bg-surface-container-low mb-3 group">
+            <summary class="flex items-center justify-between px-4 py-3 cursor-pointer list-none">
+                <span class="flex items-center gap-2">
+                    <span class="font-label text-[10px] text-outline uppercase tracking-widest">All Issues</span>
+                    <span class="font-label text-[10px] text-on-surface-variant">({{ $issues->count() }})</span>
+                </span>
+                <span class="font-label text-[10px] text-primary uppercase tracking-widest group-open:hidden">Switch ↓</span>
+                <span class="font-label text-[10px] text-primary uppercase tracking-widest hidden group-open:inline">Close ↑</span>
+            </summary>
+            <div class="border-t border-outline-variant/40 max-h-72 overflow-y-auto">
+                @foreach ($issues as $listIssue)
+                    @php $isActive = $activeIssue && $listIssue->id === $activeIssue->id; @endphp
+                    <a href="{{ route('issues.show', $listIssue) }}"
+                       class="block px-4 py-2.5 border-b border-outline-variant/20 {{ $isActive ? 'bg-surface-container-high border-l-2 border-l-secondary' : '' }}">
+                        <div class="text-sm font-medium text-on-surface line-clamp-1">{{ $listIssue->title }}</div>
+                        <div class="text-xs text-on-surface-variant mt-0.5">
+                            {{ str_replace('_', ' ', ucfirst($listIssue->status->value)) }}
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </details>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[calc(100vh-10rem)]" id="issue-view">
-            {{-- Left panel: Issue queue --}}
-            <div class="lg:col-span-3 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
+            {{-- Left panel: Issue queue (desktop only) --}}
+            <div class="hidden lg:flex lg:col-span-3 rounded-xl bg-surface-container-low overflow-hidden flex-col">
                 <div class="px-3 py-2 border-b border-outline-variant/40 bg-surface-container">
                     <h2 class="text-sm font-headline font-semibold text-on-surface-variant">Pipeline Issues</h2>
                 </div>
@@ -52,7 +76,7 @@
             </div>
 
             {{-- Center panel: Active issue details with live progress --}}
-            <div class="lg:col-span-6 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
+            <div class="order-2 lg:order-none lg:col-span-6 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
                 @if ($activeIssue)
                     <div class="px-4 py-3 border-b border-outline-variant/40 bg-surface-container">
                         <h2 class="text-base font-headline font-semibold text-on-surface">{{ $activeIssue->title }}</h2>
@@ -283,8 +307,8 @@
                 @endif
             </div>
 
-            {{-- Right panel: Approval / actions --}}
-            <div class="lg:col-span-3 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
+            {{-- Right panel: Approval / actions (first on mobile for focus) --}}
+            <div class="order-1 lg:order-none lg:col-span-3 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
                 <div class="px-3 py-2 border-b border-outline-variant/40 bg-surface-container">
                     <h2 class="text-sm font-headline font-semibold text-on-surface-variant">Actions</h2>
                 </div>
