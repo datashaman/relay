@@ -1,0 +1,21 @@
+parameters:
+
+    paths:
+        - src/
+        - config/
+#        - tests/
+
+
+    # Level 9 is the highest level
+    level: 5
+
+
+    noEnvCallsOutsideOfConfig: false # Don't know why he doesn't consider our config/ directory as config
+
+    ignoreErrors:
+       - '#Class App\\Providers\\NativeAppServiceProvider not found#'
+       - '#Class Native\\Laravel\\ChildProcess has an uninitialized readonly property#'
+
+
+    excludePaths:
+        - ./src/NativeServiceProvider.php

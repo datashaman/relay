@@ -1,0 +1,446 @@
+{
+  "project": "Relay",
+  "description": "Relay is an agentic issue pipeline that moves issues through four stages — Preflight → Implement → Verify → Release — each handled by a focused agent with a bounded tool set. Human-in-the-loop is configurable at workspace, stage, and issue scopes, plus escalation rules that fire per stage transition. Relay ships as a local-first native app built on Laravel 13 / PHP 8.4 with NativePHP for desktop (macOS/Windows/Linux) and mobile (iOS/Android). A local Laravel server assists with OAuth callbacks, provider API calls, and subprocess orchestration; no cloud backend is required. Issues are pulled from GitHub Issues and Jira, implemented against local repositories using git worktrees (with configurable setup/teardown/run scripts), and released as GitHub pull requests. LLM calls route through the Laravel AI SDK with pluggable providers: Anthropic, Gemini, OpenAI, and Claude Code (invoked as a CLI subprocess).",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Laravel 13 + NativePHP desktop scaffold",
+      "description": "As a developer, I want a Laravel 13 / PHP 8.4 project preconfigured with NativePHP so that the app runs as a local desktop binary from day one.",
+      "acceptanceCriteria": [
+        "Laravel 13 project created with PHP 8.4 as minimum version in composer.json",
+        "NativePHP installed and configured; php artisan native:serve launches a desktop window",
+        "App bundles produced via native:build for macOS, Windows, Linux",
+        "Local SQLite database provisioned on first launch via migrations",
+        "Project passes composer install and php artisan test with a placeholder test"
+      ],
+      "priority": 1,
+      "passes": true,
+      "inProgress": false
+    },
+    {
+      "id": "US-002",
+      "title": "Core database schema",
+      "description": "As the orchestrator, I want persistent models for the pipeline's core entities so that state survives app restarts.",
+      "acceptanceCriteria": [
+        "Migrations for: sources, repositories, issues, runs, stages, stage_events, autonomy_configs, escalation_rules, filter_rules, provider_configs, oauth_tokens",
+        "Eloquent models with relationships (Source → Issues, Issue → Runs → Stages → Events)",
+        "Enum-typed columns for stage name, autonomy level, stuck state, source type",
+        "Seeder for default autonomy config (global: Supervised)",
+        "Factories for each model to support tests"
+      ],
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "title": "Local OAuth callback server + secret storage",
+      "description": "As a user, I want the app to complete OAuth flows locally so that I can connect GitHub and Jira without routing credentials through a third-party server.",
+      "acceptanceCriteria": [
+        "Dedicated /oauth/callback/{provider} routes handle redirect URIs",
+        "OAuth state parameter generated and validated to prevent CSRF",
+        "Tokens encrypted at rest using Laravel's encrypter with a per-install key",
+        "OauthToken model stores access token, refresh token, expiry, scopes",
+        "Token refresh helper invoked automatically when a request returns 401",
+        "Keychain/credential-manager integration via NativePHP secure storage for the master key"
+      ],
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": "US-004",
+      "title": "AI provider adapter layer",
+      "description": "As the agent runtime, I want a single interface for LLM calls so that any provider can be swapped per stage or per workspace.",
+      "acceptanceCriteria": [
+        "AiProvider contract defining chat(messages, tools, options) and stream(...) methods",
+        "Laravel AI SDK integrated as the base for HTTP-based providers",
+        "Implementations: AnthropicProvider, GeminiProvider, OpenAiProvider, ClaudeCodeCliProvider",
+        "ClaudeCodeCliProvider spawns claude via Symfony\\Process; binary path configurable (default claude on PATH)",
+        "Per-workspace and per-stage provider selection persisted in provider_configs",
+        "Structured tool-call output normalized across providers",
+        "Unit tests with a recorded-response fixture for each provider"
+      ],
+      "priority": 4,
+      "passes": false
+    },
+    {
+      "id": "US-005",
+      "title": "GitHub OAuth (custom flow)",
+      "description": "As a user, I want to connect my GitHub account with repo, pull-request, and issue scopes so that Relay can read issues and open PRs on my behalf.",
+      "acceptanceCriteria": [
+        "\"Connect GitHub\" button initiates OAuth with scopes: repo, read:org, workflow",
+        "App ID and secret configurable via settings (no hard-coded credentials)",
+        "Successful callback stores token and displays the connected account name",
+        "Disconnect action revokes token locally and calls GitHub's revoke endpoint",
+        "Error states rendered for denied consent and network failure"
+      ],
+      "priority": 5,
+      "passes": false
+    },
+    {
+      "id": "US-006",
+      "title": "Jira OAuth 2.0 (3LO) custom flow",
+      "description": "As a user, I want to connect my Atlassian account so that Relay can read and update Jira issues.",
+      "acceptanceCriteria": [
+        "OAuth 2.0 3LO flow with scopes: read:jira-work, write:jira-work, read:jira-user, offline_access",
+        "Accessible resources endpoint queried post-auth to list available Jira sites",
+        "User selects a site; cloud_id persisted per connection",
+        "Refresh token exchange implemented and exercised by the token refresh helper",
+        "Multiple Jira sites per install supported"
+      ],
+      "priority": 6,
+      "passes": false
+    },
+    {
+      "id": "US-007",
+      "title": "GitHub API client",
+      "description": "As the intake and release agents, I want a typed GitHub client so that issue fetching and PR creation are consistent and testable.",
+      "acceptanceCriteria": [
+        "Methods: listIssues, getIssue, listRepos, createBranch, pushBranch, createPullRequest, addComment",
+        "Rate-limit headers respected; automatic backoff on 403 rate-limited responses",
+        "Pagination handled for list endpoints",
+        "Requests attach the current token and refresh on 401",
+        "HTTP interactions mocked via Http::fake() in tests"
+      ],
+      "priority": 7,
+      "passes": false
+    },
+    {
+      "id": "US-008",
+      "title": "Jira API client",
+      "description": "As the intake agent, I want a typed Jira client so that issues can be fetched and transitioned.",
+      "acceptanceCriteria": [
+        "Methods: searchIssues (JQL), getIssue, listProjects, listTransitions, transitionIssue, addComment",
+        "cloud_id scoped into every request URL",
+        "Labels, assignee, status mapped into Relay's Issue model",
+        "Pagination handled via startAt/maxResults",
+        "Tests mock Atlassian REST responses"
+      ],
+      "priority": 8,
+      "passes": false
+    },
+    {
+      "id": "US-009",
+      "title": "Repository management + git worktree orchestration",
+      "description": "As the implement agent, I want each run to execute in an isolated git worktree with configurable lifecycle scripts so that concurrent runs don't collide and per-repo setup is automated.",
+      "acceptanceCriteria": [
+        "Repository model stores path, default branch, worktree root, and three script hooks: setup, teardown, run",
+        "Worktree created per run under the configured root (e.g., \u003croot\u003e/relay-\u003crun_id\u003e)",
+        "Setup script executed after worktree creation; teardown on run completion (success or failure)",
+        "Worktree removed via git worktree remove after teardown",
+        "Scripts receive environment variables: RELAY_RUN_ID, RELAY_ISSUE_ID, RELAY_BRANCH, RELAY_WORKTREE",
+        "Script output captured and attached to the run's event stream",
+        "Stale-worktree recovery on app startup"
+      ],
+      "priority": 9,
+      "passes": false
+    },
+    {
+      "id": "US-010",
+      "title": "Sources management UI",
+      "description": "As a user, I want to add, view, and remove connected issue sources so that I can control what feeds the pipeline.",
+      "acceptanceCriteria": [
+        "List view shows each source with type, connected account, last sync time, and status",
+        "Add-source action launches the relevant OAuth flow",
+        "Per-source \"Test connection\" button triggers a minimal API call",
+        "Remove-source action is confirmation-gated and revokes the token"
+      ],
+      "priority": 10,
+      "passes": false
+    },
+    {
+      "id": "US-011",
+      "title": "Filter rules engine",
+      "description": "As a user, I want to configure per-source filters so that only relevant issues enter the queue.",
+      "acceptanceCriteria": [
+        "Rules per source: include-labels, exclude-labels, unassigned-only toggle, auto-accept labels",
+        "Rules evaluated on every sync; matched issues created as Issue records",
+        "Auto-accept labels bypass the queue and enter preflight directly",
+        "Rule edits take effect on next sync cycle; no retroactive re-evaluation",
+        "Validation prevents conflicting include/exclude overlap"
+      ],
+      "priority": 11,
+      "passes": false
+    },
+    {
+      "id": "US-012",
+      "title": "Issue sync workers",
+      "description": "As a user, I want issues pulled from GitHub and Jira on a schedule so that the queue stays current.",
+      "acceptanceCriteria": [
+        "Background job polls each source on a configurable interval (default 5 min)",
+        "Deduplicates by external ID + source; updates existing records on change",
+        "Manual \"Sync now\" action available per source",
+        "Sync errors surfaced in the source list with retry countdown",
+        "NativePHP scheduler wired to run queue workers locally"
+      ],
+      "priority": 12,
+      "passes": false
+    },
+    {
+      "id": "US-013",
+      "title": "Incoming queue + accept/reject + pause intake",
+      "description": "As a user, I want a queue of incoming issues where I can accept, reject, or pause intake so that I stay in control of what the pipeline works on.",
+      "acceptanceCriteria": [
+        "Queue view lists incoming issues grouped by source with filter/search",
+        "Accept action transitions the issue to preflight",
+        "Reject action hides the issue and records the decision",
+        "Pause-intake toggle with configurable backlog threshold prevents new issues from entering",
+        "Auto-accepted issues visible with an \"auto\" badge"
+      ],
+      "priority": 13,
+      "passes": false
+    },
+    {
+      "id": "US-014",
+      "title": "Autonomy levels + three-scope config",
+      "description": "As a user, I want to set autonomy at global, stage, and issue scopes so that I can tune oversight without changing code.",
+      "acceptanceCriteria": [
+        "Four levels: Manual, Supervised, Assisted, Autonomous — stored as enum",
+        "Scopes persisted: AutonomyConfig rows keyed by (scope, scope_id, stage|null)",
+        "Resolution function returns the effective level for (issue, stage)",
+        "Invariant enforced: stage overrides can only tighten from global; issue overrides can only loosen from stage",
+        "Validation rejects writes that violate the invariant with a clear message",
+        "Unit tests cover every scope-combination edge case"
+      ],
+      "priority": 14,
+      "passes": false
+    },
+    {
+      "id": "US-015",
+      "title": "Escalation rules engine",
+      "description": "As a user, I want escalation rules that always tighten autonomy when matched so that risky changes never run unattended.",
+      "acceptanceCriteria": [
+        "EscalationRule model: condition (JSON), target level, scope",
+        "Conditions: file-path match, label match, estimated diff size, touched-directory match",
+        "Rules evaluated before every stage transition — not just at triage",
+        "Matching rule forces effective level to the rule's target regardless of other config",
+        "UI to add, edit, reorder, and disable rules",
+        "Matched rule recorded on the stage event for traceability"
+      ],
+      "priority": 15,
+      "passes": false
+    },
+    {
+      "id": "US-016",
+      "title": "Orchestrator core",
+      "description": "As the pipeline, I need a central orchestrator that drives stage transitions, enforces autonomy gates, and emits events so that agents run in the correct order with the right oversight.",
+      "acceptanceCriteria": [
+        "Orchestrator service manages stage lifecycle: start, pause, resume, bounce, complete, fail",
+        "Stage transitions evaluate autonomy + escalation rules and either auto-advance or pause for approval",
+        "Events emitted for every state change; persisted to stage_events",
+        "Stage execution dispatched to a queue so the UI stays responsive",
+        "Broadcast channel pushes live updates to the UI via Laravel Reverb or NativePHP events"
+      ],
+      "priority": 16,
+      "passes": false
+    },
+    {
+      "id": "US-017",
+      "title": "Preflight agent — clarification mode",
+      "description": "As the preflight agent, I want to front-load known facts and ask structured clarifying questions when the issue is ambiguous so that users can correct or confirm quickly.",
+      "acceptanceCriteria": [
+        "Agent decides \"clear\" vs \"ambiguous\" based on a confidence rubric",
+        "Known-facts panel rendered before any question",
+        "Questions rendered as radio-button choices where possible; free-text fallback",
+        "User answers persist on the run; agent resumes with answers in context",
+        "\"Skip to doc\" override available for impatient users"
+      ],
+      "priority": 17,
+      "passes": false
+    },
+    {
+      "id": "US-018",
+      "title": "Preflight agent — preflight doc output",
+      "description": "As the implement agent's upstream, I want the preflight agent to emit a structured doc so that downstream stages have a stable contract.",
+      "acceptanceCriteria": [
+        "Doc sections produced: Summary, Requirements, Acceptance Criteria (numbered), Affected Files, Approach, Scope Assessment (size + risk flags + suggested autonomy)",
+        "Doc stored as Markdown on the run; rendered in the UI",
+        "Implement agent receives the doc — not the original issue — as its context",
+        "User can edit the doc before approving",
+        "Re-runs produce a new doc version; history preserved"
+      ],
+      "priority": 18,
+      "passes": false
+    },
+    {
+      "id": "US-019",
+      "title": "Implement agent",
+      "description": "As the implement agent, I want scoped tools for file editing, shell execution, and linting so that I can produce a diff inside the run's worktree.",
+      "acceptanceCriteria": [
+        "Tools exposed: read_file, write_file, list_files, run_shell, run_linter, git_status, git_diff",
+        "Tools operate only inside the run's worktree; escape attempts rejected",
+        "Shell command timeouts and output size caps enforced",
+        "Agent cannot run tests (Verify's tool), cannot push or create PRs (Release's tool)",
+        "Live diff rendered in the UI as the agent works"
+      ],
+      "priority": 19,
+      "passes": false
+    },
+    {
+      "id": "US-020",
+      "title": "Verify agent",
+      "description": "As the verify agent, I want to run tests, static analysis, and coverage diffs against the implement agent's output so that quality gates are enforced before release.",
+      "acceptanceCriteria": [
+        "Tools exposed: run_tests, run_static_analysis, coverage_diff",
+        "Test runner configurable per repository (PHPUnit, Pest, Jest, etc.)",
+        "Verify agent cannot edit files",
+        "Structured failure report emitted when any gate fails: test name, assertion, file, line",
+        "Pass → advance to Release; fail → bounce back to Implement with the failure report"
+      ],
+      "priority": 20,
+      "passes": false
+    },
+    {
+      "id": "US-021",
+      "title": "Verify → Implement bounce with failure context",
+      "description": "As the orchestrator, I want the verify failure report to travel back to implement as a patch target so that iteration doesn't waste the agent's context re-diagnosing.",
+      "acceptanceCriteria": [
+        "Bounce creates a new stage event implement.iteration.n on the same run",
+        "Preflight doc is reused — not regenerated",
+        "Failure report prepended to implement's context on retry",
+        "Iteration count increments; surfaced as ↺ N badge on the issue",
+        "Iteration cap per workspace — configurable — triggers a stuck state when reached"
+      ],
+      "priority": 21,
+      "passes": false
+    },
+    {
+      "id": "US-022",
+      "title": "Release agent",
+      "description": "As the release agent, I want to commit, push, open a PR, and update the changelog so that approved changes ship cleanly.",
+      "acceptanceCriteria": [
+        "Tools exposed: git_commit, git_push, create_pr, write_changelog, trigger_deploy",
+        "Commit message and PR body generated from the preflight doc and diff",
+        "Changelog entry appended to the configured file",
+        "Deploy hook optional; fires after PR merge if configured",
+        "Release agent cannot modify source code (only commits and pushes what Implement produced)"
+      ],
+      "priority": 22,
+      "passes": false
+    },
+    {
+      "id": "US-023",
+      "title": "Stuck states + give-guidance flow",
+      "description": "As a user, I want stuck issues to surface with resolution paths so that I can unblock the pipeline without starting over.",
+      "acceptanceCriteria": [
+        "Four stuck states detected: iteration cap, timeout, agent uncertain, external blocker",
+        "Each state shows its primary action (guidance, restart, take over, fix environment)",
+        "\"Give guidance\" opens a text box; submitted guidance is prepended to the next agent's context",
+        "Preflight doc stays valid — only the active stage retries",
+        "Stuck issues float to the top of the activity feed with unread dots"
+      ],
+      "priority": 23,
+      "passes": false
+    },
+    {
+      "id": "US-024",
+      "title": "Run history timeline",
+      "description": "As a user, I want a full timeline per issue with iteration labels so that I can read the story of a run.",
+      "acceptanceCriteria": [
+        "Timeline breaks into labelled sections per iteration",
+        "Each event shows actor (agent name or user), stage, timestamp, payload",
+        "Bounces and their failure reports visible inline",
+        "Diffs from each implement iteration expandable",
+        "Link to the PR once released"
+      ],
+      "priority": 24,
+      "passes": false
+    },
+    {
+      "id": "US-025",
+      "title": "Activity feed",
+      "description": "As a user, I want a global feed of agent events and human actions so that I can audit pipeline health.",
+      "acceptanceCriteria": [
+        "Combined stream: agent state changes, user approvals, guidance, overrides",
+        "\"N stuck\" chip in the topbar, persistent until cleared",
+        "Filters: by source, stage, autonomy level, actor",
+        "Clicking an event deep-links to the run history"
+      ],
+      "priority": 25,
+      "passes": false
+    },
+    {
+      "id": "US-026",
+      "title": "Issue view — 3-panel layout",
+      "description": "As a user, I want a three-panel view — queue, active issue, approval panel — so that I can work one issue at a time with context.",
+      "acceptanceCriteria": [
+        "Left: queue of accepted issues sorted by stage + iteration",
+        "Center: active issue with preflight doc, diff, test output",
+        "Right: approval panel with context-appropriate actions (approve, reject, give guidance)",
+        "Keyboard shortcuts for approve (A), reject (R), next issue (J/K)",
+        "Responsive: collapses to a single panel on narrow widths"
+      ],
+      "priority": 26,
+      "passes": false
+    },
+    {
+      "id": "US-027",
+      "title": "Live pipeline progress view",
+      "description": "As a user, I want a live view of the current stage so that I can watch work happen in real time.",
+      "acceptanceCriteria": [
+        "Stage indicator shows current stage with stage color",
+        "Live diff updates stream as the implement agent writes",
+        "Test runner output streams during Verify",
+        "Changelog and PR preview rendered during Release",
+        "Reconnects gracefully after app sleep"
+      ],
+      "priority": 27,
+      "passes": false
+    },
+    {
+      "id": "US-028",
+      "title": "Configure autonomy screen",
+      "description": "As a user, I want a dedicated screen to configure autonomy at every scope so that setup is visible in one place.",
+      "acceptanceCriteria": [
+        "Global default selector with explanation of each level",
+        "Per-stage overrides with the tighten-only constraint enforced in UI",
+        "Escalation rules list with add/edit/reorder/disable actions",
+        "Iteration cap input with validation (min 1, max 20)",
+        "Preview panel showing the effective autonomy for a sample issue"
+      ],
+      "priority": 28,
+      "passes": false
+    },
+    {
+      "id": "US-029",
+      "title": "NativePHP mobile build",
+      "description": "As a mobile user, I want Relay on iOS and Android so that I can approve stages and give guidance away from my desk.",
+      "acceptanceCriteria": [
+        "NativePHP mobile target configured; builds produce installable iOS and Android packages",
+        "Mobile-adapted layouts for issue view, activity feed, approval panel",
+        "Background sync respects mobile power/network constraints",
+        "Push notifications for stuck states and approvals awaiting",
+        "OAuth flows work with the platform browser in-app"
+      ],
+      "priority": 29,
+      "passes": false
+    },
+    {
+      "id": "US-030",
+      "title": "Test coverage",
+      "description": "As a maintainer, I want meaningful test coverage so that regressions are caught before release.",
+      "acceptanceCriteria": [
+        "Unit tests for every service: orchestrator, autonomy resolver, escalation engine, provider adapters",
+        "Feature tests for every stage transition path including bounces",
+        "Integration tests against recorded fixtures for GitHub, Jira, and each AI provider",
+        "CI runs php artisan test with coverage reporting",
+        "Coverage threshold enforced (start at 70%, ratchet up)"
+      ],
+      "priority": 30,
+      "passes": false
+    },
+    {
+      "id": "US-031",
+      "title": "Developer documentation",
+      "description": "As a new contributor, I want clear setup and architecture docs so that I can run Relay and extend it.",
+      "acceptanceCriteria": [
+        "README.md covers install, first-run, desktop and mobile build commands",
+        "ARCHITECTURE.md documents the orchestrator, stage contracts, autonomy resolution, provider adapters",
+        "CONTRIBUTING.md covers branching, commit style, and how to add a new provider",
+        "Each agent's tool surface documented in docs/agents/",
+        "Diagram of the pipeline and scope-resolution logic included"
+      ],
+      "priority": 31,
+      "passes": false
+    }
+  ]
+}

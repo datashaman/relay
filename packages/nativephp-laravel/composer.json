@@ -1,0 +1,109 @@
+{
+    "name": "nativephp/laravel",
+    "description": "Laravel wrapper for the NativePHP framework.",
+    "keywords": [
+        "nativephp",
+        "laravel",
+        "nativephp-laravel"
+    ],
+    "homepage": "https://github.com/nativephp/laravel",
+    "license": "MIT",
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/simonhamp"
+        },
+        {
+            "type": "opencollective",
+            "url": "https://opencollective.com/nativephp"
+        }
+    ],
+    "authors": [
+        {
+            "name": "Marcel Pociot",
+            "email": "marcel@beyondco.de",
+            "role": "Developer"
+        },
+        {
+            "name": "Simon Hamp",
+            "email": "simon.hamp@me.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+        "spatie/laravel-package-tools": "^1.16.4",
+        "symfony/finder": "^6.2|^7.0|^8.0"
+    },
+    "require-dev": {
+        "guzzlehttp/guzzle": "^7.0",
+        "laravel/pint": "^1.0",
+        "larastan/larastan": "^2.0|^3.1",
+        "nunomaduro/collision": "^7.11|^8.1.1",
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "pestphp/pest": "^v2.30|^3.0",
+        "pestphp/pest-plugin-arch": "^2.0|^3.0",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.1",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan-deprecation-rules": "^1.0|^2.0",
+        "phpstan/phpstan-phpunit": "^1.0|^2.0",
+        "spatie/laravel-ray": "^1.26"
+    },
+    "autoload": {
+        "psr-4": {
+            "Native\\Laravel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Native\\Laravel\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "qa" : [
+            "@composer format",
+            "@composer analyse",
+            "@composer test"
+        ],
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+              "Native\\Laravel\\NativeServiceProvider"
+            ],
+            "aliases": {
+                "ChildProcess": "Native\\Laravel\\Facades\\ChildProcess",
+                "Clipboard": "Native\\Laravel\\Facades\\Clipboard",
+                "ContextMenu": "Native\\Laravel\\Facades\\ContextMenu",
+                "Dock": "Native\\Laravel\\Facades\\Dock",
+                "GlobalShortcut": "Native\\Laravel\\Facades\\GlobalShortcut",
+                "Menu": "Native\\Laravel\\Facades\\Menu",
+                "MenuBar": "Native\\Laravel\\Facades\\MenuBar",
+                "Notification": "Native\\Laravel\\Facades\\Notification",
+                "PowerMonitor": "Native\\Laravel\\Facades\\PowerMonitor",
+                "Process": "Native\\Laravel\\Facades\\Process",
+                "QueueWorker": "Native\\Laravel\\Facades\\QueueWorker",
+                "Screen": "Native\\Laravel\\Facades\\Screen",
+                "Settings": "Native\\Laravel\\Facades\\Settings",
+                "Shell": "Native\\Laravel\\Facades\\Shell",
+                "System": "Native\\Laravel\\Facades\\System",
+                "Window": "Native\\Laravel\\Facades\\Window"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
