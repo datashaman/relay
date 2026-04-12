@@ -1,0 +1,25 @@
+{
+  "id": "msg_01YcQG4VtVGaHhE7KPvNBcea",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "I'll check the weather for you."
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_01A09q90qw90lq917835lhl",
+      "name": "get_weather",
+      "input": {
+        "location": "San Francisco"
+      }
+    }
+  ],
+  "model": "claude-sonnet-4-6",
+  "stop_reason": "tool_use",
+  "usage": {
+    "input_tokens": 50,
+    "output_tokens": 35
+  }
+}

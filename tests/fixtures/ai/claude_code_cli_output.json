@@ -1,0 +1,9 @@
+{
+  "result": "Hello! How can I help you today?",
+  "usage": {
+    "input_tokens": 12,
+    "output_tokens": 10
+  },
+  "is_error": false,
+  "session_id": "abc123"
+}
