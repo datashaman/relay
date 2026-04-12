@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityFeedController;
 use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\IssueController;
+use App\Http\Controllers\IssueViewController;
 use App\Http\Controllers\OauthController;
 use App\Http\Controllers\PreflightController;
 use App\Http\Controllers\RunTimelineController;
@@ -18,7 +19,13 @@ Route::get('/sources', [SourceController::class, 'index'])->name('sources.index'
 Route::post('/sources/{source}/test', [SourceController::class, 'testConnection'])->name('sources.test');
 Route::post('/sources/{source}/sync', [SourceController::class, 'syncNow'])->name('sources.sync');
 
+Route::get('/issues', [IssueViewController::class, 'index'])->name('issues.index');
+Route::post('/issues/stages/{stage}/approve', [IssueViewController::class, 'approve'])->name('issues.approve');
+Route::post('/issues/stages/{stage}/reject', [IssueViewController::class, 'reject'])->name('issues.reject-stage');
+Route::post('/issues/runs/{run}/guidance', [IssueViewController::class, 'guidance'])->name('issues.guidance');
+
 Route::get('/issues/queue', [IssueController::class, 'queue'])->name('issues.queue');
+Route::get('/issues/{issue}', [IssueViewController::class, 'show'])->name('issues.show');
 Route::post('/issues/{issue}/accept', [IssueController::class, 'accept'])->name('issues.accept');
 Route::post('/issues/{issue}/reject', [IssueController::class, 'reject'])->name('issues.reject');
 Route::post('/sources/{source}/toggle-pause', [IssueController::class, 'togglePause'])->name('issues.toggle-pause');

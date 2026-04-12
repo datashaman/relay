@@ -21,6 +21,7 @@
             <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
                 <a href="/" class="text-lg font-semibold">Relay</a>
                 <div class="flex items-center gap-4">
+                    <a href="/issues" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Issues</a>
                     <a href="/issues/queue" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Queue</a>
                     <a href="/sources" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Sources</a>
                     <a href="/escalation-rules" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Escalation</a>
@@ -41,7 +42,7 @@
             </div>
         </nav>
 
-        <main class="max-w-5xl mx-auto px-4 py-8">
+        <main class="@yield('container_class', 'max-w-5xl') mx-auto px-4 py-8">
             @if (session('success'))
                 <div class="mb-4 rounded-md bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 p-4 text-sm text-green-800 dark:text-green-200">
                     {{ session('success') }}
