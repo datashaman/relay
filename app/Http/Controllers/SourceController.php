@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncSourceIssuesJob;
 use App\Models\Source;
 use App\Services\GitHubClient;
 use App\Services\JiraClient;
 use App\Services\OauthService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class SourceController extends Controller
@@ -20,6 +22,14 @@ class SourceController extends Controller
         $sources = Source::with('oauthTokens')->orderBy('created_at', 'desc')->get();
 
         return view('sources.index', compact('sources'));
+    }
+
+    public function syncNow(Source $source): RedirectResponse
+    {
+        SyncSourceIssuesJob::dispatch($source);
+
+        return redirect()->route('sources.index')
+            ->with('success', 'Sync started for ' . ($source->external_account ?? $source->name) . '.');
     }
 
     public function testConnection(Source $source): JsonResponse

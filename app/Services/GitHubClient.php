@@ -78,6 +78,23 @@ class GitHubClient
         return $this->fetchAllPages("/repos/{$owner}/{$repo}/issues", ['state' => 'open']);
     }
 
+    public static function mapToIssueAttributes(array $ghIssue): array
+    {
+        return [
+            'external_id' => (string) ($ghIssue['number'] ?? ''),
+            'title' => $ghIssue['title'] ?? '',
+            'body' => $ghIssue['body'] ?? '',
+            'external_url' => $ghIssue['html_url'] ?? '',
+            'assignee' => $ghIssue['assignee']['login'] ?? null,
+            'labels' => array_map(fn ($l) => $l['name'], $ghIssue['labels'] ?? []),
+        ];
+    }
+
+    public static function isPullRequest(array $ghIssue): bool
+    {
+        return isset($ghIssue['pull_request']);
+    }
+
     public function allRepos(): array
     {
         return $this->fetchAllPages('/user/repos', ['sort' => 'updated']);

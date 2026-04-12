@@ -10,6 +10,7 @@ Route::get('/', function () {
 
 Route::get('/sources', [SourceController::class, 'index'])->name('sources.index');
 Route::post('/sources/{source}/test', [SourceController::class, 'testConnection'])->name('sources.test');
+Route::post('/sources/{source}/sync', [SourceController::class, 'syncNow'])->name('sources.sync');
 
 Route::get('/oauth/redirect/{provider}', [OauthController::class, 'redirect'])
     ->name('oauth.redirect')

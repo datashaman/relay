@@ -19,6 +19,9 @@ class Source extends Model
         'last_synced_at',
         'is_active',
         'config',
+        'sync_error',
+        'next_retry_at',
+        'sync_interval',
     ];
 
     protected function casts(): array
@@ -28,6 +31,8 @@ class Source extends Model
             'last_synced_at' => 'datetime',
             'is_active' => 'boolean',
             'config' => 'array',
+            'next_retry_at' => 'datetime',
+            'sync_interval' => 'integer',
         ];
     }
 

@@ -47,6 +47,16 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                 {{ $source->last_synced_at ? $source->last_synced_at->diffForHumans() : 'Never' }}
+                                @if ($source->sync_error)
+                                    <div class="text-xs text-red-500 dark:text-red-400 mt-1 max-w-xs truncate" title="{{ $source->sync_error }}">
+                                        Error: {{ Str::limit($source->sync_error, 60) }}
+                                    </div>
+                                    @if ($source->next_retry_at && $source->next_retry_at->isFuture())
+                                        <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                            Retry {{ $source->next_retry_at->diffForHumans() }}
+                                        </div>
+                                    @endif
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if ($source->is_active)
@@ -56,6 +66,12 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                <form action="{{ route('sources.sync', $source) }}" method="POST" class="inline mr-3">
+                                    @csrf
+                                    <button type="submit" class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300">
+                                        Sync Now
+                                    </button>
+                                </form>
                                 <button onclick="testConnection({{ $source->id }})"
                                         id="test-btn-{{ $source->id }}"
                                         class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">
