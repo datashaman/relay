@@ -23,6 +23,9 @@ Route::post('/sources/{source}/toggle-pause', [IssueController::class, 'togglePa
 Route::get('/runs/{run}/preflight', [PreflightController::class, 'show'])->name('preflight.show');
 Route::post('/runs/{run}/preflight/answers', [PreflightController::class, 'submitAnswers'])->name('preflight.submit-answers');
 Route::post('/runs/{run}/preflight/skip', [PreflightController::class, 'skipToDoc'])->name('preflight.skip');
+Route::get('/runs/{run}/preflight/doc', [PreflightController::class, 'showDoc'])->name('preflight.doc');
+Route::get('/runs/{run}/preflight/doc/edit', [PreflightController::class, 'editDoc'])->name('preflight.doc.edit');
+Route::put('/runs/{run}/preflight/doc', [PreflightController::class, 'updateDoc'])->name('preflight.doc.update');
 
 Route::get('/oauth/redirect/{provider}', [OauthController::class, 'redirect'])
     ->name('oauth.redirect')

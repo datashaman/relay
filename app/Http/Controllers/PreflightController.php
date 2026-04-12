@@ -81,4 +81,62 @@ class PreflightController extends Controller
         return redirect()->route('issues.queue')
             ->with('success', "Skipped to doc for \"{$run->issue->title}\". Preflight resuming.");
     }
+
+    public function showDoc(Run $run)
+    {
+        $run->load('issue');
+
+        if (! $run->preflight_doc) {
+            return redirect()->route('issues.queue')
+                ->with('error', 'No preflight doc generated for this run yet.');
+        }
+
+        return view('preflight.doc', [
+            'run' => $run,
+            'doc' => $run->preflight_doc,
+            'history' => $run->preflight_doc_history ?? [],
+        ]);
+    }
+
+    public function editDoc(Run $run)
+    {
+        $run->load('issue');
+
+        if (! $run->preflight_doc) {
+            return redirect()->route('issues.queue')
+                ->with('error', 'No preflight doc generated for this run yet.');
+        }
+
+        return view('preflight.edit-doc', [
+            'run' => $run,
+            'doc' => $run->preflight_doc,
+        ]);
+    }
+
+    public function updateDoc(Request $request, Run $run)
+    {
+        if (! $run->preflight_doc) {
+            return redirect()->route('issues.queue')
+                ->with('error', 'No preflight doc generated for this run yet.');
+        }
+
+        $request->validate([
+            'preflight_doc' => 'required|string',
+        ]);
+
+        $history = $run->preflight_doc_history ?? [];
+        $history[] = [
+            'doc' => $run->preflight_doc,
+            'created_at' => now()->toIso8601String(),
+            'iteration' => $run->iteration,
+        ];
+
+        $run->update([
+            'preflight_doc' => $request->input('preflight_doc'),
+            'preflight_doc_history' => $history,
+        ]);
+
+        return redirect()->route('preflight.doc', $run)
+            ->with('success', 'Preflight doc updated.');
+    }
 }

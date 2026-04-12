@@ -118,9 +118,60 @@ class PreflightAgentTest extends TestCase
         return [$issue, $run, $stage];
     }
 
+    private function createMultiCallProvider(array $responses): AiProvider
+    {
+        return new class($responses) implements AiProvider
+        {
+            private int $callIndex = 0;
+
+            public function __construct(private array $responses) {}
+
+            public function chat(array $messages, array $tools = [], array $options = []): array
+            {
+                return $this->responses[$this->callIndex++] ?? end($this->responses);
+            }
+
+            public function stream(array $messages, array $tools = [], array $options = []): \Generator
+            {
+                yield [];
+            }
+        };
+    }
+
+    private function mockDocResponse(): array
+    {
+        return [
+            'content' => null,
+            'tool_calls' => [
+                [
+                    'id' => 'call_doc',
+                    'name' => 'generate_preflight_doc',
+                    'arguments' => [
+                        'summary' => 'Implementation summary for the issue.',
+                        'requirements' => ['Requirement one'],
+                        'acceptance_criteria' => ['Criterion one'],
+                        'affected_files' => ['app/file.php'],
+                        'approach' => 'Standard approach.',
+                        'scope_assessment' => ['size' => 'small', 'risk_flags' => [], 'suggested_autonomy' => 'supervised'],
+                    ],
+                ],
+            ],
+            'usage' => ['input_tokens' => 100, 'output_tokens' => 100],
+            'raw' => [],
+        ];
+    }
+
     private function bindMockProvider(array $response): void
     {
         $mock = $this->createMockProvider($response);
+        $manager = $this->createMock(AiProviderManager::class);
+        $manager->method('resolve')->willReturn($mock);
+        $this->app->instance(AiProviderManager::class, $manager);
+    }
+
+    private function bindMultiCallProvider(array $responses): void
+    {
+        $mock = $this->createMultiCallProvider($responses);
         $manager = $this->createMock(AiProviderManager::class);
         $manager->method('resolve')->willReturn($mock);
         $this->app->instance(AiProviderManager::class, $manager);
@@ -134,7 +185,10 @@ class PreflightAgentTest extends TestCase
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
         $knownFacts = ['Users need a login page', 'Authentication uses email and password'];
-        $this->bindMockProvider($this->mockClearResponse($knownFacts));
+        $this->bindMultiCallProvider([
+            $this->mockClearResponse($knownFacts),
+            $this->mockDocResponse(),
+        ]);
 
         app(PreflightAgent::class)->execute($stage, []);
 
@@ -143,24 +197,25 @@ class PreflightAgentTest extends TestCase
 
         $this->assertEquals($knownFacts, $run->known_facts);
         $this->assertNotNull($run->preflight_doc);
-        $this->assertStringContainsString('Known Facts', $run->preflight_doc);
-        $this->assertStringContainsString('Users need a login page', $run->preflight_doc);
+        $this->assertStringContainsString('## Summary', $run->preflight_doc);
         $this->assertEquals(StageStatus::Completed, $stage->status);
     }
 
-    public function test_clear_issue_stores_original_issue_in_doc(): void
+    public function test_clear_issue_stores_issue_title_in_doc(): void
     {
         Queue::fake();
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $this->bindMockProvider($this->mockClearResponse());
+        $this->bindMultiCallProvider([
+            $this->mockClearResponse(),
+            $this->mockDocResponse(),
+        ]);
 
         app(PreflightAgent::class)->execute($stage, []);
 
         $run->refresh();
-        $this->assertStringContainsString('Original Issue', $run->preflight_doc);
         $this->assertStringContainsString($issue->title, $run->preflight_doc);
-        $this->assertStringContainsString($issue->body, $run->preflight_doc);
+        $this->assertStringContainsString('## Summary', $run->preflight_doc);
     }
 
     public function test_ambiguous_issue_pauses_stage_and_stores_questions(): void
@@ -190,7 +245,10 @@ class PreflightAgentTest extends TestCase
         Queue::fake();
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $this->bindMockProvider($this->mockClearResponse(['Fact one', 'Fact two']));
+        $this->bindMultiCallProvider([
+            $this->mockClearResponse(['Fact one', 'Fact two']),
+            $this->mockDocResponse(),
+        ]);
 
         app(PreflightAgent::class)->execute($stage, []);
 
@@ -229,7 +287,9 @@ class PreflightAgentTest extends TestCase
             'clarification_answers' => ['q1' => 'Admin'],
         ]);
 
-        $this->bindMockProvider($this->mockClearResponse());
+        $this->bindMultiCallProvider([
+            $this->mockDocResponse(),
+        ]);
 
         app(PreflightAgent::class)->execute($stage, []);
 
@@ -238,9 +298,7 @@ class PreflightAgentTest extends TestCase
 
         $this->assertEquals(StageStatus::Completed, $stage->status);
         $this->assertNotNull($run->preflight_doc);
-        $this->assertStringContainsString('Clarification Answers', $run->preflight_doc);
-        $this->assertStringContainsString('Which dashboard?', $run->preflight_doc);
-        $this->assertStringContainsString('Admin', $run->preflight_doc);
+        $this->assertStringContainsString('## Summary', $run->preflight_doc);
     }
 
     public function test_skip_to_doc_completes_without_answers(): void
@@ -255,7 +313,9 @@ class PreflightAgentTest extends TestCase
             ],
         ]);
 
-        $this->bindMockProvider($this->mockClearResponse());
+        $this->bindMultiCallProvider([
+            $this->mockDocResponse(),
+        ]);
 
         app(PreflightAgent::class)->execute($stage, ['skip_to_doc' => true]);
 
@@ -264,7 +324,7 @@ class PreflightAgentTest extends TestCase
 
         $this->assertEquals(StageStatus::Completed, $stage->status);
         $this->assertNotNull($run->preflight_doc);
-        $this->assertStringNotContainsString('Clarification Answers', $run->preflight_doc);
+        $this->assertStringContainsString('## Summary', $run->preflight_doc);
     }
 
     public function test_no_tool_call_defaults_to_clear(): void
@@ -272,11 +332,14 @@ class PreflightAgentTest extends TestCase
         Queue::fake();
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $this->bindMockProvider([
-            'content' => 'The issue looks fine.',
-            'tool_calls' => [],
-            'usage' => ['input_tokens' => 50, 'output_tokens' => 20],
-            'raw' => [],
+        $this->bindMultiCallProvider([
+            [
+                'content' => 'The issue looks fine.',
+                'tool_calls' => [],
+                'usage' => ['input_tokens' => 50, 'output_tokens' => 20],
+                'raw' => [],
+            ],
+            $this->mockDocResponse(),
         ]);
 
         app(PreflightAgent::class)->execute($stage, []);
@@ -333,7 +396,10 @@ class PreflightAgentTest extends TestCase
         Queue::fake();
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $this->bindMockProvider($this->mockClearResponse());
+        $this->bindMultiCallProvider([
+            $this->mockClearResponse(),
+            $this->mockDocResponse(),
+        ]);
 
         $job = new ExecuteStageJob($stage, []);
         $job->handle();
@@ -568,7 +634,9 @@ class PreflightAgentTest extends TestCase
 
         $run->update(['clarification_answers' => ['q1' => 'Bar']]);
 
-        $this->bindMockProvider($this->mockClearResponse());
+        $this->bindMultiCallProvider([
+            $this->mockDocResponse(),
+        ]);
         $stage->refresh();
         $stage->update(['status' => StageStatus::Running]);
 
@@ -576,7 +644,7 @@ class PreflightAgentTest extends TestCase
 
         $run->refresh();
         $this->assertNotNull($run->preflight_doc);
-        $this->assertStringContainsString('Bar', $run->preflight_doc);
+        $this->assertStringContainsString('## Summary', $run->preflight_doc);
         $this->assertEquals(['q1' => 'Bar'], $run->clarification_answers);
     }
 

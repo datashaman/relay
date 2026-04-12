@@ -20,6 +20,7 @@ class RunFactory extends Factory
             'branch' => 'relay/' . fake()->slug(3),
             'worktree_path' => null,
             'preflight_doc' => null,
+            'preflight_doc_history' => null,
             'known_facts' => null,
             'clarification_questions' => null,
             'clarification_answers' => null,

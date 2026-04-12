@@ -20,6 +20,7 @@ class Run extends Model
         'branch',
         'worktree_path',
         'preflight_doc',
+        'preflight_doc_history',
         'known_facts',
         'clarification_questions',
         'clarification_answers',
@@ -33,6 +34,7 @@ class Run extends Model
         return [
             'status' => RunStatus::class,
             'stuck_state' => StuckState::class,
+            'preflight_doc_history' => 'array',
             'known_facts' => 'array',
             'clarification_questions' => 'array',
             'clarification_answers' => 'array',
