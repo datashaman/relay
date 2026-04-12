@@ -248,6 +248,8 @@ class DemoDataSeeder extends Seeder
             'branch' => 'relay/'.$issue->external_id,
             'worktree_path' => '/tmp/relay-worktrees/'.$issue->external_id,
             'preflight_doc' => $shape === 'preflight_clarifying' ? null : $this->preflightDoc($issue),
+            'known_facts' => $shape === 'preflight_clarifying' ? $this->knownFactsFor($issue) : null,
+            'clarification_questions' => $shape === 'preflight_clarifying' ? $this->clarificationQuestionsFor($issue) : null,
             'iteration' => match ($shape) {
                 'stuck_iteration' => 5,
                 'stuck_timeout', 'stuck_uncertain', 'stuck_blocker' => 2,
@@ -272,6 +274,40 @@ class DemoDataSeeder extends Seeder
             'completed' => $this->stagesCompleted($run, $runStart),
             'failed' => $this->stagesFailed($run, $runStart),
         };
+    }
+
+    private function knownFactsFor(Issue $issue): array
+    {
+        return [
+            "Endpoint: POST /v1/charges — lives in {$issue->repository?->name} at app/Http/Controllers/Api/ChargeController.php.",
+            'Issue filed by @dev_lead after a retry storm on 2026-04-09 caused 137 duplicate charges.',
+            'Stripe supports `Idempotency-Key` as an HTTP header, TTL 24h.',
+            'Current middleware stack: `api`, `throttle:120,1`, `auth:sanctum` — no idempotency middleware yet.',
+            "Callers: iOS app, Android app, web checkout — all already generate a UUID per user action.",
+        ];
+    }
+
+    private function clarificationQuestionsFor(Issue $issue): array
+    {
+        return [
+            [
+                'id' => 'scope',
+                'text' => 'Should idempotency apply to every mutating endpoint, or just `POST /v1/charges` for now?',
+                'type' => 'choice',
+                'options' => ['Only charges', 'All mutating /v1/* endpoints', 'Charges + refunds'],
+            ],
+            [
+                'id' => 'storage',
+                'text' => 'Where should idempotency keys be stored?',
+                'type' => 'choice',
+                'options' => ['Redis (TTL 24h)', 'Database table with cleanup job', 'Defer — use Stripe\'s own key'],
+            ],
+            [
+                'id' => 'notes',
+                'text' => 'Anything else the implement agent should know before starting?',
+                'type' => 'text',
+            ],
+        ];
     }
 
     private function preflightDoc(Issue $issue): string
