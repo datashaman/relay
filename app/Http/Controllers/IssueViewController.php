@@ -19,24 +19,6 @@ class IssueViewController extends Controller
         private OrchestratorService $orchestrator,
     ) {}
 
-    public function index(Request $request): View|RedirectResponse
-    {
-        $issues = $this->loadIssueList();
-
-        if ($issues->isEmpty()) {
-            return view('issues.view', [
-                'issues' => $issues,
-                'activeIssue' => null,
-                'latestRun' => null,
-                'currentStage' => null,
-            ]);
-        }
-
-        $first = $issues->first();
-
-        return redirect()->route('issues.show', $first);
-    }
-
     public function show(Issue $issue): View
     {
         $issues = $this->loadIssueList();

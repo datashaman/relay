@@ -1,10 +1,10 @@
 @php
     $stageOrder = ['preflight', 'implement', 'verify', 'release'];
     $stageColors = [
-        'preflight' => ['bg' => 'bg-indigo-500', 'text' => 'text-indigo-700 dark:text-indigo-300', 'ring' => 'ring-indigo-500'],
-        'implement' => ['bg' => 'bg-blue-500', 'text' => 'text-blue-700 dark:text-blue-300', 'ring' => 'ring-blue-500'],
-        'verify' => ['bg' => 'bg-purple-500', 'text' => 'text-purple-700 dark:text-purple-300', 'ring' => 'ring-purple-500'],
-        'release' => ['bg' => 'bg-green-500', 'text' => 'text-green-700 dark:text-green-300', 'ring' => 'ring-green-500'],
+        'preflight' => ['bg' => 'bg-stage-preflight', 'text' => 'text-stage-preflight', 'ring' => 'ring-stage-preflight'],
+        'implement' => ['bg' => 'bg-stage-implement', 'text' => 'text-stage-implement', 'ring' => 'ring-stage-implement'],
+        'verify' => ['bg' => 'bg-stage-verify', 'text' => 'text-stage-verify', 'ring' => 'ring-stage-verify'],
+        'release' => ['bg' => 'bg-stage-release', 'text' => 'text-stage-release', 'ring' => 'ring-stage-release'],
     ];
 
     $stageMap = $run->stages->keyBy(fn ($s) => $s->name->value);
@@ -26,7 +26,7 @@
         @endphp
 
         @if ($i > 0)
-            <div class="flex-shrink-0 w-6 h-px {{ $isCompleted || ($stage && !$isPending) ? 'bg-gray-400 dark:bg-gray-500' : 'bg-gray-200 dark:bg-gray-700' }}"></div>
+            <div class="flex-shrink-0 w-6 h-px {{ $isCompleted || ($stage && !$isPending) ? 'bg-outline' : 'bg-outline-variant/40' }}"></div>
         @endif
 
         <div class="flex items-center gap-1.5 {{ $isCurrent ? 'font-semibold' : '' }}" data-stage="{{ $name }}">
@@ -36,25 +36,25 @@
                     <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                 </span>
             @elseif ($isRunning)
-                <span class="flex-shrink-0 w-5 h-5 rounded-full {{ $colors['bg'] }} animate-pulse ring-2 {{ $colors['ring'] }} ring-offset-1 ring-offset-white dark:ring-offset-gray-800"></span>
+                <span class="flex-shrink-0 w-5 h-5 rounded-full {{ $colors['bg'] }} animate-pulse ring-2 {{ $colors['ring'] }} ring-offset-1 ring-offset-surface-container-low"></span>
             @elseif ($isAwaiting)
-                <span class="flex-shrink-0 w-5 h-5 rounded-full bg-yellow-400 ring-2 ring-yellow-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-800"></span>
+                <span class="flex-shrink-0 w-5 h-5 rounded-full bg-stage-stuck ring-2 ring-stage-stuck ring-offset-1 ring-offset-surface-container-low"></span>
             @elseif ($isFailed)
-                <span class="flex-shrink-0 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <span class="flex-shrink-0 w-5 h-5 rounded-full bg-error flex items-center justify-center">
+                    <svg class="w-3 h-3 text-on-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </span>
             @else
-                <span class="flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600"></span>
+                <span class="flex-shrink-0 w-5 h-5 rounded-full bg-surface-container-high border-2 border-outline-variant"></span>
             @endif
 
             {{-- Stage label --}}
-            <span class="text-xs {{ $isCurrent ? $colors['text'] : 'text-gray-500 dark:text-gray-400' }}">
+            <span class="text-xs {{ $isCurrent ? $colors['text'] : 'text-on-surface-variant' }}">
                 {{ ucfirst($name) }}
             </span>
         </div>
     @endforeach
 
     @if ($run->iteration > 1)
-        <span class="ml-2 text-xs text-indigo-600 dark:text-indigo-400 font-medium">↺ {{ $run->iteration }}</span>
+        <span class="ml-2 text-xs text-primary font-medium">↺ {{ $run->iteration }}</span>
     @endif
 </div>

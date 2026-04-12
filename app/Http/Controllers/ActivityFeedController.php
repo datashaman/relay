@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\StageName;
+use App\Enums\RunStatus;
+use App\Enums\StageStatus;
+use App\Models\Run;
 use App\Models\Source;
+use App\Models\Stage;
 use App\Models\StageEvent;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -36,6 +39,36 @@ class ActivityFeedController extends Controller
 
         $sources = Source::where('is_active', true)->orderBy('name')->get();
 
-        return view('activity.index', compact('events', 'sources'));
+        $dayAgo = now()->subDay();
+        $weekAgo = now()->subWeek();
+
+        $completedDay = Stage::where('status', StageStatus::Completed)
+            ->where('completed_at', '>=', $dayAgo)
+            ->count();
+        $completedWeek = Run::where('status', RunStatus::Completed)
+            ->where('completed_at', '>=', $weekAgo)
+            ->count();
+        $failedWeek = Run::where('status', RunStatus::Failed)
+            ->where('completed_at', '>=', $weekAgo)
+            ->count();
+        $stuckCount = Run::where('status', RunStatus::Stuck)->count();
+
+        $successDenominator = $completedWeek + $failedWeek;
+        $health = [
+            'throughput_per_hour' => round($completedDay / 24, 1),
+            'success_rate_pct' => $successDenominator > 0
+                ? round($completedWeek / $successDenominator * 100, 1)
+                : null,
+            'active_agents' => Stage::where('status', StageStatus::Running)->count(),
+            'shipped_total' => Run::where('status', RunStatus::Completed)->count(),
+        ];
+
+        $stuckRuns = Run::with('issue.source')
+            ->where('status', RunStatus::Stuck)
+            ->orderByDesc('updated_at')
+            ->limit(3)
+            ->get();
+
+        return view('activity.index', compact('events', 'sources', 'health', 'stuckCount', 'stuckRuns'));
     }
 }

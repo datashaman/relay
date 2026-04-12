@@ -9,28 +9,13 @@ use Illuminate\Http\Request;
 
 class EscalationRuleController extends Controller
 {
-    public function index()
-    {
-        $rules = EscalationRule::orderBy('order')->get();
-
-        return view('escalation-rules.index', compact('rules'));
-    }
-
-    public function create()
-    {
-        return view('escalation-rules.form', [
-            'rule' => null,
-            'levels' => AutonomyLevel::cases(),
-        ]);
-    }
-
     public function store(Request $request)
     {
         $this->validateRule($request);
 
         $maxOrder = EscalationRule::max('order') ?? -1;
 
-        EscalationRule::create([
+        $rule = EscalationRule::create([
             'name' => $request->name,
             'condition' => $this->buildCondition($request),
             'target_level' => $request->target_level,
@@ -38,16 +23,16 @@ class EscalationRuleController extends Controller
             'order' => $maxOrder + 1,
         ]);
 
-        return redirect()->route('escalation-rules.index')
-            ->with('success', 'Escalation rule created.');
-    }
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'id' => $rule->id,
+                'html' => view('escalation-rules._card', ['rule' => $rule])->render(),
+            ]);
+        }
 
-    public function edit(EscalationRule $escalationRule)
-    {
-        return view('escalation-rules.form', [
-            'rule' => $escalationRule,
-            'levels' => AutonomyLevel::cases(),
-        ]);
+        return redirect()->route('config.index')
+            ->with('success', 'Escalation rule created.');
     }
 
     public function update(Request $request, EscalationRule $escalationRule)
@@ -60,25 +45,41 @@ class EscalationRuleController extends Controller
             'target_level' => $request->target_level,
         ]);
 
-        return redirect()->route('escalation-rules.index')
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'id' => $escalationRule->id,
+                'html' => view('escalation-rules._card', ['rule' => $escalationRule])->render(),
+            ]);
+        }
+
+        return redirect()->route('config.index')
             ->with('success', 'Escalation rule updated.');
     }
 
-    public function destroy(EscalationRule $escalationRule)
+    public function destroy(Request $request, EscalationRule $escalationRule)
     {
         $escalationRule->delete();
 
-        return redirect()->route('escalation-rules.index')
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'deleted' => true]);
+        }
+
+        return redirect()->route('config.index')
             ->with('success', 'Escalation rule deleted.');
     }
 
-    public function toggleEnabled(EscalationRule $escalationRule)
+    public function toggleEnabled(Request $request, EscalationRule $escalationRule)
     {
         $escalationRule->update(['is_enabled' => ! $escalationRule->is_enabled]);
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'enabled' => $escalationRule->is_enabled]);
+        }
+
         $status = $escalationRule->is_enabled ? 'enabled' : 'disabled';
 
-        return redirect()->route('escalation-rules.index')
+        return redirect()->route('config.index')
             ->with('success', "Rule \"{$escalationRule->name}\" {$status}.");
     }
 
@@ -93,11 +94,11 @@ class EscalationRuleController extends Controller
             EscalationRule::where('id', $id)->update(['order' => $index]);
         }
 
-        return redirect()->route('escalation-rules.index')
+        return redirect()->route('config.index')
             ->with('success', 'Rules reordered.');
     }
 
-    public function moveUp(EscalationRule $escalationRule)
+    public function moveUp(Request $request, EscalationRule $escalationRule)
     {
         $swapWith = EscalationRule::where('order', '<', $escalationRule->order)
             ->orderByDesc('order')
@@ -109,10 +110,14 @@ class EscalationRuleController extends Controller
             $swapWith->update(['order' => $tempOrder]);
         }
 
-        return redirect()->route('escalation-rules.index');
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return redirect()->route('config.index');
     }
 
-    public function moveDown(EscalationRule $escalationRule)
+    public function moveDown(Request $request, EscalationRule $escalationRule)
     {
         $swapWith = EscalationRule::where('order', '>', $escalationRule->order)
             ->orderBy('order')
@@ -124,7 +129,11 @@ class EscalationRuleController extends Controller
             $swapWith->update(['order' => $tempOrder]);
         }
 
-        return redirect()->route('escalation-rules.index');
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return redirect()->route('config.index');
     }
 
     private function validateRule(Request $request): array
@@ -132,6 +141,7 @@ class EscalationRuleController extends Controller
         return $request->validate([
             'name' => 'required|string|max:255',
             'condition_type' => 'required|in:label_match,file_path_match,diff_size,touched_directory_match',
+            'condition_operator' => 'nullable|in:>,>=,<,<=,=,~',
             'condition_value' => 'required|string|max:255',
             'target_level' => 'required|in:'.implode(',', array_map(fn ($l) => $l->value, AutonomyLevel::cases())),
         ]);
@@ -139,9 +149,19 @@ class EscalationRuleController extends Controller
 
     private function buildCondition(Request $request): array
     {
-        return [
-            'type' => $request->condition_type,
-            'value' => $request->condition_value,
-        ];
+        $type = $request->condition_type;
+        $value = $request->condition_value;
+
+        $operator = match ($type) {
+            'diff_size' => $request->condition_operator ?: '>=',
+            'label_match', 'file_path_match', 'touched_directory_match' => '~',
+            default => '=',
+        };
+
+        if ($type === 'diff_size') {
+            $value = (string) (int) $value;
+        }
+
+        return compact('type', 'operator', 'value');
     }
 }

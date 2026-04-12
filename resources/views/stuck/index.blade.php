@@ -4,11 +4,11 @@
 
 @section('content')
     <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold">Stuck Issues</h1>
+        <h1 class="text-2xl font-headline font-bold">Stuck Issues</h1>
     </div>
 
     @if ($stuckRuns->isEmpty())
-        <div class="mt-8 text-center text-gray-500 dark:text-gray-400">
+        <div class="mt-8 text-center text-on-surface-variant">
             <p class="text-lg">No stuck issues.</p>
             <p class="text-sm mt-1">Issues that get stuck during processing will appear here.</p>
         </div>
@@ -23,7 +23,7 @@
                             'action' => 'Give Guidance',
                             'action_route' => route('stuck.guidance', $run),
                             'action_method' => 'GET',
-                            'color' => 'amber',
+                            'accent' => 'border-l-stage-stuck',
                         ],
                         \App\Enums\StuckState::Timeout => [
                             'label' => 'Timeout',
@@ -31,7 +31,7 @@
                             'action' => 'Restart',
                             'action_route' => route('stuck.restart', $run),
                             'action_method' => 'POST',
-                            'color' => 'red',
+                            'accent' => 'border-l-error',
                         ],
                         \App\Enums\StuckState::AgentUncertain => [
                             'label' => 'Agent Uncertain',
@@ -39,7 +39,7 @@
                             'action' => 'Give Guidance',
                             'action_route' => route('stuck.guidance', $run),
                             'action_method' => 'GET',
-                            'color' => 'yellow',
+                            'accent' => 'border-l-tertiary',
                         ],
                         \App\Enums\StuckState::ExternalBlocker => [
                             'label' => 'External Blocker',
@@ -47,7 +47,7 @@
                             'action' => 'Restart',
                             'action_route' => route('stuck.restart', $run),
                             'action_method' => 'POST',
-                            'color' => 'orange',
+                            'accent' => 'border-l-error',
                         ],
                         default => [
                             'label' => 'Unknown',
@@ -55,32 +55,32 @@
                             'action' => 'Restart',
                             'action_route' => route('stuck.restart', $run),
                             'action_method' => 'POST',
-                            'color' => 'gray',
+                            'accent' => 'border-l-outline',
                         ],
                     };
                     $latestStage = $run->stages->first();
                 @endphp
-                <div class="rounded-lg border border-{{ $stuckMeta['color'] }}-300 dark:border-{{ $stuckMeta['color'] }}-700 bg-{{ $stuckMeta['color'] }}-50 dark:bg-{{ $stuckMeta['color'] }}-900/20 p-4">
+                <div class="rounded-xl bg-surface-container-low border-l-4 {{ $stuckMeta['accent'] }} p-4 shadow-[0_0_40px_-16px_rgba(239,159,39,0.25)]">
                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+                                <span class="inline-flex items-center rounded-full bg-stage-stuck px-2 py-0.5 font-label text-[10px] uppercase tracking-widest text-on-background">
                                     {{ $stuckMeta['label'] }}
                                 </span>
                                 @if ($run->stuck_unread)
-                                    <span class="inline-block w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span class="inline-block w-2 h-2 rounded-full bg-error"></span>
                                 @endif
                                 @if ($run->iteration > 0)
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">&circlearrowright; {{ $run->iteration }}</span>
+                                    <span class="text-xs text-on-surface-variant">&circlearrowright; {{ $run->iteration }}</span>
                                 @endif
                             </div>
-                            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <h3 class="text-sm font-semibold text-on-surface">
                                 {{ $run->issue->title ?? 'Unknown Issue' }}
                             </h3>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                            <p class="text-xs text-on-surface-variant mt-0.5">
                                 {{ $stuckMeta['description'] }}
                             </p>
-                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <div class="text-xs text-on-surface-variant mt-1">
                                 @if ($latestStage)
                                     Stage: {{ $latestStage->name->value }}
                                 @endif
@@ -91,14 +91,14 @@
                         <div class="flex items-center gap-2 sm:ml-4">
                             @if ($stuckMeta['action_method'] === 'GET')
                                 <a href="{{ $stuckMeta['action_route'] }}"
-                                   class="rounded-md bg-amber-600 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-white hover:bg-amber-500 active:bg-amber-700">
+                                   class="rounded-md bg-stage-stuck px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-on-background hover:bg-stage-stuck/90 active:bg-stage-stuck/80">
                                     {{ $stuckMeta['action'] }}
                                 </a>
                             @else
                                 <form method="POST" action="{{ $stuckMeta['action_route'] }}">
                                     @csrf
                                     <button type="submit"
-                                            class="rounded-md bg-amber-600 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-white hover:bg-amber-500 active:bg-amber-700">
+                                            class="rounded-md bg-stage-stuck px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-on-background hover:bg-stage-stuck/90 active:bg-stage-stuck/80">
                                         {{ $stuckMeta['action'] }}
                                     </button>
                                 </form>
@@ -107,7 +107,7 @@
                                 <form method="POST" action="{{ route('stuck.restart', $run) }}">
                                     @csrf
                                     <button type="submit"
-                                            class="rounded-md bg-gray-600 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-white hover:bg-gray-500 active:bg-gray-700">
+                                            class="rounded-md bg-surface-container-high px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-on-surface hover:bg-surface-container-highest">
                                         Restart
                                     </button>
                                 </form>

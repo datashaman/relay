@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\ActivityFeedController;
-use App\Http\Controllers\AutonomyConfigController;
+use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\EscalationRuleController;
+use App\Http\Controllers\FilterRuleController;
+use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueViewController;
 use App\Http\Controllers\OauthController;
+use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\PreflightController;
 use App\Http\Controllers\RunProgressController;
 use App\Http\Controllers\RunTimelineController;
@@ -13,20 +16,18 @@ use App\Http\Controllers\SourceController;
 use App\Http\Controllers\StuckRunController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [OverviewController::class, 'index'])->name('overview');
+Route::get('/intake', [IntakeController::class, 'index'])->name('intake.index');
+Route::get('/intake/sources/{source}/rules', [FilterRuleController::class, 'edit'])->name('intake.rules.edit');
+Route::put('/intake/sources/{source}/rules', [FilterRuleController::class, 'update'])->name('intake.rules.update');
 
-Route::get('/sources', [SourceController::class, 'index'])->name('sources.index');
 Route::post('/sources/{source}/test', [SourceController::class, 'testConnection'])->name('sources.test');
 Route::post('/sources/{source}/sync', [SourceController::class, 'syncNow'])->name('sources.sync');
 
-Route::get('/issues', [IssueViewController::class, 'index'])->name('issues.index');
 Route::post('/issues/stages/{stage}/approve', [IssueViewController::class, 'approve'])->name('issues.approve');
 Route::post('/issues/stages/{stage}/reject', [IssueViewController::class, 'reject'])->name('issues.reject-stage');
 Route::post('/issues/runs/{run}/guidance', [IssueViewController::class, 'guidance'])->name('issues.guidance');
 
-Route::get('/issues/queue', [IssueController::class, 'queue'])->name('issues.queue');
 Route::get('/issues/{issue}', [IssueViewController::class, 'show'])->name('issues.show');
 Route::post('/issues/{issue}/accept', [IssueController::class, 'accept'])->name('issues.accept');
 Route::post('/issues/{issue}/reject', [IssueController::class, 'reject'])->name('issues.reject');
@@ -60,16 +61,13 @@ Route::get('/jira/select-site', [OauthController::class, 'jiraSiteSelectionForm'
 Route::post('/jira/select-site', [OauthController::class, 'jiraSelectSite'])
     ->name('jira.select-site');
 
-Route::get('/autonomy', [AutonomyConfigController::class, 'index'])->name('autonomy.index');
-Route::post('/autonomy/global', [AutonomyConfigController::class, 'updateGlobal'])->name('autonomy.update-global');
-Route::post('/autonomy/stage/{stage}', [AutonomyConfigController::class, 'updateStage'])->name('autonomy.update-stage');
-Route::post('/autonomy/iteration-cap', [AutonomyConfigController::class, 'updateIterationCap'])->name('autonomy.update-iteration-cap');
-Route::get('/autonomy/preview', [AutonomyConfigController::class, 'preview'])->name('autonomy.preview');
+Route::get('/config', [ConfigController::class, 'index'])->name('config.index');
+Route::post('/config/global', [ConfigController::class, 'updateGlobal'])->name('config.update-global');
+Route::post('/config/stage/{stage}', [ConfigController::class, 'updateStage'])->name('config.update-stage');
+Route::post('/config/iteration-cap', [ConfigController::class, 'updateIterationCap'])->name('config.update-iteration-cap');
+Route::get('/config/preview', [ConfigController::class, 'preview'])->name('config.preview');
 
-Route::get('/escalation-rules', [EscalationRuleController::class, 'index'])->name('escalation-rules.index');
-Route::get('/escalation-rules/create', [EscalationRuleController::class, 'create'])->name('escalation-rules.create');
 Route::post('/escalation-rules', [EscalationRuleController::class, 'store'])->name('escalation-rules.store');
-Route::get('/escalation-rules/{escalationRule}/edit', [EscalationRuleController::class, 'edit'])->name('escalation-rules.edit');
 Route::put('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'update'])->name('escalation-rules.update');
 Route::delete('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'destroy'])->name('escalation-rules.destroy');
 Route::post('/escalation-rules/{escalationRule}/toggle', [EscalationRuleController::class, 'toggleEnabled'])->name('escalation-rules.toggle');

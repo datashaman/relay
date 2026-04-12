@@ -94,13 +94,21 @@ class EscalationRuleService
     private function matchDiffSize(array $condition, array $context): bool
     {
         $threshold = (int) ($condition['value'] ?? 0);
+        $operator = $condition['operator'] ?? '>=';
         $diffSize = $context['diff_size'] ?? null;
 
         if ($diffSize === null) {
             return false;
         }
 
-        return $diffSize >= $threshold;
+        return match ($operator) {
+            '>' => $diffSize > $threshold,
+            '>=' => $diffSize >= $threshold,
+            '<' => $diffSize < $threshold,
+            '<=' => $diffSize <= $threshold,
+            '=' => $diffSize === $threshold,
+            default => $diffSize >= $threshold,
+        };
     }
 
     private function matchTouchedDirectory(array $condition, array $context): bool

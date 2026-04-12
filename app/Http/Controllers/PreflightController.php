@@ -19,7 +19,7 @@ class PreflightController extends Controller
             ->first();
 
         if (! $stage) {
-            return redirect()->route('issues.queue')
+            return redirect()->route('intake.index')
                 ->with('error', 'No pending clarification for this run.');
         }
 
@@ -40,7 +40,7 @@ class PreflightController extends Controller
             ->first();
 
         if (! $stage) {
-            return redirect()->route('issues.queue')
+            return redirect()->route('intake.index')
                 ->with('error', 'No pending clarification for this run.');
         }
 
@@ -59,7 +59,7 @@ class PreflightController extends Controller
 
         $orchestrator->resume($stage);
 
-        return redirect()->route('issues.queue')
+        return redirect()->route('intake.index')
             ->with('success', "Answers submitted for \"{$run->issue->title}\". Preflight resuming.");
     }
 
@@ -72,13 +72,13 @@ class PreflightController extends Controller
             ->first();
 
         if (! $stage) {
-            return redirect()->route('issues.queue')
+            return redirect()->route('intake.index')
                 ->with('error', 'No pending clarification for this run.');
         }
 
         $orchestrator->resume($stage, ['skip_to_doc' => true]);
 
-        return redirect()->route('issues.queue')
+        return redirect()->route('intake.index')
             ->with('success', "Skipped to doc for \"{$run->issue->title}\". Preflight resuming.");
     }
 
@@ -87,7 +87,7 @@ class PreflightController extends Controller
         $run->load('issue');
 
         if (! $run->preflight_doc) {
-            return redirect()->route('issues.queue')
+            return redirect()->route('intake.index')
                 ->with('error', 'No preflight doc generated for this run yet.');
         }
 
@@ -103,7 +103,7 @@ class PreflightController extends Controller
         $run->load('issue');
 
         if (! $run->preflight_doc) {
-            return redirect()->route('issues.queue')
+            return redirect()->route('intake.index')
                 ->with('error', 'No preflight doc generated for this run yet.');
         }
 
@@ -116,7 +116,7 @@ class PreflightController extends Controller
     public function updateDoc(Request $request, Run $run)
     {
         if (! $run->preflight_doc) {
-            return redirect()->route('issues.queue')
+            return redirect()->route('intake.index')
                 ->with('error', 'No preflight doc generated for this run yet.');
         }
 

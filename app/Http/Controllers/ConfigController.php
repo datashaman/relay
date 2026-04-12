@@ -11,7 +11,7 @@ use App\Services\AutonomyResolver;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-class AutonomyConfigController extends Controller
+class ConfigController extends Controller
 {
     public function __construct(
         private AutonomyResolver $resolver,
@@ -33,7 +33,7 @@ class AutonomyConfigController extends Controller
         $rules = EscalationRule::orderBy('order')->get();
         $iterationCap = config('relay.iteration_cap');
 
-        return view('autonomy.index', compact(
+        return view('config.index', compact(
             'globalDefault',
             'stageOverrides',
             'rules',
@@ -51,7 +51,11 @@ class AutonomyConfigController extends Controller
 
         $this->resolver->validateAndSave(AutonomyScope::Global, null, null, $level);
 
-        return redirect()->route('autonomy.index')->with('success', 'Global autonomy level updated.');
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'level' => $level->value]);
+        }
+
+        return redirect()->route('config.index')->with('success', 'Global autonomy level updated.');
     }
 
     public function updateStage(Request $request, string $stage)
@@ -64,7 +68,11 @@ class AutonomyConfigController extends Controller
                 ->where('stage', $stageName)
                 ->delete();
 
-            return redirect()->route('autonomy.index')->with('success', ucfirst($stage) . ' stage override removed.');
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['ok' => true, 'cleared' => true]);
+            }
+
+            return redirect()->route('config.index')->with('success', ucfirst($stage) . ' stage override removed.');
         }
 
         $request->validate([
@@ -75,7 +83,11 @@ class AutonomyConfigController extends Controller
 
         $this->resolver->validateAndSave(AutonomyScope::Stage, null, $stageName, $level);
 
-        return redirect()->route('autonomy.index')->with('success', ucfirst($stage) . ' stage override updated.');
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'level' => $level->value]);
+        }
+
+        return redirect()->route('config.index')->with('success', ucfirst($stage) . ' stage override updated.');
     }
 
     public function updateIterationCap(Request $request)
@@ -91,7 +103,7 @@ class AutonomyConfigController extends Controller
             $this->setEnvValue('RELAY_ITERATION_CAP', (string) $cap);
         }
 
-        return redirect()->route('autonomy.index')->with('success', 'Iteration cap updated.');
+        return redirect()->route('config.index')->with('success', 'Iteration cap updated.');
     }
 
     public function preview(Request $request)

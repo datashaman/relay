@@ -5,16 +5,16 @@
 
 @section('content')
     @if ($issues->isEmpty())
-        <div class="text-center text-gray-500 dark:text-gray-400 py-16">
+        <div class="text-center text-on-surface-variant py-16">
             <p class="text-lg">No pipeline issues yet.</p>
-            <p class="text-sm mt-1">Accept issues from the <a href="{{ route('issues.queue') }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">queue</a> to see them here.</p>
+            <p class="text-sm mt-1">Accept issues from the <a href="{{ route('intake.index') }}" class="text-primary hover:underline">queue</a> to see them here.</p>
         </div>
     @else
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[calc(100vh-10rem)]" id="issue-view">
             {{-- Left panel: Issue queue --}}
-            <div class="lg:col-span-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col">
-                <div class="px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                    <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Pipeline Issues</h2>
+            <div class="lg:col-span-3 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
+                <div class="px-3 py-2 border-b border-outline-variant/40 bg-surface-container">
+                    <h2 class="text-sm font-headline font-semibold text-on-surface-variant">Pipeline Issues</h2>
                 </div>
                 <div class="overflow-y-auto flex-1" id="issue-list">
                     @foreach ($issues as $listIssue)
@@ -25,25 +25,25 @@
                         @endphp
                         <a href="{{ route('issues.show', $listIssue) }}"
                            data-issue-id="{{ $listIssue->id }}"
-                           class="block px-3 py-2.5 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors {{ $isActive ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-2 border-l-indigo-500' : '' }}">
-                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $listIssue->title }}</div>
+                           class="block px-3 py-2.5 border-b border-outline-variant/30 hover:bg-surface-container transition-colors {{ $isActive ? 'bg-surface-container-high border-l-2 border-l-secondary' : '' }}">
+                            <div class="text-sm font-medium text-on-surface truncate">{{ $listIssue->title }}</div>
                             <div class="flex items-center gap-2 mt-1">
                                 @php $statusColors = match($listIssue->status->value) {
-                                    'accepted' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-                                    'in_progress' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-                                    'completed' => 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-                                    'failed' => 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-                                    'stuck' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-                                    default => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                                    'accepted' => 'bg-secondary-container/30 text-secondary',
+                                    'in_progress' => 'bg-primary-container/30 text-primary',
+                                    'completed' => 'bg-secondary-container/30 text-secondary',
+                                    'failed' => 'bg-error-container/30 text-error',
+                                    'stuck' => 'bg-stage-stuck/20 text-stage-stuck',
+                                    default => 'bg-surface-container-high text-on-surface-variant',
                                 }; @endphp
                                 <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium {{ $statusColors }}">
                                     {{ str_replace('_', ' ', ucfirst($listIssue->status->value)) }}
                                 </span>
                                 @if ($listStage)
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ ucfirst($listStage->name->value) }}</span>
+                                    <span class="text-xs text-on-surface-variant">{{ ucfirst($listStage->name->value) }}</span>
                                 @endif
                                 @if ($listRun && $listRun->iteration > 1)
-                                    <span class="text-xs text-indigo-600 dark:text-indigo-400">↺ {{ $listRun->iteration }}</span>
+                                    <span class="text-xs text-primary">↺ {{ $listRun->iteration }}</span>
                                 @endif
                             </div>
                         </a>
@@ -52,27 +52,27 @@
             </div>
 
             {{-- Center panel: Active issue details with live progress --}}
-            <div class="lg:col-span-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col">
+            <div class="lg:col-span-6 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
                 @if ($activeIssue)
-                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                        <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $activeIssue->title }}</h2>
-                        <div class="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <div class="px-4 py-3 border-b border-outline-variant/40 bg-surface-container">
+                        <h2 class="text-base font-headline font-semibold text-on-surface">{{ $activeIssue->title }}</h2>
+                        <div class="flex items-center gap-2 mt-1 text-xs text-on-surface-variant">
                             @if ($activeIssue->external_id)
                                 <span>{{ $activeIssue->external_id }}</span>
                             @endif
                             @if ($activeIssue->external_url)
-                                <a href="{{ $activeIssue->external_url }}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">External →</a>
+                                <a href="{{ $activeIssue->external_url }}" target="_blank" class="text-primary hover:underline">External →</a>
                             @endif
                             @if ($latestRun)
                                 <span>·</span>
-                                <a href="{{ route('runs.timeline', $latestRun) }}" class="text-indigo-600 dark:text-indigo-400 hover:underline">Full Timeline</a>
+                                <a href="{{ route('runs.timeline', $latestRun) }}" class="text-primary hover:underline">Full Timeline</a>
                             @endif
                         </div>
                     </div>
 
                     @if ($latestRun)
                         {{-- Stage pipeline indicator --}}
-                        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700" id="stage-pipeline">
+                        <div class="px-4 py-3 border-b border-outline-variant/40" id="stage-pipeline">
                             @include('issues._stage-pipeline', ['run' => $latestRun])
                         </div>
                     @endif
@@ -82,25 +82,25 @@
                             {{-- Preflight doc --}}
                             @if ($latestRun->preflight_doc)
                                 <details open>
-                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">Preflight Doc</summary>
-                                    <div class="mt-2 prose prose-sm dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-xs whitespace-pre-wrap">{{ $latestRun->preflight_doc }}</div>
+                                    <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">Preflight Doc</summary>
+                                    <div class="mt-2 prose prose-sm dark:prose-invert max-w-none bg-surface-container rounded-xl p-3 text-xs whitespace-pre-wrap">{{ $latestRun->preflight_doc }}</div>
                                 </details>
                             @endif
 
                             {{-- Live diff panel (Implement stage) --}}
                             <div id="live-diff-panel" class="{{ $currentStage?->name === \App\Enums\StageName::Implement && $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
                                 <details open>
-                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">
                                         <span class="inline-flex items-center gap-1.5">
-                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-stage-implement animate-pulse"></span>
                                             Live Implementation
                                         </span>
                                     </summary>
                                     <div class="mt-2 space-y-2">
-                                        <div id="live-diff-files" class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">Waiting for changes…</p>
+                                        <div id="live-diff-files" class="bg-surface-container rounded-xl p-3">
+                                            <p class="text-xs text-on-surface-variant">Waiting for changes…</p>
                                         </div>
-                                        <pre id="live-diff-content" class="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-96 hidden"></pre>
+                                        <pre id="live-diff-content" class="bg-surface-container-highest text-on-surface rounded-xl p-3 text-xs font-mono overflow-x-auto max-h-96 hidden"></pre>
                                     </div>
                                 </details>
                             </div>
@@ -116,15 +116,15 @@
                             @endphp
                             <div id="static-impl-panel" class="{{ $filesChanged->isNotEmpty() || $implementSummary ? '' : 'hidden' }}">
                                 <details open>
-                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">Implementation</summary>
+                                    <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">Implementation</summary>
                                     <div class="mt-2 space-y-2">
                                         @if ($implementSummary)
-                                            <p class="text-xs text-gray-600 dark:text-gray-400">{{ $implementSummary }}</p>
+                                            <p class="text-xs text-on-surface-variant">{{ $implementSummary }}</p>
                                         @endif
                                         @if ($filesChanged->isNotEmpty())
-                                            <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
-                                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Files changed ({{ $filesChanged->count() }})</p>
-                                                <ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">
+                                            <div class="bg-surface-container rounded-xl p-3">
+                                                <p class="text-xs font-medium text-on-surface-variant mb-1">Files changed ({{ $filesChanged->count() }})</p>
+                                                <ul class="text-xs text-on-surface-variant font-mono space-y-0.5">
                                                     @foreach ($filesChanged as $file)
                                                         <li>{{ $file }}</li>
                                                     @endforeach
@@ -138,13 +138,13 @@
                             {{-- Live test output panel (Verify stage) --}}
                             <div id="live-test-panel" class="{{ $currentStage?->name === \App\Enums\StageName::Verify && $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
                                 <details open>
-                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">
                                         <span class="inline-flex items-center gap-1.5">
-                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-stage-verify animate-pulse"></span>
                                             Live Test Output
                                         </span>
                                     </summary>
-                                    <pre id="live-test-output" class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-96">Waiting for test output…</pre>
+                                    <pre id="live-test-output" class="mt-2 bg-surface-container-highest text-on-surface rounded-xl p-3 text-xs font-mono overflow-x-auto max-h-96">Waiting for test output…</pre>
                                 </details>
                             </div>
 
@@ -158,31 +158,31 @@
                             @endphp
                             <div id="static-test-panel" class="{{ $lastVerify ? '' : 'hidden' }}">
                                 <details open>
-                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">
                                         Test Results
                                         <span id="static-test-badge">
                                             @if ($lastVerify)
                                                 @if ($lastVerify->payload['passed'] ?? false)
-                                                    <span class="ml-1 text-xs text-green-600 dark:text-green-400">Passed</span>
+                                                    <span class="ml-1 text-xs text-secondary">Passed</span>
                                                 @else
-                                                    <span class="ml-1 text-xs text-red-600 dark:text-red-400">Failed</span>
+                                                    <span class="ml-1 text-xs text-error">Failed</span>
                                                 @endif
                                             @endif
                                         </span>
                                     </summary>
-                                    <div id="static-test-content" class="mt-2 bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                                    <div id="static-test-content" class="mt-2 bg-surface-container rounded-xl p-3">
                                         @if ($lastVerify)
                                             @if (!empty($lastVerify->payload['summary']))
-                                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ $lastVerify->payload['summary'] }}</p>
+                                                <p class="text-xs text-on-surface-variant mb-2">{{ $lastVerify->payload['summary'] }}</p>
                                             @endif
                                             @if (!empty($lastVerify->payload['failures']))
                                                 <div class="space-y-1">
                                                     @foreach ($lastVerify->payload['failures'] as $failure)
-                                                        <div class="text-xs text-red-600 dark:text-red-400 font-mono">
+                                                        <div class="text-xs text-error font-mono">
                                                             @if (is_array($failure))
                                                                 {{ $failure['test'] ?? '' }}: {{ $failure['assertion'] ?? '' }}
                                                                 @if (!empty($failure['file']))
-                                                                    <span class="text-gray-500">({{ $failure['file'] }}{{ !empty($failure['line']) ? ':' . $failure['line'] : '' }})</span>
+                                                                    <span class="text-on-surface-variant">({{ $failure['file'] }}{{ !empty($failure['line']) ? ':' . $failure['line'] : '' }})</span>
                                                                 @endif
                                                             @else
                                                                 {{ $failure }}
@@ -199,14 +199,14 @@
                             {{-- Live release progress panel --}}
                             <div id="live-release-panel" class="{{ $currentStage?->name === \App\Enums\StageName::Release && $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
                                 <details open>
-                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">
                                         <span class="inline-flex items-center gap-1.5">
-                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-stage-release animate-pulse"></span>
                                             Release Progress
                                         </span>
                                     </summary>
                                     <div id="live-release-steps" class="mt-2 space-y-2">
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">Preparing release…</p>
+                                        <p class="text-xs text-on-surface-variant">Preparing release…</p>
                                     </div>
                                 </details>
                             </div>
@@ -222,24 +222,24 @@
                                     ->last();
                             @endphp
                             <div id="static-release-panel" class="{{ $prUrl ? '' : 'hidden' }}">
-                                <div class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-3">
-                                    <a id="pr-link" href="{{ $prUrl ?? '#' }}" target="_blank" rel="noopener" class="text-sm font-medium text-green-700 dark:text-green-300 hover:underline">
+                                <div class="rounded-xl bg-secondary-container/30 p-3">
+                                    <a id="pr-link" href="{{ $prUrl ?? '#' }}" target="_blank" rel="noopener" class="text-sm font-medium text-secondary hover:underline">
                                         {{ $prUrl ? "Pull Request: $prUrl →" : '' }}
                                     </a>
                                 </div>
                             </div>
 
                         @else
-                            <p class="text-sm text-gray-500 dark:text-gray-400">No runs yet for this issue.</p>
+                            <p class="text-sm text-on-surface-variant">No runs yet for this issue.</p>
                         @endif
                     </div>
                 @endif
             </div>
 
             {{-- Right panel: Approval / actions --}}
-            <div class="lg:col-span-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col">
-                <div class="px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                    <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</h2>
+            <div class="lg:col-span-3 rounded-xl bg-surface-container-low overflow-hidden flex flex-col">
+                <div class="px-3 py-2 border-b border-outline-variant/40 bg-surface-container">
+                    <h2 class="text-sm font-headline font-semibold text-on-surface-variant">Actions</h2>
                 </div>
 
                 @if ($activeIssue)
@@ -247,10 +247,10 @@
                         @if ($currentStage && $currentStage->status === \App\Enums\StageStatus::AwaitingApproval)
                             {{-- Awaiting approval --}}
                             <div class="mb-4">
-                                <span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 px-2.5 py-0.5 text-xs font-medium">
+                                <span class="inline-flex items-center rounded-full bg-stage-stuck/20 text-stage-stuck px-2.5 py-0.5 font-label text-[10px] uppercase tracking-widest">
                                     Awaiting Approval
                                 </span>
-                                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                <p class="mt-2 text-sm text-on-surface-variant">
                                     <span class="font-medium">{{ ucfirst($currentStage->name->value) }}</span> stage is waiting for your review.
                                 </p>
                             </div>
@@ -259,7 +259,7 @@
                                 <form method="POST" action="{{ route('issues.approve', $currentStage) }}">
                                     @csrf
                                     <button type="submit"
-                                            class="w-full rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 transition-colors">
+                                            class="w-full rounded-md bg-secondary px-4 py-2 text-sm font-medium text-on-secondary hover:bg-secondary/90 transition-colors">
                                         Approve (A)
                                     </button>
                                 </form>
@@ -267,7 +267,7 @@
                                       onsubmit="return confirm('Reject this stage?')">
                                     @csrf
                                     <button type="submit"
-                                            class="w-full rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 transition-colors">
+                                            class="w-full rounded-md bg-error px-4 py-2 text-sm font-medium text-on-error hover:bg-error/90 transition-colors">
                                         Reject (R)
                                     </button>
                                 </form>
@@ -276,29 +276,29 @@
                         @elseif ($latestRun && $latestRun->status === \App\Enums\RunStatus::Stuck)
                             {{-- Stuck state --}}
                             <div class="mb-4">
-                                <span class="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-bold text-white">
+                                <span class="inline-flex items-center rounded-full bg-stage-stuck px-2.5 py-0.5 font-label text-[10px] uppercase tracking-widest text-on-background">
                                     {{ str_replace('_', ' ', ucfirst($latestRun->stuck_state?->value ?? 'stuck')) }}
                                 </span>
                                 @if ($latestRun->iteration > 0)
-                                    <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">↺ {{ $latestRun->iteration }} iterations</span>
+                                    <span class="ml-2 text-xs text-on-surface-variant">↺ {{ $latestRun->iteration }} iterations</span>
                                 @endif
                             </div>
 
                             <form method="POST" action="{{ route('issues.guidance', $latestRun) }}">
                                 @csrf
                                 <div class="mb-3">
-                                    <label for="guidance" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label for="guidance" class="block text-xs font-medium text-on-surface-variant mb-1">
                                         Give guidance for retry
                                     </label>
                                     <textarea name="guidance" id="guidance" rows="4" required
-                                              class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 px-3 py-2 text-xs focus:ring-indigo-500 focus:border-indigo-500"
+                                              class="w-full rounded-md bg-surface-container-lowest border-outline-variant text-on-surface px-3 py-2 text-xs focus:ring-primary focus:border-primary"
                                               placeholder="Describe what the agent should do differently..."></textarea>
                                     @error('guidance')
-                                        <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        <p class="mt-1 text-xs text-error">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <button type="submit"
-                                        class="w-full rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-500 transition-colors">
+                                        class="w-full rounded-md bg-stage-stuck px-4 py-2 text-sm font-medium text-on-background hover:bg-stage-stuck/90 transition-colors">
                                     Submit Guidance
                                 </button>
                             </form>
@@ -307,8 +307,8 @@
                             {{-- Running --}}
                             <div class="text-center py-6">
                                 <div class="inline-flex items-center gap-2">
-                                    <span class="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <span class="inline-block w-2 h-2 rounded-full bg-stage-implement animate-pulse"></span>
+                                    <span class="text-sm font-medium text-on-surface-variant">
                                         {{ ucfirst($currentStage->name->value) }} running…
                                     </span>
                                 </div>
@@ -317,7 +317,7 @@
                         @elseif ($latestRun && $latestRun->status === \App\Enums\RunStatus::Completed)
                             {{-- Completed --}}
                             <div class="text-center py-6">
-                                <span class="inline-flex items-center rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-3 py-1 text-sm font-medium">
+                                <span class="inline-flex items-center rounded-full bg-secondary-container/30 text-secondary px-3 py-1 text-sm font-medium">
                                     Completed
                                 </span>
                             </div>
@@ -325,26 +325,26 @@
                         @elseif ($latestRun && $latestRun->status === \App\Enums\RunStatus::Failed)
                             {{-- Failed --}}
                             <div class="text-center py-6">
-                                <span class="inline-flex items-center rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 px-3 py-1 text-sm font-medium">
+                                <span class="inline-flex items-center rounded-full bg-error-container/30 text-error px-3 py-1 text-sm font-medium">
                                     Failed
                                 </span>
                             </div>
 
                         @else
                             {{-- No actionable state --}}
-                            <div class="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
+                            <div class="text-center py-6 text-sm text-on-surface-variant">
                                 No actions available.
                             </div>
                         @endif
 
                         {{-- Keyboard shortcut hint --}}
-                        <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <p class="text-xs text-gray-400 dark:text-gray-500">Keyboard shortcuts</p>
-                            <div class="mt-1 grid grid-cols-2 gap-1 text-xs text-gray-500 dark:text-gray-400">
-                                <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">A</kbd> Approve</span>
-                                <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">R</kbd> Reject</span>
-                                <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">J</kbd> Next</span>
-                                <span><kbd class="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">K</kbd> Previous</span>
+                        <div class="mt-6 pt-4 border-t border-outline-variant/40">
+                            <p class="text-xs text-outline font-label uppercase tracking-widest">Keyboard shortcuts</p>
+                            <div class="mt-1 grid grid-cols-2 gap-1 text-xs text-on-surface-variant">
+                                <span><kbd class="px-1 py-0.5 bg-surface-container-high rounded text-xs">A</kbd> Approve</span>
+                                <span><kbd class="px-1 py-0.5 bg-surface-container-high rounded text-xs">R</kbd> Reject</span>
+                                <span><kbd class="px-1 py-0.5 bg-surface-container-high rounded text-xs">J</kbd> Next</span>
+                                <span><kbd class="px-1 py-0.5 bg-surface-container-high rounded text-xs">K</kbd> Previous</span>
                             </div>
                         </div>
                     </div>
@@ -400,10 +400,10 @@
                     const POLL_IDLE = 10000;
 
                     const stageColors = {
-                        preflight: { bg: 'bg-indigo-500', ring: 'ring-indigo-500', text: 'text-indigo-700 dark:text-indigo-300' },
-                        implement: { bg: 'bg-blue-500', ring: 'ring-blue-500', text: 'text-blue-700 dark:text-blue-300' },
-                        verify: { bg: 'bg-purple-500', ring: 'ring-purple-500', text: 'text-purple-700 dark:text-purple-300' },
-                        release: { bg: 'bg-green-500', ring: 'ring-green-500', text: 'text-green-700 dark:text-green-300' },
+                        preflight: { bg: 'bg-stage-preflight', ring: 'ring-stage-preflight', text: 'text-stage-preflight' },
+                        implement: { bg: 'bg-stage-implement', ring: 'ring-stage-implement', text: 'text-stage-implement' },
+                        verify: { bg: 'bg-stage-verify', ring: 'ring-stage-verify', text: 'text-stage-verify' },
+                        release: { bg: 'bg-stage-release', ring: 'ring-stage-release', text: 'text-stage-release' },
                     };
 
                     function isRunActive(status) {
@@ -431,23 +431,23 @@
                             el.className = 'flex items-center gap-1.5' + (isCurrent ? ' font-semibold' : '');
 
                             if (!stage || stage.status === 'pending') {
-                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600';
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-surface-container-high border-2 border-outline-variant';
                                 dot.innerHTML = '';
                             } else if (stage.status === 'completed') {
                                 dot.className = 'flex-shrink-0 w-5 h-5 rounded-full ' + colors.bg + ' flex items-center justify-center';
                                 dot.innerHTML = '<svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>';
                             } else if (stage.status === 'running') {
-                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full ' + colors.bg + ' animate-pulse ring-2 ' + colors.ring + ' ring-offset-1 ring-offset-white dark:ring-offset-gray-800';
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full ' + colors.bg + ' animate-pulse ring-2 ' + colors.ring + ' ring-offset-1 ring-offset-surface-container-low';
                                 dot.innerHTML = '';
                             } else if (stage.status === 'awaiting_approval') {
-                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-yellow-400 ring-2 ring-yellow-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-800';
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-stage-stuck ring-2 ring-stage-stuck ring-offset-1 ring-offset-surface-container-low';
                                 dot.innerHTML = '';
                             } else if (['failed', 'stuck', 'bounced'].includes(stage.status)) {
-                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center';
-                                dot.innerHTML = '<svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-error flex items-center justify-center';
+                                dot.innerHTML = '<svg class="w-3 h-3 text-on-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
                             }
 
-                            label.className = 'text-xs ' + (isCurrent ? colors.text : 'text-gray-500 dark:text-gray-400');
+                            label.className = 'text-xs ' + (isCurrent ? colors.text : 'text-on-surface-variant');
                         });
                     }
 
@@ -468,8 +468,8 @@
                             if (live.changed_files && live.changed_files.length > 0) {
                                 const filesEl = document.getElementById('live-diff-files');
                                 if (filesEl) {
-                                    filesEl.innerHTML = '<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Files changed (' + live.changed_files.length + ')</p>'
-                                        + '<ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">'
+                                    filesEl.innerHTML = '<p class="text-xs font-medium text-on-surface-variant mb-1">Files changed (' + live.changed_files.length + ')</p>'
+                                        + '<ul class="text-xs text-on-surface-variant font-mono space-y-0.5">'
                                         + live.changed_files.map(f => '<li>' + escapeHtml(f) + '</li>').join('')
                                         + '</ul>';
                                 }
@@ -506,12 +506,12 @@
                                     if (badge) {
                                         const passed = live.test_status === 'passed';
                                         badge.innerHTML = passed
-                                            ? '<span class="ml-1 text-xs text-green-600 dark:text-green-400">Passed</span>'
-                                            : '<span class="ml-1 text-xs text-red-600 dark:text-red-400">Failed</span>';
+                                            ? '<span class="ml-1 text-xs text-secondary">Passed</span>'
+                                            : '<span class="ml-1 text-xs text-error">Failed</span>';
                                     }
                                     const content = document.getElementById('static-test-content');
                                     if (content && live.test_output) {
-                                        content.innerHTML = '<p class="text-xs text-gray-600 dark:text-gray-400">' + escapeHtml(live.test_output) + '</p>';
+                                        content.innerHTML = '<p class="text-xs text-on-surface-variant">' + escapeHtml(live.test_output) + '</p>';
                                     }
                                 }
                             }
@@ -527,16 +527,16 @@
                                 if (stepsEl) {
                                     stepsEl.innerHTML = live.release_steps.map(function(s) {
                                         const icon = s.step === 'pr_created'
-                                            ? '<svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
-                                            : '<span class="w-3.5 h-3.5 flex-shrink-0 flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span></span>';
+                                            ? '<svg class="w-3.5 h-3.5 text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
+                                            : '<span class="w-3.5 h-3.5 flex-shrink-0 flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span></span>';
                                         let detail = escapeHtml(s.detail);
                                         if (s.pr_url) {
-                                            detail = '<a href="' + escapeHtml(s.pr_url) + '" target="_blank" class="text-green-600 dark:text-green-400 hover:underline">' + escapeHtml(s.pr_url) + '</a>';
+                                            detail = '<a href="' + escapeHtml(s.pr_url) + '" target="_blank" class="text-secondary hover:underline">' + escapeHtml(s.pr_url) + '</a>';
                                         }
                                         return '<div class="flex items-start gap-2 text-xs">'
                                             + icon
-                                            + '<div><span class="font-medium text-gray-700 dark:text-gray-300">' + escapeHtml(s.step.replace(/_/g, ' ')) + '</span>'
-                                            + '<span class="ml-1 text-gray-500 dark:text-gray-400">' + detail + '</span></div></div>';
+                                            + '<div><span class="font-medium text-on-surface">' + escapeHtml(s.step.replace(/_/g, ' ')) + '</span>'
+                                            + '<span class="ml-1 text-on-surface-variant">' + detail + '</span></div></div>';
                                     }).join('');
                                 }
                             }

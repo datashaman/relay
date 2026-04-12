@@ -17,18 +17,11 @@ class SourceController extends Controller
         private OauthService $oauth,
     ) {}
 
-    public function index(): View
-    {
-        $sources = Source::with('oauthTokens')->orderBy('created_at', 'desc')->get();
-
-        return view('sources.index', compact('sources'));
-    }
-
     public function syncNow(Source $source): RedirectResponse
     {
         SyncSourceIssuesJob::dispatch($source);
 
-        return redirect()->route('sources.index')
+        return redirect()->route('intake.index')
             ->with('success', 'Sync started for ' . ($source->external_account ?? $source->name) . '.');
     }
 

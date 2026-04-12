@@ -4,15 +4,15 @@
 
 @section('content')
     <div class="mb-6">
-        <a href="{{ route('stuck.index') }}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">&larr; Back to Stuck Issues</a>
+        <a href="{{ route('stuck.index') }}" class="text-sm text-primary hover:underline">&larr; Back to Stuck Issues</a>
     </div>
 
-    <h1 class="text-2xl font-bold mb-4">Give Guidance</h1>
+    <h1 class="text-2xl font-headline font-bold mb-4">Give Guidance</h1>
 
-    <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 mb-6">
-        <h2 class="text-lg font-semibold mb-2">{{ $run->issue->title }}</h2>
-        <div class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
-            <span class="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
+    <div class="rounded-xl bg-surface-container-low p-4 mb-6">
+        <h2 class="text-lg font-headline font-semibold mb-2">{{ $run->issue->title }}</h2>
+        <div class="flex items-center gap-3 text-sm text-on-surface-variant mb-3">
+            <span class="inline-flex items-center rounded-full bg-stage-stuck px-2 py-0.5 font-label text-[10px] uppercase tracking-widest text-on-background">
                 {{ $run->stuck_state->value }}
             </span>
             @if ($run->iteration > 0)
@@ -22,8 +22,8 @@
 
         @if ($run->preflight_doc)
             <details class="mt-3">
-                <summary class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">Preflight Doc</summary>
-                <div class="mt-2 prose prose-sm dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-900 rounded p-3 text-xs">
+                <summary class="text-sm font-medium text-on-surface-variant cursor-pointer">Preflight Doc</summary>
+                <div class="mt-2 prose prose-sm dark:prose-invert max-w-none bg-surface-container rounded p-3 text-xs">
                     {!! nl2br(e($run->preflight_doc)) !!}
                 </div>
             </details>
@@ -35,8 +35,8 @@
         @endphp
         @if ($stuckEvent && ! empty($stuckEvent->payload))
             <details class="mt-3" open>
-                <summary class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">Failure Context</summary>
-                <pre class="mt-2 bg-gray-50 dark:bg-gray-900 rounded p-3 text-xs overflow-x-auto">{{ json_encode($stuckEvent->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
+                <summary class="text-sm font-medium text-on-surface-variant cursor-pointer">Failure Context</summary>
+                <pre class="mt-2 bg-surface-container rounded p-3 text-xs overflow-x-auto text-on-surface">{{ json_encode($stuckEvent->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
             </details>
         @endif
     </div>
@@ -44,23 +44,23 @@
     <form method="POST" action="{{ route('stuck.submit-guidance', $run) }}">
         @csrf
         <div class="mb-4">
-            <label for="guidance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="guidance" class="block text-sm font-medium text-on-surface-variant mb-1">
                 Your guidance will be prepended to the agent's context on retry.
             </label>
             <textarea name="guidance" id="guidance" rows="6" required
-                      class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      class="w-full rounded-md bg-surface-container-lowest border-outline-variant text-on-surface px-3 py-2 text-sm focus:ring-primary focus:border-primary"
                       placeholder="Describe what the agent should do differently...">{{ old('guidance') }}</textarea>
             @error('guidance')
-                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                <p class="mt-1 text-sm text-error">{{ $message }}</p>
             @enderror
         </div>
         <div class="flex gap-3">
             <button type="submit"
-                    class="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-500">
+                    class="rounded-md bg-stage-stuck px-4 py-2 text-sm font-medium text-on-background hover:bg-stage-stuck/90">
                 Submit Guidance &amp; Retry
             </button>
             <a href="{{ route('stuck.index') }}"
-               class="rounded-md bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
+               class="rounded-md bg-surface-container-high px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-highest">
                 Cancel
             </a>
         </div>
