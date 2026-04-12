@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\IssueStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Issue extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'source_id',
+        'repository_id',
+        'external_id',
+        'title',
+        'body',
+        'status',
+        'external_url',
+        'assignee',
+        'labels',
+        'auto_accepted',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => IssueStatus::class,
+            'labels' => 'array',
+            'auto_accepted' => 'boolean',
+        ];
+    }
+
+    public function source(): BelongsTo
+    {
+        return $this->belongsTo(Source::class);
+    }
+
+    public function repository(): BelongsTo
+    {
+        return $this->belongsTo(Repository::class);
+    }
+
+    public function runs(): HasMany
+    {
+        return $this->hasMany(Run::class);
+    }
+}

@@ -29,7 +29,8 @@
         "Factories for each model to support tests"
       ],
       "priority": 2,
-      "passes": false
+      "passes": false,
+      "inProgress": true
     },
     {
       "id": "US-003",

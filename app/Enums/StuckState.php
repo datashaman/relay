@@ -1,0 +1,11 @@
+<?php
+
+namespace App\Enums;
+
+enum StuckState: string
+{
+    case IterationCap = 'iteration_cap';
+    case Timeout = 'timeout';
+    case AgentUncertain = 'agent_uncertain';
+    case ExternalBlocker = 'external_blocker';
+}
