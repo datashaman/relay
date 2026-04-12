@@ -454,7 +454,8 @@
         "Coverage threshold enforced (start at 70%, ratchet up)"
       ],
       "priority": 30,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-031",
@@ -468,7 +469,8 @@
         "Diagram of the pipeline and scope-resolution logic included"
       ],
       "priority": 31,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     }
   ]
 }

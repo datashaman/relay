@@ -12,6 +12,7 @@
 /.vscode
 /.zed
 /auth.json
+/database/*.sqlite
 /dist
 /node_modules
 /public/build
@@ -28,3 +29,4 @@ Homestead.yaml
 Thumbs.db
 .claude/settings.local.json
 .chief/
+/.vite/
