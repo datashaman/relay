@@ -404,4 +404,336 @@ class OauthFlowTest extends TestCase
         $this->assertDatabaseCount('sources', 0);
         $this->assertDatabaseCount('oauth_tokens', 0);
     }
+
+    public function test_jira_redirect_includes_correct_scopes(): void
+    {
+        $response = $this->get('/oauth/redirect/jira');
+
+        $location = $response->headers->get('Location');
+        $this->assertStringContainsString('scope=read%3Ajira-work+write%3Ajira-work+read%3Ajira-user+offline_access', $location);
+    }
+
+    public function test_jira_callback_single_site_auto_selects(): void
+    {
+        $state = 'test-jira-single';
+        Cache::put("oauth_state:{$state}", 'jira', now()->addMinutes(10));
+
+        Http::fake([
+            'auth.atlassian.com/oauth/token' => Http::response([
+                'access_token' => 'jira-access-token',
+                'refresh_token' => 'jira-refresh-token',
+                'expires_in' => 3600,
+                'scope' => 'read:jira-work write:jira-work read:jira-user offline_access',
+            ]),
+            'api.atlassian.com/oauth/token/accessible-resources' => Http::response([
+                [
+                    'id' => 'cloud-id-abc',
+                    'name' => 'My Jira Site',
+                    'url' => 'https://mysite.atlassian.net',
+                    'scopes' => ['read:jira-work', 'write:jira-work'],
+                ],
+            ]),
+        ]);
+
+        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('success', 'Jira connected successfully (My Jira Site).');
+
+        $source = Source::where('type', 'jira')->first();
+        $this->assertNotNull($source);
+        $this->assertEquals('My Jira Site', $source->external_account);
+        $this->assertEquals('cloud-id-abc', $source->config['cloud_id']);
+        $this->assertEquals('https://mysite.atlassian.net', $source->config['site_url']);
+
+        $token = OauthToken::where('provider', 'jira')->first();
+        $this->assertNotNull($token);
+        $this->assertEquals('jira-access-token', $token->access_token);
+        $this->assertEquals('jira-refresh-token', $token->refresh_token);
+        $this->assertEquals(['read:jira-work', 'write:jira-work', 'read:jira-user', 'offline_access'], $token->scopes);
+    }
+
+    public function test_jira_callback_multiple_sites_redirects_to_selection(): void
+    {
+        $state = 'test-jira-multi';
+        Cache::put("oauth_state:{$state}", 'jira', now()->addMinutes(10));
+
+        Http::fake([
+            'auth.atlassian.com/oauth/token' => Http::response([
+                'access_token' => 'jira-access-token',
+                'refresh_token' => 'jira-refresh-token',
+                'expires_in' => 3600,
+                'scope' => 'read:jira-work write:jira-work read:jira-user offline_access',
+            ]),
+            'api.atlassian.com/oauth/token/accessible-resources' => Http::response([
+                ['id' => 'cloud-1', 'name' => 'Site One', 'url' => 'https://site-one.atlassian.net'],
+                ['id' => 'cloud-2', 'name' => 'Site Two', 'url' => 'https://site-two.atlassian.net'],
+            ]),
+        ]);
+
+        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+
+        $response->assertRedirect('/jira/select-site');
+        $this->assertDatabaseCount('sources', 0);
+        $this->assertDatabaseCount('oauth_tokens', 0);
+
+        $pending = Cache::get('jira_pending_site_selection');
+        $this->assertNotNull($pending);
+        $this->assertCount(2, $pending['sites']);
+        $this->assertEquals('jira-access-token', $pending['token_data']['access_token']);
+    }
+
+    public function test_jira_select_site_creates_source(): void
+    {
+        Cache::put('jira_pending_site_selection', [
+            'token_data' => [
+                'access_token' => 'jira-token',
+                'refresh_token' => 'jira-refresh',
+                'expires_in' => 3600,
+                'scope' => 'read:jira-work write:jira-work read:jira-user offline_access',
+            ],
+            'sites' => [
+                ['id' => 'cloud-1', 'name' => 'Site One', 'url' => 'https://site-one.atlassian.net'],
+                ['id' => 'cloud-2', 'name' => 'Site Two', 'url' => 'https://site-two.atlassian.net'],
+            ],
+        ], now()->addMinutes(10));
+
+        $response = $this->post('/jira/select-site', ['cloud_id' => 'cloud-2']);
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('success', 'Jira connected successfully (Site Two).');
+
+        $source = Source::where('type', 'jira')->first();
+        $this->assertNotNull($source);
+        $this->assertEquals('Site Two', $source->external_account);
+        $this->assertEquals('cloud-2', $source->config['cloud_id']);
+
+        $this->assertDatabaseCount('oauth_tokens', 1);
+        $this->assertNull(Cache::get('jira_pending_site_selection'));
+    }
+
+    public function test_jira_select_site_invalid_cloud_id_returns_error(): void
+    {
+        Cache::put('jira_pending_site_selection', [
+            'token_data' => ['access_token' => 'jira-token', 'refresh_token' => 'jira-refresh', 'expires_in' => 3600],
+            'sites' => [
+                ['id' => 'cloud-1', 'name' => 'Site One', 'url' => 'https://site-one.atlassian.net'],
+            ],
+        ], now()->addMinutes(10));
+
+        $response = $this->post('/jira/select-site', ['cloud_id' => 'nonexistent']);
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('error', 'Invalid Jira site selection.');
+    }
+
+    public function test_jira_select_site_expired_pending_returns_error(): void
+    {
+        $response = $this->post('/jira/select-site', ['cloud_id' => 'cloud-1']);
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('error', 'No pending Jira authorization. Please reconnect.');
+    }
+
+    public function test_jira_sites_endpoint_returns_pending_sites(): void
+    {
+        Cache::put('jira_pending_site_selection', [
+            'token_data' => ['access_token' => 'jira-token'],
+            'sites' => [
+                ['id' => 'cloud-1', 'name' => 'Site One', 'url' => 'https://site-one.atlassian.net'],
+                ['id' => 'cloud-2', 'name' => 'Site Two', 'url' => 'https://site-two.atlassian.net'],
+            ],
+        ], now()->addMinutes(10));
+
+        $response = $this->getJson('/jira/sites');
+
+        $response->assertOk();
+        $response->assertJsonCount(2, 'sites');
+        $response->assertJsonPath('sites.0.name', 'Site One');
+    }
+
+    public function test_jira_sites_endpoint_returns_404_when_no_pending(): void
+    {
+        $response = $this->getJson('/jira/sites');
+
+        $response->assertStatus(404);
+        $response->assertJsonPath('error', 'No pending Jira authorization. Please reconnect.');
+    }
+
+    public function test_jira_callback_no_accessible_sites_shows_error(): void
+    {
+        $state = 'test-jira-nosites';
+        Cache::put("oauth_state:{$state}", 'jira', now()->addMinutes(10));
+
+        Http::fake([
+            'auth.atlassian.com/oauth/token' => Http::response([
+                'access_token' => 'jira-token',
+                'refresh_token' => 'jira-refresh',
+                'expires_in' => 3600,
+            ]),
+            'api.atlassian.com/oauth/token/accessible-resources' => Http::response([]),
+        ]);
+
+        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('error', 'No accessible Jira sites found for this account.');
+    }
+
+    public function test_jira_callback_accessible_resources_failure_shows_error(): void
+    {
+        $state = 'test-jira-resfail';
+        Cache::put("oauth_state:{$state}", 'jira', now()->addMinutes(10));
+
+        Http::fake([
+            'auth.atlassian.com/oauth/token' => Http::response([
+                'access_token' => 'jira-token',
+                'refresh_token' => 'jira-refresh',
+                'expires_in' => 3600,
+            ]),
+            'api.atlassian.com/oauth/token/accessible-resources' => Http::response('Unauthorized', 401),
+        ]);
+
+        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('error');
+        $this->assertStringContainsString('Failed to fetch Jira sites', session('error'));
+    }
+
+    public function test_jira_refresh_token_exchange(): void
+    {
+        $source = Source::factory()->create(['type' => 'jira', 'config' => ['cloud_id' => 'cloud-abc']]);
+        $token = $source->oauthTokens()->create([
+            'provider' => 'jira',
+            'access_token' => 'old-jira-token',
+            'refresh_token' => 'jira-refresh-token',
+            'expires_at' => now()->subHour(),
+            'scopes' => ['read:jira-work'],
+        ]);
+
+        Http::fake([
+            'auth.atlassian.com/oauth/token' => Http::response([
+                'access_token' => 'new-jira-token',
+                'refresh_token' => 'new-jira-refresh',
+                'expires_in' => 3600,
+            ]),
+        ]);
+
+        $service = app(OauthService::class);
+        $refreshed = $service->refreshIfExpired($token);
+
+        $this->assertEquals('new-jira-token', $refreshed->access_token);
+        $this->assertEquals('new-jira-refresh', $refreshed->refresh_token);
+    }
+
+    public function test_jira_disconnect_revokes_and_deletes(): void
+    {
+        $source = Source::factory()->create([
+            'type' => 'jira',
+            'external_account' => 'My Jira Site',
+            'config' => ['cloud_id' => 'cloud-abc'],
+        ]);
+        $source->oauthTokens()->create([
+            'provider' => 'jira',
+            'access_token' => 'jira-revoke-me',
+            'refresh_token' => 'jira-refresh',
+            'scopes' => ['read:jira-work'],
+        ]);
+
+        Http::fake([
+            'auth.atlassian.com/oauth/revoke' => Http::response(null, 200),
+        ]);
+
+        $response = $this->delete('/oauth/disconnect/jira');
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('success', 'Jira disconnected successfully.');
+
+        $this->assertDatabaseCount('sources', 0);
+        $this->assertDatabaseCount('oauth_tokens', 0);
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'auth.atlassian.com/oauth/revoke');
+        });
+    }
+
+    public function test_jira_disconnect_deletes_locally_on_revocation_failure(): void
+    {
+        $source = Source::factory()->create([
+            'type' => 'jira',
+            'external_account' => 'My Jira Site',
+            'config' => ['cloud_id' => 'cloud-abc'],
+        ]);
+        $source->oauthTokens()->create([
+            'provider' => 'jira',
+            'access_token' => 'jira-revoke-me',
+            'refresh_token' => 'jira-refresh',
+            'scopes' => ['read:jira-work'],
+        ]);
+
+        Http::fake([
+            'auth.atlassian.com/oauth/revoke' => Http::response('Server Error', 500),
+        ]);
+
+        $response = $this->delete('/oauth/disconnect/jira');
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('warning');
+
+        $this->assertDatabaseCount('sources', 0);
+        $this->assertDatabaseCount('oauth_tokens', 0);
+    }
+
+    public function test_jira_multiple_sites_per_install(): void
+    {
+        $state1 = 'test-jira-site1';
+        Cache::put("oauth_state:{$state1}", 'jira', now()->addMinutes(10));
+
+        Http::fake([
+            'auth.atlassian.com/oauth/token' => Http::response([
+                'access_token' => 'jira-token-1',
+                'refresh_token' => 'jira-refresh-1',
+                'expires_in' => 3600,
+                'scope' => 'read:jira-work write:jira-work read:jira-user offline_access',
+            ]),
+            'api.atlassian.com/oauth/token/accessible-resources' => Http::response([
+                ['id' => 'cloud-1', 'name' => 'Site Alpha', 'url' => 'https://alpha.atlassian.net'],
+            ]),
+        ]);
+
+        $this->get("/oauth/callback/jira?code=auth-code&state={$state1}");
+
+        $source1 = Source::where('external_account', 'Site Alpha')->first();
+        $this->assertNotNull($source1);
+        $this->assertEquals('cloud-1', $source1->config['cloud_id']);
+
+        Source::factory()->create([
+            'type' => 'jira',
+            'external_account' => 'Site Beta',
+            'config' => ['cloud_id' => 'cloud-2', 'site_url' => 'https://beta.atlassian.net'],
+        ]);
+
+        $this->assertDatabaseCount('sources', 2);
+        $jiraSources = Source::where('type', 'jira')->get();
+        $this->assertCount(2, $jiraSources);
+        $this->assertNotEquals(
+            $jiraSources[0]->config['cloud_id'],
+            $jiraSources[1]->config['cloud_id'],
+        );
+    }
+
+    public function test_jira_credentials_configurable_via_env(): void
+    {
+        config([
+            'services.jira.client_id' => 'custom-jira-id',
+            'services.jira.client_secret' => 'custom-jira-secret',
+        ]);
+
+        $service = app(OauthService::class);
+        $config = $service->providerConfig('jira');
+
+        $this->assertEquals('custom-jira-id', $config['client_id']);
+        $this->assertEquals('custom-jira-secret', $config['client_secret']);
+    }
 }

@@ -92,6 +92,33 @@ class OauthService
         return $response->json();
     }
 
+    public function fetchJiraAccessibleResources(string $accessToken): array
+    {
+        $response = Http::withToken($accessToken)
+            ->accept('application/json')
+            ->get('https://api.atlassian.com/oauth/token/accessible-resources');
+
+        if ($response->failed()) {
+            throw new \RuntimeException('Failed to fetch Jira accessible resources: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function revokeJiraToken(string $accessToken): void
+    {
+        $response = Http::withToken($accessToken)
+            ->accept('application/json')
+            ->post('https://auth.atlassian.com/oauth/revoke', [
+                'client_id' => $this->providerConfig('jira')['client_id'],
+                'token' => $accessToken,
+            ]);
+
+        if ($response->failed() && $response->status() !== 400) {
+            throw new \RuntimeException('Jira token revocation failed: ' . $response->body());
+        }
+    }
+
     public function revokeGitHubToken(string $accessToken): void
     {
         $config = $this->providerConfig('github');

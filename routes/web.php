@@ -18,3 +18,9 @@ Route::get('/oauth/callback/{provider}', [OauthController::class, 'callback'])
 Route::delete('/oauth/disconnect/{provider}', [OauthController::class, 'disconnect'])
     ->name('oauth.disconnect')
     ->whereIn('provider', ['github', 'jira']);
+
+Route::get('/jira/sites', [OauthController::class, 'jiraSites'])
+    ->name('jira.sites');
+
+Route::post('/jira/select-site', [OauthController::class, 'jiraSelectSite'])
+    ->name('jira.select-site');

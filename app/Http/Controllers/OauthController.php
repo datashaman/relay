@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Source;
 use App\Services\OauthService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class OauthController extends Controller
 {
@@ -38,6 +40,10 @@ class OauthController extends Controller
 
             $tokenData = $this->oauth->exchangeCode($provider, $request->input('code'));
 
+            if ($provider === 'jira') {
+                return $this->handleJiraCallback($tokenData);
+            }
+
             $accountName = $this->resolveAccountName($provider, $tokenData);
 
             $source = Source::firstOrCreate(
@@ -53,6 +59,54 @@ class OauthController extends Controller
         }
     }
 
+    public function jiraSites(): JsonResponse
+    {
+        $pendingKey = $this->getJiraPendingCacheKey();
+        $pending = Cache::get($pendingKey);
+
+        if (! $pending) {
+            return response()->json(['error' => 'No pending Jira authorization. Please reconnect.'], 404);
+        }
+
+        return response()->json(['sites' => $pending['sites']]);
+    }
+
+    public function jiraSelectSite(Request $request): RedirectResponse
+    {
+        $request->validate(['cloud_id' => 'required|string']);
+
+        $pendingKey = $this->getJiraPendingCacheKey();
+        $pending = Cache::pull($pendingKey);
+
+        if (! $pending) {
+            return redirect('/sources')->with('error', 'No pending Jira authorization. Please reconnect.');
+        }
+
+        $cloudId = $request->input('cloud_id');
+        $site = collect($pending['sites'])->firstWhere('id', $cloudId);
+
+        if (! $site) {
+            return redirect('/sources')->with('error', 'Invalid Jira site selection.');
+        }
+
+        $source = Source::firstOrCreate(
+            ['type' => 'jira', 'external_account' => $site['name']],
+            [
+                'name' => 'Jira: ' . $site['name'],
+                'is_active' => true,
+                'config' => ['cloud_id' => $cloudId, 'site_url' => $site['url'] ?? null],
+            ],
+        );
+
+        if ($source->wasRecentlyCreated === false) {
+            $source->update(['config' => ['cloud_id' => $cloudId, 'site_url' => $site['url'] ?? null]]);
+        }
+
+        $this->oauth->storeToken($source, 'jira', $pending['token_data']);
+
+        return redirect('/sources')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
+    }
+
     public function disconnect(string $provider): RedirectResponse
     {
         $source = Source::where('type', $provider)->first();
@@ -65,9 +119,13 @@ class OauthController extends Controller
 
         $revocationError = null;
 
-        if ($token && $provider === 'github') {
+        if ($token) {
             try {
-                $this->oauth->revokeGitHubToken($token->access_token);
+                if ($provider === 'github') {
+                    $this->oauth->revokeGitHubToken($token->access_token);
+                } elseif ($provider === 'jira') {
+                    $this->oauth->revokeJiraToken($token->access_token);
+                }
             } catch (\RuntimeException $e) {
                 $revocationError = $e->getMessage();
             }
@@ -83,6 +141,48 @@ class OauthController extends Controller
         return redirect('/sources')->with('success', ucfirst($provider) . ' disconnected successfully.');
     }
 
+    private function handleJiraCallback(array $tokenData): RedirectResponse
+    {
+        try {
+            $sites = $this->oauth->fetchJiraAccessibleResources($tokenData['access_token']);
+        } catch (\RuntimeException $e) {
+            return redirect('/sources')->with('error', 'Failed to fetch Jira sites: ' . $e->getMessage());
+        }
+
+        if (empty($sites)) {
+            return redirect('/sources')->with('error', 'No accessible Jira sites found for this account.');
+        }
+
+        if (count($sites) === 1) {
+            $site = $sites[0];
+
+            $source = Source::firstOrCreate(
+                ['type' => 'jira', 'external_account' => $site['name']],
+                [
+                    'name' => 'Jira: ' . $site['name'],
+                    'is_active' => true,
+                    'config' => ['cloud_id' => $site['id'], 'site_url' => $site['url'] ?? null],
+                ],
+            );
+
+            if ($source->wasRecentlyCreated === false) {
+                $source->update(['config' => ['cloud_id' => $site['id'], 'site_url' => $site['url'] ?? null]]);
+            }
+
+            $this->oauth->storeToken($source, 'jira', $tokenData);
+
+            return redirect('/sources')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
+        }
+
+        $pendingKey = $this->getJiraPendingCacheKey();
+        Cache::put($pendingKey, [
+            'token_data' => $tokenData,
+            'sites' => $sites,
+        ], now()->addMinutes(10));
+
+        return redirect('/jira/select-site')->with('sites', $sites);
+    }
+
     private function resolveAccountName(string $provider, array $tokenData): string
     {
         if ($provider === 'github') {
@@ -96,5 +196,10 @@ class OauthController extends Controller
         }
 
         return $tokenData['account_name'] ?? $provider;
+    }
+
+    private function getJiraPendingCacheKey(): string
+    {
+        return 'jira_pending_site_selection';
     }
 }
