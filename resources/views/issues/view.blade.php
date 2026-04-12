@@ -51,7 +51,7 @@
                 </div>
             </div>
 
-            {{-- Center panel: Active issue details --}}
+            {{-- Center panel: Active issue details with live progress --}}
             <div class="lg:col-span-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col">
                 @if ($activeIssue)
                     <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -70,7 +70,14 @@
                         </div>
                     </div>
 
-                    <div class="overflow-y-auto flex-1 p-4 space-y-4">
+                    @if ($latestRun)
+                        {{-- Stage pipeline indicator --}}
+                        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700" id="stage-pipeline">
+                            @include('issues._stage-pipeline', ['run' => $latestRun])
+                        </div>
+                    @endif
+
+                    <div class="overflow-y-auto flex-1 p-4 space-y-4" id="live-progress-content">
                         @if ($latestRun)
                             {{-- Preflight doc --}}
                             @if ($latestRun->preflight_doc)
@@ -80,7 +87,25 @@
                                 </details>
                             @endif
 
-                            {{-- Diff from implement stages --}}
+                            {{-- Live diff panel (Implement stage) --}}
+                            <div id="live-diff-panel" class="{{ $currentStage?->name === \App\Enums\StageName::Implement && $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
+                                <details open>
+                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                            Live Implementation
+                                        </span>
+                                    </summary>
+                                    <div class="mt-2 space-y-2">
+                                        <div id="live-diff-files" class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Waiting for changes…</p>
+                                        </div>
+                                        <pre id="live-diff-content" class="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-96 hidden"></pre>
+                                    </div>
+                                </details>
+                            </div>
+
+                            {{-- Completed implementation (static) --}}
                             @php
                                 $diffEvents = $latestRun->stages
                                     ->where('name', \App\Enums\StageName::Implement)
@@ -89,7 +114,7 @@
                                 $filesChanged = $diffEvents->pluck('payload.files_changed')->flatten()->filter()->unique()->values();
                                 $implementSummary = $diffEvents->pluck('payload.summary')->filter()->last();
                             @endphp
-                            @if ($filesChanged->isNotEmpty() || $implementSummary)
+                            <div id="static-impl-panel" class="{{ $filesChanged->isNotEmpty() || $implementSummary ? '' : 'hidden' }}">
                                 <details open>
                                     <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">Implementation</summary>
                                     <div class="mt-2 space-y-2">
@@ -108,9 +133,22 @@
                                         @endif
                                     </div>
                                 </details>
-                            @endif
+                            </div>
 
-                            {{-- Test output from verify stages --}}
+                            {{-- Live test output panel (Verify stage) --}}
+                            <div id="live-test-panel" class="{{ $currentStage?->name === \App\Enums\StageName::Verify && $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
+                                <details open>
+                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                            Live Test Output
+                                        </span>
+                                    </summary>
+                                    <pre id="live-test-output" class="mt-2 bg-gray-900 text-gray-100 rounded-lg p-3 text-xs font-mono overflow-x-auto max-h-96">Waiting for test output…</pre>
+                                </details>
+                            </div>
+
+                            {{-- Completed test results (static) --}}
                             @php
                                 $verifyEvents = $latestRun->stages
                                     ->where('name', \App\Enums\StageName::Verify)
@@ -118,41 +156,62 @@
                                     ->where('type', 'verify_complete');
                                 $lastVerify = $verifyEvents->last();
                             @endphp
-                            @if ($lastVerify)
+                            <div id="static-test-panel" class="{{ $lastVerify ? '' : 'hidden' }}">
                                 <details open>
                                     <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         Test Results
-                                        @if ($lastVerify->payload['passed'] ?? false)
-                                            <span class="ml-1 text-xs text-green-600 dark:text-green-400">Passed</span>
-                                        @else
-                                            <span class="ml-1 text-xs text-red-600 dark:text-red-400">Failed</span>
-                                        @endif
+                                        <span id="static-test-badge">
+                                            @if ($lastVerify)
+                                                @if ($lastVerify->payload['passed'] ?? false)
+                                                    <span class="ml-1 text-xs text-green-600 dark:text-green-400">Passed</span>
+                                                @else
+                                                    <span class="ml-1 text-xs text-red-600 dark:text-red-400">Failed</span>
+                                                @endif
+                                            @endif
+                                        </span>
                                     </summary>
-                                    <div class="mt-2 bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
-                                        @if (!empty($lastVerify->payload['summary']))
-                                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ $lastVerify->payload['summary'] }}</p>
-                                        @endif
-                                        @if (!empty($lastVerify->payload['failures']))
-                                            <div class="space-y-1">
-                                                @foreach ($lastVerify->payload['failures'] as $failure)
-                                                    <div class="text-xs text-red-600 dark:text-red-400 font-mono">
-                                                        @if (is_array($failure))
-                                                            {{ $failure['test'] ?? '' }}: {{ $failure['assertion'] ?? '' }}
-                                                            @if (!empty($failure['file']))
-                                                                <span class="text-gray-500">({{ $failure['file'] }}{{ !empty($failure['line']) ? ':' . $failure['line'] : '' }})</span>
+                                    <div id="static-test-content" class="mt-2 bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                                        @if ($lastVerify)
+                                            @if (!empty($lastVerify->payload['summary']))
+                                                <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ $lastVerify->payload['summary'] }}</p>
+                                            @endif
+                                            @if (!empty($lastVerify->payload['failures']))
+                                                <div class="space-y-1">
+                                                    @foreach ($lastVerify->payload['failures'] as $failure)
+                                                        <div class="text-xs text-red-600 dark:text-red-400 font-mono">
+                                                            @if (is_array($failure))
+                                                                {{ $failure['test'] ?? '' }}: {{ $failure['assertion'] ?? '' }}
+                                                                @if (!empty($failure['file']))
+                                                                    <span class="text-gray-500">({{ $failure['file'] }}{{ !empty($failure['line']) ? ':' . $failure['line'] : '' }})</span>
+                                                                @endif
+                                                            @else
+                                                                {{ $failure }}
                                                             @endif
-                                                        @else
-                                                            {{ $failure }}
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         @endif
                                     </div>
                                 </details>
-                            @endif
+                            </div>
 
-                            {{-- Release info --}}
+                            {{-- Live release progress panel --}}
+                            <div id="live-release-panel" class="{{ $currentStage?->name === \App\Enums\StageName::Release && $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
+                                <details open>
+                                    <summary class="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                            Release Progress
+                                        </span>
+                                    </summary>
+                                    <div id="live-release-steps" class="mt-2 space-y-2">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Preparing release…</p>
+                                    </div>
+                                </details>
+                            </div>
+
+                            {{-- Release info (static, PR link) --}}
                             @php
                                 $prUrl = $latestRun->stages
                                     ->where('name', \App\Enums\StageName::Release)
@@ -162,13 +221,13 @@
                                     ->filter()
                                     ->last();
                             @endphp
-                            @if ($prUrl)
+                            <div id="static-release-panel" class="{{ $prUrl ? '' : 'hidden' }}">
                                 <div class="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-3">
-                                    <a href="{{ $prUrl }}" target="_blank" rel="noopener" class="text-sm font-medium text-green-700 dark:text-green-300 hover:underline">
-                                        Pull Request: {{ $prUrl }} →
+                                    <a id="pr-link" href="{{ $prUrl ?? '#' }}" target="_blank" rel="noopener" class="text-sm font-medium text-green-700 dark:text-green-300 hover:underline">
+                                        {{ $prUrl ? "Pull Request: $prUrl →" : '' }}
                                     </a>
                                 </div>
-                            @endif
+                            </div>
 
                         @else
                             <p class="text-sm text-gray-500 dark:text-gray-400">No runs yet for this issue.</p>
@@ -329,6 +388,240 @@
                         }
                     }
                 });
+
+                @if ($latestRun)
+                // Live progress polling
+                (function () {
+                    const runId = {{ $latestRun->id }};
+                    const progressUrl = '/runs/' + runId + '/progress';
+                    let pollInterval = null;
+                    let lastData = null;
+                    const POLL_ACTIVE = 2000;
+                    const POLL_IDLE = 10000;
+
+                    const stageColors = {
+                        preflight: { bg: 'bg-indigo-500', ring: 'ring-indigo-500', text: 'text-indigo-700 dark:text-indigo-300' },
+                        implement: { bg: 'bg-blue-500', ring: 'ring-blue-500', text: 'text-blue-700 dark:text-blue-300' },
+                        verify: { bg: 'bg-purple-500', ring: 'ring-purple-500', text: 'text-purple-700 dark:text-purple-300' },
+                        release: { bg: 'bg-green-500', ring: 'ring-green-500', text: 'text-green-700 dark:text-green-300' },
+                    };
+
+                    function isRunActive(status) {
+                        return status === 'running' || status === 'pending';
+                    }
+
+                    function updateStagePipeline(stages) {
+                        const pipeline = document.getElementById('stage-pipeline');
+                        if (!pipeline) return;
+
+                        const stageOrder = ['preflight', 'implement', 'verify', 'release'];
+                        const stageMap = {};
+                        stages.forEach(s => { stageMap[s.name] = s; });
+                        const currentStage = stages.length > 0 ? stages[stages.length - 1] : null;
+
+                        stageOrder.forEach(name => {
+                            const el = pipeline.querySelector('[data-stage="' + name + '"]');
+                            if (!el) return;
+                            const stage = stageMap[name];
+                            const dot = el.querySelector('span:first-child');
+                            const label = el.querySelector('span:last-child');
+                            const colors = stageColors[name];
+                            const isCurrent = currentStage && currentStage.name === name;
+
+                            el.className = 'flex items-center gap-1.5' + (isCurrent ? ' font-semibold' : '');
+
+                            if (!stage || stage.status === 'pending') {
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600';
+                                dot.innerHTML = '';
+                            } else if (stage.status === 'completed') {
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full ' + colors.bg + ' flex items-center justify-center';
+                                dot.innerHTML = '<svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>';
+                            } else if (stage.status === 'running') {
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full ' + colors.bg + ' animate-pulse ring-2 ' + colors.ring + ' ring-offset-1 ring-offset-white dark:ring-offset-gray-800';
+                                dot.innerHTML = '';
+                            } else if (stage.status === 'awaiting_approval') {
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-yellow-400 ring-2 ring-yellow-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-800';
+                                dot.innerHTML = '';
+                            } else if (['failed', 'stuck', 'bounced'].includes(stage.status)) {
+                                dot.className = 'flex-shrink-0 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center';
+                                dot.innerHTML = '<svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+                            }
+
+                            label.className = 'text-xs ' + (isCurrent ? colors.text : 'text-gray-500 dark:text-gray-400');
+                        });
+                    }
+
+                    function updateLiveContent(data) {
+                        const live = data.live;
+                        const liveDiff = document.getElementById('live-diff-panel');
+                        const staticImpl = document.getElementById('static-impl-panel');
+                        const liveTest = document.getElementById('live-test-panel');
+                        const staticTest = document.getElementById('static-test-panel');
+                        const liveRelease = document.getElementById('live-release-panel');
+                        const staticRelease = document.getElementById('static-release-panel');
+
+                        // Implement stage — live diff
+                        if (live.current_stage === 'implement' && live.current_status === 'running') {
+                            if (liveDiff) liveDiff.classList.remove('hidden');
+                            if (staticImpl) staticImpl.classList.add('hidden');
+
+                            if (live.changed_files && live.changed_files.length > 0) {
+                                const filesEl = document.getElementById('live-diff-files');
+                                if (filesEl) {
+                                    filesEl.innerHTML = '<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Files changed (' + live.changed_files.length + ')</p>'
+                                        + '<ul class="text-xs text-gray-600 dark:text-gray-400 font-mono space-y-0.5">'
+                                        + live.changed_files.map(f => '<li>' + escapeHtml(f) + '</li>').join('')
+                                        + '</ul>';
+                                }
+                            }
+                            if (live.diff) {
+                                const diffEl = document.getElementById('live-diff-content');
+                                if (diffEl) {
+                                    diffEl.classList.remove('hidden');
+                                    diffEl.textContent = live.diff;
+                                }
+                            }
+                        } else {
+                            if (liveDiff) liveDiff.classList.add('hidden');
+                        }
+
+                        // Verify stage — live test output
+                        if (live.current_stage === 'verify' && live.current_status === 'running') {
+                            if (liveTest) liveTest.classList.remove('hidden');
+                            if (staticTest) staticTest.classList.add('hidden');
+
+                            if (live.test_output) {
+                                const testEl = document.getElementById('live-test-output');
+                                if (testEl) {
+                                    testEl.textContent = live.test_output;
+                                    testEl.scrollTop = testEl.scrollHeight;
+                                }
+                            }
+                        } else {
+                            if (liveTest) liveTest.classList.add('hidden');
+                            if (live.test_output && live.current_stage !== 'verify') {
+                                if (staticTest) {
+                                    staticTest.classList.remove('hidden');
+                                    const badge = document.getElementById('static-test-badge');
+                                    if (badge) {
+                                        const passed = live.test_status === 'passed';
+                                        badge.innerHTML = passed
+                                            ? '<span class="ml-1 text-xs text-green-600 dark:text-green-400">Passed</span>'
+                                            : '<span class="ml-1 text-xs text-red-600 dark:text-red-400">Failed</span>';
+                                    }
+                                    const content = document.getElementById('static-test-content');
+                                    if (content && live.test_output) {
+                                        content.innerHTML = '<p class="text-xs text-gray-600 dark:text-gray-400">' + escapeHtml(live.test_output) + '</p>';
+                                    }
+                                }
+                            }
+                        }
+
+                        // Release stage — live progress
+                        if (live.current_stage === 'release' && live.current_status === 'running') {
+                            if (liveRelease) liveRelease.classList.remove('hidden');
+                            if (staticRelease) staticRelease.classList.add('hidden');
+
+                            if (live.release_steps && live.release_steps.length > 0) {
+                                const stepsEl = document.getElementById('live-release-steps');
+                                if (stepsEl) {
+                                    stepsEl.innerHTML = live.release_steps.map(function(s) {
+                                        const icon = s.step === 'pr_created'
+                                            ? '<svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>'
+                                            : '<span class="w-3.5 h-3.5 flex-shrink-0 flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span></span>';
+                                        let detail = escapeHtml(s.detail);
+                                        if (s.pr_url) {
+                                            detail = '<a href="' + escapeHtml(s.pr_url) + '" target="_blank" class="text-green-600 dark:text-green-400 hover:underline">' + escapeHtml(s.pr_url) + '</a>';
+                                        }
+                                        return '<div class="flex items-start gap-2 text-xs">'
+                                            + icon
+                                            + '<div><span class="font-medium text-gray-700 dark:text-gray-300">' + escapeHtml(s.step.replace(/_/g, ' ')) + '</span>'
+                                            + '<span class="ml-1 text-gray-500 dark:text-gray-400">' + detail + '</span></div></div>';
+                                    }).join('');
+                                }
+                            }
+                        } else {
+                            if (liveRelease) liveRelease.classList.add('hidden');
+                        }
+
+                        // Show PR link when available
+                        if (live.pr_url) {
+                            if (staticRelease) {
+                                staticRelease.classList.remove('hidden');
+                                const prLink = document.getElementById('pr-link');
+                                if (prLink) {
+                                    prLink.href = live.pr_url;
+                                    prLink.textContent = 'Pull Request: ' + live.pr_url + ' →';
+                                }
+                            }
+                        }
+
+                        // Refresh page when run transitions to a terminal or awaiting state
+                        if (data.run_status === 'stuck' || data.run_status === 'completed' || data.run_status === 'failed') {
+                            if (lastData && lastData.run_status === 'running') {
+                                window.location.reload();
+                            }
+                        }
+                        if (live.current_status === 'awaiting_approval') {
+                            if (lastData && lastData.live && lastData.live.current_status !== 'awaiting_approval') {
+                                window.location.reload();
+                            }
+                        }
+                    }
+
+                    function escapeHtml(str) {
+                        if (!str) return '';
+                        const div = document.createElement('div');
+                        div.textContent = str;
+                        return div.innerHTML;
+                    }
+
+                    function poll() {
+                        fetch(progressUrl, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+                            .then(function(r) { return r.ok ? r.json() : null; })
+                            .then(function(data) {
+                                if (!data) return;
+
+                                updateStagePipeline(data.stages);
+                                updateLiveContent(data);
+
+                                // Adjust poll rate
+                                const active = isRunActive(data.run_status);
+                                const newInterval = active ? POLL_ACTIVE : POLL_IDLE;
+                                if (pollInterval && pollInterval._interval !== newInterval) {
+                                    clearInterval(pollInterval);
+                                    pollInterval = setInterval(poll, newInterval);
+                                    pollInterval._interval = newInterval;
+                                }
+
+                                lastData = data;
+                            })
+                            .catch(function() {});
+                    }
+
+                    // Start polling — reconnect on visibility change (handles app sleep)
+                    const runStatus = '{{ $latestRun->status->value }}';
+                    const initialInterval = (runStatus === 'running' || runStatus === 'pending') ? POLL_ACTIVE : POLL_IDLE;
+                    pollInterval = setInterval(poll, initialInterval);
+                    pollInterval._interval = initialInterval;
+                    poll();
+
+                    document.addEventListener('visibilitychange', function () {
+                        if (document.visibilityState === 'visible') {
+                            poll();
+                            if (!pollInterval) {
+                                pollInterval = setInterval(poll, POLL_ACTIVE);
+                                pollInterval._interval = POLL_ACTIVE;
+                            }
+                        } else {
+                            if (pollInterval) {
+                                clearInterval(pollInterval);
+                                pollInterval = null;
+                            }
+                        }
+                    });
+                })();
+                @endif
             });
         </script>
     @endif

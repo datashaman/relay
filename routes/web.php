@@ -6,6 +6,7 @@ use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueViewController;
 use App\Http\Controllers\OauthController;
 use App\Http\Controllers\PreflightController;
+use App\Http\Controllers\RunProgressController;
 use App\Http\Controllers\RunTimelineController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\StuckRunController;
@@ -69,6 +70,7 @@ Route::post('/escalation-rules/{escalationRule}/move-up', [EscalationRuleControl
 Route::post('/escalation-rules/{escalationRule}/move-down', [EscalationRuleController::class, 'moveDown'])->name('escalation-rules.move-down');
 Route::post('/escalation-rules/reorder', [EscalationRuleController::class, 'reorder'])->name('escalation-rules.reorder');
 
+Route::get('/runs/{run}/progress', [RunProgressController::class, 'show'])->name('runs.progress');
 Route::get('/runs/{run}/timeline', [RunTimelineController::class, 'show'])->name('runs.timeline');
 
 Route::get('/activity', [ActivityFeedController::class, 'index'])->name('activity.index');
