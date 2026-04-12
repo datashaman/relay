@@ -412,7 +412,7 @@ class PreflightAgentTest extends TestCase
     {
         Queue::fake();
         [$issue, $run, $stage] = $this->setupRunWithStage();
-        $stage->update(['name' => StageName::Verify]);
+        $stage->update(['name' => StageName::Release]);
 
         $job = new ExecuteStageJob($stage, []);
         $job->handle();
