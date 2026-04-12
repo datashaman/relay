@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityFeedController;
+use App\Http\Controllers\AutonomyConfigController;
 use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueViewController;
@@ -58,6 +59,12 @@ Route::get('/jira/select-site', [OauthController::class, 'jiraSiteSelectionForm'
 
 Route::post('/jira/select-site', [OauthController::class, 'jiraSelectSite'])
     ->name('jira.select-site');
+
+Route::get('/autonomy', [AutonomyConfigController::class, 'index'])->name('autonomy.index');
+Route::post('/autonomy/global', [AutonomyConfigController::class, 'updateGlobal'])->name('autonomy.update-global');
+Route::post('/autonomy/stage/{stage}', [AutonomyConfigController::class, 'updateStage'])->name('autonomy.update-stage');
+Route::post('/autonomy/iteration-cap', [AutonomyConfigController::class, 'updateIterationCap'])->name('autonomy.update-iteration-cap');
+Route::get('/autonomy/preview', [AutonomyConfigController::class, 'preview'])->name('autonomy.preview');
 
 Route::get('/escalation-rules', [EscalationRuleController::class, 'index'])->name('escalation-rules.index');
 Route::get('/escalation-rules/create', [EscalationRuleController::class, 'create'])->name('escalation-rules.create');

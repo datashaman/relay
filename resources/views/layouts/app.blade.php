@@ -24,7 +24,7 @@
                     <a href="/issues" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Issues</a>
                     <a href="/issues/queue" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Queue</a>
                     <a href="/sources" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Sources</a>
-                    <a href="/escalation-rules" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Escalation</a>
+                    <a href="/autonomy" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Autonomy</a>
                     @php $stuckCount = \App\Models\Run::where('status', \App\Enums\RunStatus::Stuck)->count(); @endphp
                     <a href="/activity" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                         Activity
