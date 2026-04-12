@@ -408,11 +408,11 @@ class PreflightAgentTest extends TestCase
         $this->assertEquals(StageStatus::Completed, $stage->status);
     }
 
-    public function test_execute_stage_job_ignores_non_preflight_stages(): void
+    public function test_execute_stage_job_ignores_unhandled_stages(): void
     {
         Queue::fake();
         [$issue, $run, $stage] = $this->setupRunWithStage();
-        $stage->update(['name' => StageName::Implement]);
+        $stage->update(['name' => StageName::Verify]);
 
         $job = new ExecuteStageJob($stage, []);
         $job->handle();

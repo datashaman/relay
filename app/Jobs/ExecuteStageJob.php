@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\StageName;
 use App\Models\Stage;
+use App\Services\ImplementAgent;
 use App\Services\PreflightAgent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -24,7 +25,8 @@ class ExecuteStageJob implements ShouldQueue
     {
         match ($this->stage->name) {
             StageName::Preflight => app(PreflightAgent::class)->execute($this->stage, $this->context),
-            default => null, // Other agents: US-019..US-022
+            StageName::Implement => app(ImplementAgent::class)->execute($this->stage, $this->context),
+            default => null, // Other agents: US-020..US-022
         };
     }
 }
