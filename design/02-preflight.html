@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relay — Preflight</title>
+  <link rel="stylesheet" href="shared.css">
+<style>
+.shell{display:grid;grid-template-columns:1fr 256px;grid-template-rows:38px 44px 1fr;height:680px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);overflow:hidden;background:var(--color-background-primary)}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.logo{font-weight:500;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--color-text-primary)}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:#534AB7}
+.topbar-sep{flex:1}
+.issue-ref{font-size:12px;color:var(--color-text-tertiary)}
+.pipeline-bar{grid-column:1/-1;display:flex;align-items:stretch;border-bottom:0.5px solid var(--color-border-tertiary);padding:0 16px;background:var(--color-background-primary)}
+.stage-step{display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:var(--color-text-tertiary);position:relative}
+.stage-step.active{color:#534AB7;font-weight:500}
+.stage-step.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:#534AB7;border-radius:1px 1px 0 0}
+.step-dot{width:6px;height:6px;border-radius:50%;background:var(--color-border-secondary);flex-shrink:0}
+.stage-step.active .step-dot{background:#534AB7}
+.step-arrow{color:var(--color-border-secondary);font-size:11px;padding:0 2px;align-self:center}
+.mode-toggle{display:flex;align-items:center;gap:6px;margin-left:auto;padding:0 2px}
+.mode-btn{font-size:11px;padding:3px 10px;border-radius:var(--border-radius-md);cursor:pointer;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);background:transparent}
+.mode-btn.active{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;font-weight:500}
+.main{overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.issue-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.issue-sub{font-size:12px;color:var(--color-text-tertiary);display:flex;gap:10px}
+.agent-understood{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.au-header{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.pa-badge{width:20px;height:20px;border-radius:50%;background:#EEEDFE;color:#534AB7;font-size:9px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.au-body{padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+.understood-row{display:flex;align-items:baseline;gap:8px;font-size:12px}
+.u-check{color:#3B6D11;flex-shrink:0;font-size:11px}
+.u-text{color:var(--color-text-secondary);line-height:1.5}
+.u-text span{color:var(--color-text-primary);font-weight:500}
+.clarification-block{border:0.5px solid #AFA9EC;border-radius:var(--border-radius-lg);overflow:hidden;background:#EEEDFE}
+.cl-header{padding:9px 14px;border-bottom:0.5px solid #AFA9EC;font-size:12px;font-weight:500;color:#3C3489;display:flex;align-items:center;gap:7px}
+.cl-dot{width:6px;height:6px;border-radius:50%;background:#534AB7;flex-shrink:0}
+.cl-body{padding:12px 14px;display:flex;flex-direction:column;gap:14px;background:var(--color-background-primary)}
+.question-block{display:flex;flex-direction:column;gap:8px}
+.q-text{font-size:12px;font-weight:500;color:var(--color-text-primary);line-height:1.5}
+.q-reason{font-size:11px;color:var(--color-text-tertiary);line-height:1.4}
+.q-options{display:flex;flex-direction:column;gap:5px}
+.q-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);font-size:12px;color:var(--color-text-secondary);cursor:pointer;background:var(--color-background-secondary)}
+.q-opt:hover{background:var(--color-background-tertiary)}
+.q-opt.selected{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC}
+.q-opt input[type=radio]{accent-color:#534AB7;flex-shrink:0}
+.q-divider{border:none;border-top:0.5px solid var(--color-border-tertiary)}
+.cl-footer{padding:10px 14px;border-top:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);display:flex;justify-content:flex-end}
+.btn-continue{padding:6px 16px;background:#534AB7;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;cursor:pointer}
+.doc-section{display:flex;flex-direction:column;gap:8px}
+.doc-label{font-size:10px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em}
+.doc-text{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.doc-list{display:flex;flex-direction:column;gap:5px}
+.doc-item{display:flex;gap:8px;font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.doc-item::before{content:"·";color:var(--color-text-tertiary);flex-shrink:0;margin-top:1px}
+.criteria-list{display:flex;flex-direction:column;gap:5px}
+.criteria-item{display:flex;gap:9px;font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.criteria-num{font-size:10px;font-weight:500;color:var(--color-text-tertiary);background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:3px;padding:1px 5px;min-width:18px;text-align:center;flex-shrink:0;margin-top:1px;height:16px;display:flex;align-items:center;justify-content:center}
+.file-list{display:flex;flex-direction:column;gap:5px}
+.file-item{display:flex;align-items:baseline;gap:10px}
+.file-path{font-family:var(--font-mono);font-size:11px;color:#185FA5;background:#E6F1FB;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+.file-reason{font-size:11px;color:var(--color-text-tertiary)}
+.doc-divider{border:none;border-top:0.5px solid var(--color-border-tertiary)}
+.right-panel{border-left:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;overflow-y:auto}
+.rp-section{padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;gap:8px}
+.rp-label{font-size:10px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em}
+.rp-row{display:flex;justify-content:space-between;align-items:center}
+.rp-key{font-size:12px;color:var(--color-text-secondary)}
+.rp-val{font-size:12px;color:var(--color-text-primary);font-weight:500}
+.scope-badge{font-size:11px;font-weight:500;padding:3px 9px;border-radius:3px}
+.scope-m{background:#FAEEDA;color:#854F0B}
+.risk-flags{display:flex;flex-direction:column;gap:5px}
+.risk-flag{display:flex;align-items:center;gap:7px;font-size:11px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.risk-flag.warn{background:#FAEEDA;border-color:#EF9F27;color:#854F0B}
+.rf-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.rf-dot-warn{background:#BA7517}
+.rf-dot-ok{background:#639922}
+.autonomy-suggest{margin:12px 14px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.as-header{padding:8px 11px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);font-size:11px;font-weight:500;color:var(--color-text-secondary)}
+.as-body{padding:9px 11px;display:flex;flex-direction:column;gap:6px}
+.as-level{font-size:13px;font-weight:500;color:#534AB7}
+.as-reason{font-size:11px;color:var(--color-text-tertiary);line-height:1.5}
+.as-override{font-size:11px;color:#185FA5;cursor:pointer}
+.rp-spacer{flex:1}
+.approval-area{padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+.btn-approve{display:flex;align-items:center;justify-content:center;padding:8px 0;background:#534AB7;color:#fff;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;cursor:pointer;border:none}
+.btn-edit{display:flex;align-items:center;justify-content:center;padding:7px 0;background:transparent;color:var(--color-text-secondary);border-radius:var(--border-radius-md);font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-tertiary)}
+</style>
+</head>
+<body>
+  <a href="index.html" style="font-size:12px;color:var(--color-text-tertiary);text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-bottom:16px;">← Back to index</a>
+  <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:16px;">Toggle between "Clarification mode" and "Pre-flight doc" using the buttons in the pipeline bar.</p>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="logo"><div class="logo-dot"></div>Relay</div>
+    <div class="topbar-sep"></div>
+    <span class="issue-ref">#418 — Auth token expiry not handled in middleware</span>
+  </div>
+  <div class="pipeline-bar">
+    <div class="stage-step active"><div class="step-dot"></div>Preflight</div>
+    <span class="step-arrow">›</span>
+    <div class="stage-step"><div class="step-dot"></div>Implement</div>
+    <span class="step-arrow">›</span>
+    <div class="stage-step"><div class="step-dot"></div>Verify</div>
+    <span class="step-arrow">›</span>
+    <div class="stage-step"><div class="step-dot"></div>Release</div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="btn-clarify" onclick="showMode('clarify')">Clarification mode</button>
+      <button class="mode-btn active" id="btn-doc" onclick="showMode('doc')">Pre-flight doc</button>
+    </div>
+  </div>
+  <div class="main" id="main-content"></div>
+  <div class="right-panel" id="right-panel"></div>
+</div>
+
+<script>
+const clarifyMain = `<div><div class="issue-title">Auth token expiry not handled in middleware</div><div class="issue-sub" style="margin-top:4px"><span>#418</span><span>preflight agent · needs input</span></div></div>
+<div class="agent-understood"><div class="au-header"><div class="pa-badge">PA</div><div style="font-weight:500;color:var(--color-text-primary);font-size:12px">Preflight agent</div><div style="font-size:11px;color:var(--color-text-tertiary);margin-left:4px">— here's what I've established</div></div><div class="au-body"><div class="understood-row"><span class="u-check">✓</span><span class="u-text">Token validation lives in <span>src/middleware/auth.ts</span>, <span>verifyToken()</span> at line 42</span></div><div class="understood-row"><span class="u-check">✓</span><span class="u-text">Current code returns a generic 401 with no distinction between invalid and expired tokens</span></div><div class="understood-row"><span class="u-check">✓</span><span class="u-text">A <span>refreshToken()</span> utility exists in <span>src/lib/jwt.ts</span> but is not wired into the middleware</span></div><div class="understood-row"><span class="u-check">✓</span><span class="u-text">3 downstream consumers call this middleware: <span>api/users</span>, <span>api/orders</span>, <span>api/admin</span></span></div></div></div>
+<div class="clarification-block"><div class="cl-header"><div class="cl-dot"></div>2 things I couldn't resolve from the issue</div><div class="cl-body"><div class="question-block"><div class="q-text">Should expired tokens attempt a silent refresh, or always return 401?</div><div class="q-reason">The refresh utility exists but the issue doesn't say whether to use it. This changes the implementation significantly.</div><div class="q-options"><label class="q-opt" onclick="selectOpt(this)"><input type="radio" name="q1"> Always return 401 — let the client handle refresh</label><label class="q-opt" onclick="selectOpt(this)"><input type="radio" name="q1"> Attempt silent refresh, fall through to 401 on failure</label></div></div><hr class="q-divider"><div class="question-block"><div class="q-text">Should the error response include a machine-readable code?</div><div class="q-reason">The admin consumer logs error codes — standardising now avoids a follow-up issue.</div><div class="q-options"><label class="q-opt" onclick="selectOpt(this)"><input type="radio" name="q2"> Yes — add <code style="font-size:11px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">code</code> field (e.g. TOKEN_EXPIRED, TOKEN_INVALID)</label><label class="q-opt" onclick="selectOpt(this)"><input type="radio" name="q2"> No — keep response shape unchanged</label></div></div></div><div class="cl-footer"><button class="btn-continue" onclick="showMode('doc')">Generate pre-flight doc →</button></div></div>`;
+
+const docMain = `<div><div class="issue-title">Auth token expiry not handled in middleware</div><div class="issue-sub" style="margin-top:4px"><span>#418</span><span>preflight agent · complete</span></div></div>
+<div class="doc-section"><div class="doc-label">Summary</div><div class="doc-text">The auth middleware returns a generic 401 for both invalid and expired tokens. The fix distinguishes between the two cases, adds machine-readable error codes, and wires in the existing refresh utility for a silent retry on expiry. Three API routes are affected.</div></div>
+<hr class="doc-divider">
+<div class="doc-section"><div class="doc-label">Requirements</div><div class="doc-list"><div class="doc-item">Expired tokens trigger a silent refresh attempt before returning 401</div><div class="doc-item">401 responses include a <code style="font-size:11px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">code</code> field distinguishing TOKEN_EXPIRED from TOKEN_INVALID</div><div class="doc-item">Existing behaviour for valid tokens is unchanged</div><div class="doc-item">No changes to the public API contract beyond the added error field</div></div></div>
+<hr class="doc-divider">
+<div class="doc-section"><div class="doc-label">Acceptance criteria</div><div class="criteria-list"><div class="criteria-item"><div class="criteria-num">1</div>A valid token passes through the middleware without error</div><div class="criteria-item"><div class="criteria-num">2</div>An expired token with a valid refresh token results in a refreshed session</div><div class="criteria-item"><div class="criteria-num">3</div>An expired token with no valid refresh token returns <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">401 { code: "TOKEN_EXPIRED" }</code></div><div class="criteria-item"><div class="criteria-num">4</div>A malformed token returns <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">401 { code: "TOKEN_INVALID" }</code></div><div class="criteria-item"><div class="criteria-num">5</div>All three downstream routes pass their existing integration tests</div></div></div>
+<hr class="doc-divider">
+<div class="doc-section"><div class="doc-label">Affected files</div><div class="file-list"><div class="file-item"><span class="file-path">src/middleware/auth.ts</span><span class="file-reason">primary change — expiry handling + error codes</span></div><div class="file-item"><span class="file-path">src/lib/jwt.ts</span><span class="file-reason">wire in refreshToken() to middleware</span></div><div class="file-item"><span class="file-path">src/types/errors.ts</span><span class="file-reason">add TOKEN_EXPIRED / TOKEN_INVALID to error enum</span></div><div class="file-item"><span class="file-path">tests/middleware/auth.test.ts</span><span class="file-reason">new cases for expiry and refresh paths</span></div></div></div>
+<hr class="doc-divider">
+<div class="doc-section"><div class="doc-label">Approach</div><div class="doc-text">In <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">verifyToken()</code>, catch the JWT expiry error separately from other decode failures. On expiry, call <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">refreshToken()</code> — if it succeeds, attach the new token to the request and continue. If refresh fails or is absent, return 401 with TOKEN_EXPIRED. All other decode failures return 401 with TOKEN_INVALID.</div></div>`;
+
+const clarifyRight = `<div class="rp-section"><div class="rp-label">Status</div><div class="rp-row"><span class="rp-key">Stage</span><span style="font-size:12px;font-weight:500;color:#534AB7">Preflight</span></div><div class="rp-row"><span class="rp-key">Mode</span><span class="rp-val">Clarifying</span></div><div class="rp-row"><span class="rp-key">Questions</span><span class="rp-val">2 of 2</span></div></div><div class="rp-section"><div class="rp-label">Already resolved</div><div style="font-size:12px;color:var(--color-text-tertiary);line-height:1.6">Issue read, codebase context loaded, 4 facts confirmed. Awaiting 2 answers to generate doc.</div></div><div class="rp-spacer"></div>`;
+
+const docRight = `<div class="rp-section"><div class="rp-label">Scope</div><div class="rp-row"><span class="rp-key">Size</span><span class="scope-badge scope-m">Medium</span></div><div class="rp-row"><span class="rp-key">Files</span><span class="rp-val">4</span></div><div class="rp-row"><span class="rp-key">New tests</span><span class="rp-val">3–4 cases</span></div></div><div class="rp-section"><div class="rp-label">Risk flags</div><div class="risk-flags"><div class="risk-flag warn"><div class="rf-dot rf-dot-warn"></div>Touches auth middleware</div><div class="risk-flag"><div class="rf-dot rf-dot-ok"></div>No schema changes</div><div class="risk-flag"><div class="rf-dot rf-dot-ok"></div>No new dependencies</div></div></div><div class="autonomy-suggest"><div class="as-header">Suggested autonomy</div><div class="as-body"><div class="as-level">Supervised</div><div class="as-reason">Auth middleware is flagged in escalation rules. Will pause before implement → verify handoff.</div><div class="as-override">Override →</div></div></div><div class="rp-spacer"></div><div class="approval-area"><button class="btn-approve">Approve → Implement</button><button class="btn-edit">Edit doc</button></div>`;
+
+function selectOpt(el) {
+  const name = el.querySelector('input').name;
+  document.querySelectorAll('input[name='+name+']').forEach(i => i.closest('.q-opt').classList.remove('selected'));
+  el.classList.add('selected');
+}
+function showMode(mode) {
+  document.getElementById('btn-clarify').classList.toggle('active', mode==='clarify');
+  document.getElementById('btn-doc').classList.toggle('active', mode==='doc');
+  document.getElementById('main-content').innerHTML = mode==='clarify' ? clarifyMain : docMain;
+  document.getElementById('right-panel').innerHTML = mode==='clarify' ? clarifyRight : docRight;
+}
+showMode('doc');
+</script>
+</body>
+</html>

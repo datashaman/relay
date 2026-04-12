@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Relay | Activity Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#201f21",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "outline-variant": "#474553",
+                    "inverse-on-surface": "#303032",
+                    "tertiary-container": "#824e00",
+                    "on-tertiary-container": "#ffc78c",
+                    "surface": "#131315",
+                    "surface-tint": "#c5c0ff",
+                    "on-tertiary-fixed-variant": "#673d00",
+                    "error-container": "#93000a",
+                    "secondary-fixed": "#86f8c9",
+                    "surface-container-low": "#1b1b1d",
+                    "on-tertiary-fixed": "#2b1700",
+                    "on-secondary-fixed-variant": "#00513a",
+                    "secondary-fixed-dim": "#68dbae",
+                    "on-primary": "#28188c",
+                    "tertiary": "#ffb869",
+                    "inverse-primary": "#584fbc",
+                    "on-surface": "#e5e1e4",
+                    "on-secondary": "#003827",
+                    "tertiary-fixed-dim": "#ffb869",
+                    "secondary-container": "#26a37a",
+                    "on-background": "#e5e1e4",
+                    "tertiary-fixed": "#ffdcbb",
+                    "primary-fixed": "#e3dfff",
+                    "on-surface-variant": "#c8c4d5",
+                    "inverse-surface": "#e5e1e4",
+                    "surface-container-highest": "#353437",
+                    "background": "#131315",
+                    "surface-dim": "#131315",
+                    "surface-container-high": "#2a2a2c",
+                    "on-error": "#690005",
+                    "surface-container-lowest": "#0e0e10",
+                    "error": "#ffb4ab",
+                    "on-tertiary": "#482900",
+                    "surface-bright": "#39393b",
+                    "primary": "#c5c0ff",
+                    "on-secondary-fixed": "#002115",
+                    "primary-container": "#534ab7",
+                    "on-primary-fixed": "#140067",
+                    "surface-variant": "#353437",
+                    "secondary": "#68dbae",
+                    "on-primary-fixed-variant": "#3f35a3",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-container": "#d1ccff",
+                    "outline": "#928f9e",
+                    "on-secondary-container": "#003121"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .font-label { font-family: 'JetBrains_Mono', monospace; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #131315; }
+        ::-webkit-scrollbar-thumb { background: #2A2A2C; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface selection:bg-primary-container/30">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#131315] dark:bg-[#131315]">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-full bg-[#1B1B1D]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#C5C0FF]" data-icon="terminal">terminal</span>
+<span class="text-xl font-bold tracking-tighter text-[#C5C0FF] font-['Space_Grotesk']">RELAY</span>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8">
+<span class="text-[#474553] font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest hover:text-[#BA7517] transition-colors cursor-pointer">Overview</span>
+<span class="text-[#C5C0FF] font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest transition-colors cursor-pointer border-b-2 border-[#C5C0FF] pb-1">Activity</span>
+<span class="text-[#474553] font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest hover:text-[#BA7517] transition-colors cursor-pointer">Intake</span>
+<span class="text-[#474553] font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest hover:text-[#BA7517] transition-colors cursor-pointer">Config</span>
+</nav>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant cursor-pointer active:opacity-80" data-alt="Close-up portrait of a professional male developer in a dark studio setting with soft purple ambient rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUQjqpYmzO61AtIyytPhGeWcWN6MG1ws6-_p3JvFx4QcX5gScblIXbWTUCqFzRAAf1K8t9gTZy7iUv_9g3reE1gKyJYR_iRA_b3zn14Wab9mBpxdi2WNK5jY5KL4E2J2HsEw_shEBN3sWVgIIeLzgBGQcsQjq2tOoby9D3TFkTxXN-_VP-8EWKlpgscJAoFfwI8azqnKyqWuLdj6j0H3_E3QaxVyY-gAeWCNk_nkVLbRIiuyf8SzSc8zFKcNrb-6a9wjWq-3J1Hd8S"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-28 px-4 md:px-8 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Sidebar: Performance Stats -->
+<aside class="lg:col-span-3 space-y-6">
+<div class="p-5 rounded-xl bg-surface-container-low border border-outline-variant/10">
+<h3 class="text-[10px] font-label text-outline uppercase tracking-[0.2em] mb-6">Pipeline Health</h3>
+<div class="space-y-8">
+<div class="relative">
+<div class="flex justify-between items-end mb-1">
+<span class="font-label text-[10px] text-on-surface-variant">Throughput</span>
+<span class="font-headline font-bold text-secondary">84.2<span class="text-xs opacity-60">req/s</span></span>
+</div>
+<div class="h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[84%]"></div>
+</div>
+</div>
+<div class="relative">
+<div class="flex justify-between items-end mb-1">
+<span class="font-label text-[10px] text-on-surface-variant">Success Rate</span>
+<span class="font-headline font-bold text-primary">99.1<span class="text-xs opacity-60">%</span></span>
+</div>
+<div class="h-1 bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[99%] shadow-[0_0_8px_rgba(197,192,255,0.4)]"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-outline-variant/10">
+<div>
+<p class="font-label text-[9px] text-outline uppercase mb-1">Active Agents</p>
+<p class="font-headline text-lg font-bold">12</p>
+</div>
+<div>
+<p class="font-label text-[9px] text-outline uppercase mb-1">Logic Checks</p>
+<p class="font-headline text-lg font-bold">4.2k</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Urgent Terminal -->
+<div class="p-4 rounded-xl bg-surface-container-high border-l-2 border-tertiary shadow-[0_0_20px_rgba(186,117,23,0.05)]">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-tertiary text-sm animate-pulse" data-icon="warning">warning</span>
+<span class="font-label text-[10px] text-tertiary tracking-widest uppercase">System: Stuck Issues</span>
+</div>
+<div class="space-y-3">
+<div class="p-3 bg-surface-container-lowest rounded border border-outline-variant/20 group cursor-pointer hover:bg-surface-bright transition-colors">
+<div class="flex justify-between items-start">
+<span class="font-label text-[11px] text-primary">RLY-902</span>
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+</div>
+<p class="text-xs text-on-surface mt-1 line-clamp-1">Branch logic conflict in Auth.py</p>
+</div>
+<div class="p-3 bg-surface-container-lowest rounded border border-outline-variant/20 group cursor-pointer hover:bg-surface-bright transition-colors">
+<div class="flex justify-between items-start">
+<span class="font-label text-[11px] text-primary">RLY-884</span>
+<span class="w-2 h-2 rounded-full bg-tertiary/40"></span>
+</div>
+<p class="text-xs text-on-surface mt-1 line-clamp-1">API rate limit reached for Stripe</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Feed -->
+<div class="lg:col-span-9">
+<div class="flex items-center justify-between mb-8">
+<h1 class="font-headline text-3xl font-bold tracking-tight text-on-surface">Event Stream</h1>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 rounded-md bg-surface-container-high border border-outline-variant/20 font-label text-[10px] text-outline hover:text-primary transition-colors">
+                        ALL
+                    </button>
+<button class="px-3 py-1.5 rounded-md bg-surface-container-high border border-outline-variant/20 font-label text-[10px] text-outline hover:text-primary transition-colors">
+                        AGENT
+                    </button>
+<button class="px-3 py-1.5 rounded-md bg-surface-container-high border border-outline-variant/20 font-label text-[10px] text-outline hover:text-primary transition-colors">
+                        HUMAN
+                    </button>
+</div>
+</div>
+<div class="space-y-px">
+<!-- Event 1: Agent Start -->
+<div class="p-6 bg-surface-container-low/50 hover:bg-surface-container-high transition-colors flex gap-6 items-start group">
+<div class="mt-1 flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center border border-primary-container/40">
+<span class="material-symbols-outlined text-primary-fixed-dim text-sm" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="w-px h-full min-h-[40px] bg-outline-variant/20 mt-2"></div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<span class="font-label text-[10px] text-primary uppercase">Agent Action</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label text-[10px] text-outline">12:04:22 UTC</span>
+</div>
+<h4 class="text-sm font-semibold text-on-surface group-hover:text-primary-fixed-dim transition-colors">Implement agent started on RLY-902</h4>
+<div class="mt-3 p-4 bg-surface-container-lowest rounded-lg border border-outline-variant/10 font-label text-xs leading-relaxed text-on-surface-variant">
+<span class="text-secondary opacity-70">EXEC</span>: initiating codebase scan... <br/>
+<span class="text-secondary opacity-70">PATH</span>: /src/services/authenticator.ts <br/>
+<span class="text-secondary opacity-70">MODE</span>: collaborative_debug
+                        </div>
+</div>
+</div>
+<!-- Event 2: Human Interaction -->
+<div class="p-6 bg-surface-container-low/50 hover:bg-surface-container-high transition-colors flex gap-6 items-start group">
+<div class="mt-1 flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-secondary-container/10 flex items-center justify-center border border-secondary-container/30">
+<span class="material-symbols-outlined text-secondary-fixed-dim text-sm" data-icon="person">person</span>
+</div>
+<div class="w-px h-full min-h-[40px] bg-outline-variant/20 mt-2"></div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<span class="font-label text-[10px] text-secondary uppercase">Human Guidance</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label text-[10px] text-outline">11:58:10 UTC</span>
+</div>
+<h4 class="text-sm font-semibold text-on-surface">User provided guidance for RLY-884</h4>
+<p class="mt-2 text-sm text-on-surface-variant leading-snug max-w-2xl">
+                            "Ignore the Stripe API timeout for now and focus on optimizing the local cache retrieval logic first. The rate limit is expected during the sandbox migration."
+                        </p>
+</div>
+</div>
+<!-- Event 3: Verification Success -->
+<div class="p-6 bg-surface-container-low/50 hover:bg-surface-container-high transition-colors flex gap-6 items-start group">
+<div class="mt-1 flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-secondary-container/20 flex items-center justify-center border border-secondary-container/40">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="verified">verified</span>
+</div>
+<div class="w-px h-full min-h-[40px] bg-outline-variant/20 mt-2"></div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<span class="font-label text-[10px] text-secondary uppercase">Verify Complete</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label text-[10px] text-outline">11:42:01 UTC</span>
+</div>
+<h4 class="text-sm font-semibold text-on-surface">Validation logic checks passed for RLY-712</h4>
+<div class="mt-3 flex gap-2">
+<span class="px-2 py-0.5 rounded text-[9px] font-label bg-secondary-container/20 text-secondary border border-secondary/30">LINT:PASS</span>
+<span class="px-2 py-0.5 rounded text-[9px] font-label bg-secondary-container/20 text-secondary border border-secondary/30">UNIT:100%</span>
+<span class="px-2 py-0.5 rounded text-[9px] font-label bg-secondary-container/20 text-secondary border border-secondary/30">SECURITY:A</span>
+</div>
+</div>
+</div>
+<!-- Event 4: Stuck/System Warning -->
+<div class="p-6 bg-surface-container-low/50 hover:bg-surface-container-high transition-colors flex gap-6 items-start group relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary/60"></div>
+<div class="mt-1 flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-tertiary-container/20 flex items-center justify-center border border-tertiary-container/40">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="error">error</span>
+</div>
+<div class="w-px h-full min-h-[40px] bg-outline-variant/20 mt-2"></div>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-1">
+<span class="font-label text-[10px] text-tertiary uppercase">System Alert</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label text-[10px] text-outline">11:15:45 UTC</span>
+</div>
+<h4 class="text-sm font-semibold text-on-surface">Agent Stuck on RLY-902</h4>
+<p class="mt-1 text-sm text-on-surface-variant">Unresolved dependency found in <code>packages.json</code>. Manual intervention required.</p>
+<div class="mt-4 flex gap-3">
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-4 py-2 rounded-md font-label text-[10px] uppercase tracking-wider shadow-lg shadow-primary-container/20 active:opacity-90">Assign Manual Task</button>
+<button class="border border-outline-variant text-outline px-4 py-2 rounded-md font-label text-[10px] uppercase tracking-wider hover:bg-surface-bright transition-colors">Dismiss Alert</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-[#131315]/80 backdrop-blur-xl dark:bg-[#131315]/80 border-t border-[#2A2A2C] shadow-[0_-4px_20px_rgba(83,74,183,0.08)] z-50 md:hidden">
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 cursor-pointer transition-all duration-200 hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Overview</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-lg px-4 py-1 cursor-pointer transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="Receipt_Long">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Activity</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 cursor-pointer transition-all duration-200 hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Intake</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 cursor-pointer transition-all duration-200 hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Config</span>
+</div>
+</nav>
+<!-- Floating Action Button (FAB) - Contextual for Activity Screen to refresh stream -->
+<button class="fixed bottom-24 right-8 w-12 h-12 bg-gradient-to-br from-primary to-primary-container rounded-full flex items-center justify-center shadow-xl shadow-primary/20 z-40 md:hidden">
+<span class="material-symbols-outlined text-on-primary" data-icon="refresh">refresh</span>
+</button>
+</body></html>

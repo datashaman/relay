@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Relay Pipeline | Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-error": "#690005",
+                        "surface-dim": "#131315",
+                        "on-background": "#e5e1e4",
+                        "error-container": "#93000a",
+                        "on-secondary-container": "#003121",
+                        "surface-variant": "#353437",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#002115",
+                        "on-primary-fixed": "#140067",
+                        "on-primary-container": "#d1ccff",
+                        "on-tertiary-fixed": "#2b1700",
+                        "primary": "#c5c0ff",
+                        "tertiary": "#ffb869",
+                        "surface-container-low": "#1b1b1d",
+                        "secondary": "#68dbae",
+                        "inverse-primary": "#584fbc",
+                        "primary-fixed": "#e3dfff",
+                        "primary-container": "#534ab7",
+                        "secondary-container": "#26a37a",
+                        "on-primary-fixed-variant": "#3f35a3",
+                        "on-secondary": "#003827",
+                        "inverse-on-surface": "#303032",
+                        "inverse-surface": "#e5e1e4",
+                        "tertiary-fixed-dim": "#ffb869",
+                        "on-tertiary-fixed-variant": "#673d00",
+                        "on-surface": "#e5e1e4",
+                        "on-primary": "#28188c",
+                        "surface-container-lowest": "#0e0e10",
+                        "surface": "#131315",
+                        "surface-container": "#201f21",
+                        "on-tertiary": "#482900",
+                        "background": "#131315",
+                        "tertiary-fixed": "#ffdcbb",
+                        "on-tertiary-container": "#ffc78c",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "surface-container-high": "#2a2a2c",
+                        "surface-bright": "#39393b",
+                        "tertiary-container": "#824e00",
+                        "surface-tint": "#c5c0ff",
+                        "on-surface-variant": "#c8c4d5",
+                        "secondary-fixed": "#86f8c9",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "surface-container-highest": "#353437",
+                        "secondary-fixed-dim": "#68dbae",
+                        "outline": "#928f9e",
+                        "outline-variant": "#474553",
+                        "error": "#ffb4ab"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pipeline-gradient {
+            background: linear-gradient(135deg, #c5c0ff 0%, #534ab7 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30">
+<!-- TopAppBar -->
+<header class="bg-[#131315] dark:bg-[#131315] flex justify-between items-center px-6 h-16 w-full max-w-full sticky top-0 z-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#C5C0FF]">terminal</span>
+<h1 class="font-['Space_Grotesk'] text-lg font-bold tracking-tight text-[#C5C0FF]">Relay Pipeline</h1>
+</div>
+<div class="flex items-center gap-4">
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="Close-up portrait of a digital agent avatar with sleek neon accents and dark tech background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFDgJ-LnLn03tmu2YewaaiCq_FdA64PA0A5WiAAba1Z3NuMgM28jQmS1PfYgYhhlXh6ljCWMrJ8p8q9Lo5eDwutonuOzSnbmswylVtBn-g1hWFVBT7Kjyg5cwFAcwXQ0gPQf1hZN5XUxm1js_8iOWIpXc0eV0CPyj6EigFJHZUWmgUkpir_MubS9uEPEQtBt5jxKZe5_6KNk233yArnDJDDkYELozEMFzTpTSypEY7LIOLz0Nmgb6lmeTLDaoatV1tFe__nKIWBqCK"/>
+</div>
+</header>
+<main class="pb-32 px-4 space-y-6">
+<!-- Toggle & Control Bar -->
+<section class="flex items-center justify-between bg-surface-container-low p-4 rounded-xl">
+<div class="flex flex-col">
+<span class="font-label text-[10px] text-outline uppercase tracking-widest">Intake Status</span>
+<span class="font-label text-xs text-secondary">ACTIVE SYSTEM</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+<span class="ml-3 font-label text-[10px] text-on-surface-variant uppercase tracking-widest">Pause Intake</span>
+</label>
+</section>
+<!-- Bento Grid Dashboard Stats -->
+<section class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col justify-between aspect-square border-l-2 border-[#534AB7]">
+<span class="material-symbols-outlined text-[#534AB7] text-xl">move_to_inbox</span>
+<div>
+<div class="font-headline text-3xl">12</div>
+<div class="font-label text-[10px] text-outline uppercase tracking-widest">Preflight</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col justify-between aspect-square border-l-2 border-[#BA7517]">
+<span class="material-symbols-outlined text-[#BA7517] text-xl">potted_plant</span>
+<div>
+<div class="font-headline text-3xl">08</div>
+<div class="font-label text-[10px] text-outline uppercase tracking-widest">Implement</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col justify-between aspect-square border-l-2 border-[#639922]">
+<span class="material-symbols-outlined text-[#639922] text-xl">fact_check</span>
+<div>
+<div class="font-headline text-3xl">05</div>
+<div class="font-label text-[10px] text-outline uppercase tracking-widest">Verify</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-col justify-between aspect-square border-l-2 border-[#1D9E75]">
+<span class="material-symbols-outlined text-[#1D9E75] text-xl">rocket_launch</span>
+<div>
+<div class="font-headline text-3xl">24</div>
+<div class="font-label text-[10px] text-outline uppercase tracking-widest">Release</div>
+</div>
+</div>
+</section>
+<!-- Active Issues Section -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-2">
+<h2 class="font-headline text-xl text-on-surface">Active Pipeline</h2>
+<span class="font-label text-[10px] text-outline uppercase tracking-widest">49 Total Issues</span>
+</div>
+<!-- Issue Item 1: Stuck State -->
+<div class="bg-surface-container-high rounded-xl p-4 space-y-3 shadow-[0_4px_20px_rgba(239,159,39,0.05)] border border-outline-variant/20">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-label text-[10px] text-primary">RLY-902</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="font-label text-[10px] text-[#EF9F27] animate-pulse">STUCK</span>
+</div>
+<h3 class="font-body text-sm font-semibold leading-tight">Dependency Conflict: Core.Engine.v4</h3>
+</div>
+<span class="material-symbols-outlined text-error text-lg">priority_high</span>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-lowest p-2 rounded">
+<span class="font-label text-[10px] text-outline">STAGE:</span>
+<span class="font-label text-[10px] text-[#BA7517] uppercase">Implementation Phase</span>
+</div>
+<div class="flex justify-between items-center pt-1">
+<div class="flex -space-x-2">
+<img class="w-5 h-5 rounded-full border border-surface" data-alt="Close-up profile of a male engineer in a dark techwear jacket" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB869-WyUw0G-WKv8t2vCfZLPFqyUpz5uevRSMRxgiQ5Al4KkPzythTi6qVD6MzeM0xU9kXY6ifyiQniA9vHP87WUXEC4Y3Yz7PFxzbyrnvyqpJaboXW_4HPo0cPYpyz6_Pv21tSVOkh6cfTAsrDqyRQCsxknyxKBDwp3IFnkC6pAKdKXbyIpihxxPR6UCVdQZjNoipVTD6MUhpxWnkqS3fZI5RPswEZBlhpoVxxBaZU7T8KmIFXzhEjfaryOOnBM26RrPu_5XHWAyQ"/>
+<img class="w-5 h-5 rounded-full border border-surface" data-alt="Close-up profile of a female software developer with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgCd94TCn_3ipWOGV8e_dqQCt1Rx-QblaFFT4Gh18_pBAMT6WfCFPMPh5xPo8aDAtd3YbGyLcLP4dWPzGn6hqPdejS_KYsofbNngNx_t1bNWr80gDYPvEQZ-32eLoXoLDPNy7poPVtDk9Mb-Nmf0V1YMqGzLff07SpMGLiBgiQudaWAnUP1DMHsIJU1aj-IKzppO3PHJBQXqTt5tWXTOVFi1CEpvWYgzY9oRQ17b5A4WIlpDoaUmZsVkSwbzNqXMggqjmPIU0PDJ5d"/>
+</div>
+<span class="font-label text-[10px] text-outline">14m ago</span>
+</div>
+</div>
+<!-- Issue Item 2: Verify State -->
+<div class="bg-surface-container px-4 py-4 rounded-xl space-y-3">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-label text-[10px] text-primary">RLY-884</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="font-label text-[10px] text-[#639922]">VERIFYING</span>
+</div>
+<h3 class="font-body text-sm font-medium leading-tight">API Gateway Latency Optimization</h3>
+</div>
+<span class="material-symbols-outlined text-outline text-lg">low_priority</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1.5 rounded-full overflow-hidden">
+<div class="bg-[#639922] h-full w-[75%]"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label text-[10px] text-outline">AGENT: HYDRA_V2</span>
+<span class="font-label text-[10px] text-outline">32m ago</span>
+</div>
+</div>
+<!-- Issue Item 3: Preflight State -->
+<div class="bg-surface-container px-4 py-4 rounded-xl space-y-3">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-label text-[10px] text-primary">RLY-911</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="font-label text-[10px] text-[#534AB7]">PREFLIGHT</span>
+</div>
+<h3 class="font-body text-sm font-medium leading-tight">Schema Migration: UserProfile_Metadata</h3>
+</div>
+<span class="material-symbols-outlined text-on-tertiary-container text-lg">bolt</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex gap-2">
+<span class="px-2 py-0.5 bg-surface-container-high rounded text-[10px] font-label text-on-surface-variant">DB_SYNC</span>
+<span class="px-2 py-0.5 bg-surface-container-high rounded text-[10px] font-label text-on-surface-variant">V3</span>
+</div>
+<span class="font-label text-[10px] text-outline">2h ago</span>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB (Suppressed based on context: Dashboard usually allows quick issue creation) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 rounded-xl pipeline-gradient flex items-center justify-center shadow-xl shadow-primary/20 z-50 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-primary text-3xl">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center pb-6 pt-2 px-4 bg-[#131315]/80 backdrop-blur-xl border-t border-[#474553]/40 z-50">
+<!-- Overview (Active) -->
+<a class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-xl py-2 px-4 transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Overview</span>
+</a>
+<!-- Activity -->
+<a class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Activity</span>
+</a>
+<!-- Intake -->
+<a class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Intake</span>
+</a>
+<!-- Config -->
+<a class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Config</span>
+</a>
+</nav>
+</body></html>

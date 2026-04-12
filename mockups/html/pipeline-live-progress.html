@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#690005",
+                    "surface-dim": "#131315",
+                    "on-background": "#e5e1e4",
+                    "error-container": "#93000a",
+                    "on-secondary-container": "#003121",
+                    "surface-variant": "#353437",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-fixed": "#002115",
+                    "on-primary-fixed": "#140067",
+                    "on-primary-container": "#d1ccff",
+                    "on-tertiary-fixed": "#2b1700",
+                    "primary": "#c5c0ff",
+                    "tertiary": "#ffb869",
+                    "surface-container-low": "#1b1b1d",
+                    "secondary": "#68dbae",
+                    "inverse-primary": "#584fbc",
+                    "primary-fixed": "#e3dfff",
+                    "primary-container": "#534ab7",
+                    "secondary-container": "#26a37a",
+                    "on-primary-fixed-variant": "#3f35a3",
+                    "on-secondary": "#003827",
+                    "inverse-on-surface": "#303032",
+                    "inverse-surface": "#e5e1e4",
+                    "tertiary-fixed-dim": "#ffb869",
+                    "on-tertiary-fixed-variant": "#673d00",
+                    "on-surface": "#e5e1e4",
+                    "on-primary": "#28188c",
+                    "surface-container-lowest": "#0e0e10",
+                    "surface": "#131315",
+                    "surface-container": "#201f21",
+                    "on-tertiary": "#482900",
+                    "background": "#131315",
+                    "tertiary-fixed": "#ffdcbb",
+                    "on-tertiary-container": "#ffc78c",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "surface-container-high": "#2a2a2c",
+                    "surface-bright": "#39393b",
+                    "tertiary-container": "#824e00",
+                    "surface-tint": "#c5c0ff",
+                    "on-surface-variant": "#c8c4d5",
+                    "secondary-fixed": "#86f8c9",
+                    "on-secondary-fixed-variant": "#00513a",
+                    "surface-container-highest": "#353437",
+                    "secondary-fixed-dim": "#68dbae",
+                    "outline": "#928f9e",
+                    "outline-variant": "#474553",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .code-diff-add { background-color: rgba(0, 81, 58, 0.3); color: #68dbae; }
+        .code-diff-remove { background-color: rgba(147, 0, 10, 0.3); color: #ffb4ab; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #131315; }
+        ::-webkit-scrollbar-thumb { background: #474553; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary">
+<header class="bg-[#131315] dark:bg-[#131315] docked full-width top-0 z-50 flex justify-between items-center px-6 h-16 w-full max-w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#C5C0FF]" data-icon="terminal">terminal</span>
+<h1 class="font-['Space_Grotesk'] text-lg font-bold tracking-tight text-[#C5C0FF]">Relay Pipeline</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-4">
+<a class="text-[#474553] font-label text-[10px] uppercase tracking-widest hover:bg-[#2A2A2C] transition-colors px-3 py-1 rounded" href="#">Overview</a>
+<a class="text-[#C5C0FF] font-label text-[10px] uppercase tracking-widest hover:bg-[#2A2A2C] transition-colors px-3 py-1 rounded" href="#">Activity</a>
+<a class="text-[#474553] font-label text-[10px] uppercase tracking-widest hover:bg-[#2A2A2C] transition-colors px-3 py-1 rounded" href="#">Intake</a>
+</nav>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User Profile" data-alt="minimalist abstract avatar icon for a software engineer in a technical interface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5D4gn-y8NDhrYAeyapYHG9w1oCoW6v8d8d2tP4KvOAKDcQW9FQNI8BNMR4X6gW_h_hSJVHxGUQZWuUBS2kze91hvLYfYlLgJmjOZjYru57RhwmtsXHdduK3N3kaQfqlMF8XWbELqJkK6XsxakC_FDndQq7b1K4WdUk4l7pPsxEJPFwlJmqIOzOis2ig7JT82_o3zR2XZnuA7xffbMiDgpZYfRazUi7ljDSVHpkzSgeyR5Ltg-D-_yrfGcV1QuCA5hQjUlLpH6jXDh"/>
+</div>
+</div>
+</header>
+<main class="flex flex-col md:flex-row h-[calc(100vh-64px-72px)] overflow-hidden">
+<aside class="bg-[#1B1B1D] h-full w-72 flex flex-col py-8 shrink-0 hidden md:flex">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-[#534AB7]" data-icon="memory">memory</span>
+<span class="font-bold text-[#534AB7]">Relay Engine</span>
+</div>
+<div class="flex justify-between items-baseline">
+<span class="text-xs text-outline">v2.4.0-stable</span>
+<span class="text-[10px] font-label text-secondary bg-secondary/10 px-1.5 py-0.5 rounded">ACTIVE</span>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-[#474553] hover:bg-[#201F21] duration-200 ease-out" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+<span class="font-['Inter'] text-sm">System Logs</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 bg-[#2A2A2C] text-[#C5C0FF] border-l-2 border-[#68DBAE] duration-200 ease-out" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="analytics">analytics</span>
+<span class="font-['Inter'] text-sm">Pipeline Health</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#474553] hover:bg-[#201F21] duration-200 ease-out" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="group">group</span>
+<span class="font-['Inter'] text-sm">Team Access</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#474553] hover:bg-[#201F21] duration-200 ease-out" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span>
+<span class="font-['Inter'] text-sm">Documentation</span>
+</a>
+</nav>
+<div class="mt-auto px-6">
+<div class="p-4 rounded-xl bg-surface-container-high border-l-2 border-tertiary">
+<span class="font-label text-[10px] text-tertiary block mb-1">LIVE AGENT STATUS</span>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></div>
+<span class="text-sm font-medium">Synthesizing Fix...</span>
+</div>
+</div>
+</div>
+</aside>
+<section class="flex-1 overflow-y-auto bg-surface p-4 md:p-8 space-y-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="font-label text-[10px] text-primary px-2 py-0.5 bg-primary-container/20 rounded">ISSUE-7742</span>
+<span class="text-outline-variant">/</span>
+<span class="font-label text-[10px] text-outline">RELAY-PIPELINE-CORE</span>
+</div>
+<h2 class="font-headline text-3xl text-on-surface">Memory Leak in Concurrent Stream Buffering</h2>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container-high px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 border border-outline-variant/20 hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="pause">pause</span>
+                        Halt Process
+                    </button>
+<button class="bg-gradient-to-br from-primary to-primary-container px-4 py-2 rounded-lg text-sm font-bold text-on-primary flex items-center gap-2 shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>
+                        Deploy Fix
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="lg:col-span-8 flex flex-col gap-6">
+<div class="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10">
+<div class="bg-surface-container-high px-4 py-3 flex items-center justify-between border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary" data-icon="code">code</span>
+<span class="font-label text-xs uppercase tracking-widest text-tertiary">Implement Stage: Code Diff</span>
+</div>
+<span class="font-label text-[10px] text-outline">src/engine/stream_handler.go</span>
+</div>
+<div class="p-0 font-label text-xs leading-relaxed overflow-x-auto">
+<div class="flex">
+<span class="w-12 text-right pr-4 text-outline-variant select-none bg-surface-container-lowest/50 py-1">42</span>
+<span class="pl-4 py-1">func (s *Stream) Buffer() {</span>
+</div>
+<div class="flex code-diff-remove">
+<span class="w-12 text-right pr-4 text-error/50 select-none bg-error-container/20 py-1">43</span>
+<span class="pl-4 py-1">-   s.cache = make([]byte, 1024)</span>
+</div>
+<div class="flex code-diff-add">
+<span class="w-12 text-right pr-4 text-secondary/50 select-none bg-on-secondary-container/20 py-1">43</span>
+<span class="pl-4 py-1">+   s.cache = sync.GetBuffer(1024)</span>
+</div>
+<div class="flex code-diff-add">
+<span class="w-12 text-right pr-4 text-secondary/50 select-none bg-on-secondary-container/20 py-1">44</span>
+<span class="pl-4 py-1">+   defer sync.PutBuffer(s.cache)</span>
+</div>
+<div class="flex">
+<span class="w-12 text-right pr-4 text-outline-variant select-none bg-surface-container-lowest/50 py-1">45</span>
+<span class="pl-4 py-1">    s.readFromSource()</span>
+</div>
+<div class="flex">
+<span class="w-12 text-right pr-4 text-outline-variant select-none bg-surface-container-lowest/50 py-1">46</span>
+<span class="pl-4 py-1">}</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-on-surface" data-icon="terminal">terminal</span>
+<span class="font-label text-xs uppercase tracking-widest text-on-surface">Agent Runtime Logs</span>
+</div>
+<div class="space-y-1 font-label text-[11px]">
+<p class="text-outline"><span class="text-secondary">[14:22:01]</span> <span class="text-primary-fixed">AGENT_ORCHESTRATOR:</span> Analyzing heap profile...</p>
+<p class="text-outline"><span class="text-secondary">[14:22:03]</span> <span class="text-primary-fixed">AGENT_ORCHESTRATOR:</span> Identified leak in <span class="text-tertiary">stream_handler.go:43</span></p>
+<p class="text-outline"><span class="text-secondary">[14:22:05]</span> <span class="text-primary-fixed">AGENT_IMPLEMENT:</span> Generating patch with sync.Pool buffer management.</p>
+<p class="text-outline"><span class="text-secondary">[14:22:08]</span> <span class="text-primary-fixed">AGENT_VERIFY:</span> Running suite: <span class="text-outline-variant">tests/core/stream_test.go</span></p>
+<p class="text-secondary animate-pulse"><span class="text-secondary">[14:22:12]</span> <span class="text-primary-fixed">AGENT_VERIFY:</span> Executing integration tests (4/12)...</p>
+</div>
+</div>
+</div>
+<div class="lg:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle">check_circle</span>
+<span class="font-label text-xs uppercase tracking-widest text-secondary">Verify Stage</span>
+</div>
+<span class="text-xs font-label text-secondary">82% PASS</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="text-sm">Unit Tests</span>
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="check_circle">check_circle</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-sm">Memory Leak Detection</span>
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="check_circle">check_circle</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-sm">Concurrency Fuzzing</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+</div>
+<span class="text-xs font-label text-outline">RUNNING</span>
+</div>
+<div class="flex items-center justify-between opacity-40">
+<span class="text-sm">E2E Regression</span>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="circle">circle</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2">
+<div class="text-[8px] font-label text-secondary-container/60 transform rotate-12">AUTO-GENERATED</div>
+</div>
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="history_edu">history_edu</span>
+<span class="font-label text-xs uppercase tracking-widest text-secondary-container">Release Stage: PR Draft</span>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-[10px] font-label text-outline block mb-1">TITLE</label>
+<div class="text-sm font-medium text-on-surface">fix(core): implement buffer pooling for concurrent streams</div>
+</div>
+<div>
+<label class="text-[10px] font-label text-outline block mb-1">CHANGELOG SUMMARY</label>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                    Resolved a significant memory leak by replacing ephemeral byte slice allocations with a synchronized buffer pool. This reduces GC pressure by 40% under high concurrency.
+                                </p>
+</div>
+<button class="w-full py-2 bg-surface-container-high rounded border border-secondary-container/30 text-secondary-container font-label text-[10px] tracking-widest uppercase hover:bg-secondary-container/10 transition-colors">
+                                Finalize Release Notes
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="fixed bottom-0 left-0 w-full flex justify-around items-center pb-6 pt-2 px-4 bg-[#131315]/80 backdrop-blur-xl border-t border-[#474553]/40 shadow-[0_-4px_20px_rgba(83,74,183,0.08)] z-50">
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 transition-all duration-300 ease-in-out hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Overview</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-xl py-2 px-4 transition-all duration-300 ease-in-out hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="Receipt_Long">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Activity</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 transition-all duration-300 ease-in-out hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Intake</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 transition-all duration-300 ease-in-out hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Config</span>
+</div>
+</footer>
+</body></html>

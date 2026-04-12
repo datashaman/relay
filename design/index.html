@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relay — Design Screens</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+    .sub { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 32px; line-height: 1.6; }
+    .pipeline {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 32px;
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+    }
+    .pipe-stage {
+      flex: 1; padding: 10px 14px; text-align: center;
+      background: var(--color-background-secondary);
+      border-right: 0.5px solid var(--color-border-tertiary);
+      font-size: 12px; font-weight: 500; color: var(--color-text-secondary);
+    }
+    .pipe-stage:last-child { border-right: none; }
+    .pipe-stage .dot { width: 8px; height: 8px; border-radius: 50%; margin: 0 auto 6px; }
+    .d1 { background: #534AB7; }
+    .d2 { background: #BA7517; }
+    .d3 { background: #639922; }
+    .d4 { background: #1D9E75; }
+    .screens { display: flex; flex-direction: column; gap: 10px; }
+    .screen-link {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-lg);
+      background: var(--color-background-primary);
+      text-decoration: none; color: inherit;
+    }
+    .screen-link:hover { background: var(--color-background-secondary); }
+    .sl-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--color-background-secondary);
+      border: 0.5px solid var(--color-border-tertiary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 500; color: var(--color-text-tertiary);
+      flex-shrink: 0;
+    }
+    .sl-body { flex: 1; }
+    .sl-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+    .sl-desc { font-size: 12px; color: var(--color-text-tertiary); }
+    .sl-arrow { font-size: 14px; color: var(--color-text-tertiary); }
+    .section-label {
+      font-size: 10px; font-weight: 500; color: var(--color-text-tertiary);
+      text-transform: uppercase; letter-spacing: .06em;
+      margin: 20px 0 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Relay</h1>
+  <p class="sub">An agentic issue pipeline. Each stage is handled by a focused agent with a specific tool set. Human-in-the-loop is configurable at the workspace, stage, and issue level.</p>
+
+  <div class="pipeline">
+    <div class="pipe-stage"><div class="dot d1"></div>Preflight</div>
+    <div class="pipe-stage"><div class="dot d2"></div>Implement</div>
+    <div class="pipe-stage"><div class="dot d3"></div>Verify</div>
+    <div class="pipe-stage"><div class="dot d4"></div>Release</div>
+  </div>
+
+  <div class="section-label">Pipeline views</div>
+  <div class="screens">
+    <a class="screen-link" href="01-issue-view.html">
+      <div class="sl-num">1</div>
+      <div class="sl-body">
+        <div class="sl-title">Issue view</div>
+        <div class="sl-desc">3-panel layout — queue, active issue, approval panel</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+    <a class="screen-link" href="02-preflight.html">
+      <div class="sl-num">2</div>
+      <div class="sl-body">
+        <div class="sl-title">Preflight stage</div>
+        <div class="sl-desc">Clarification mode and pre-flight doc output</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+    <a class="screen-link" href="03-implement-verify-release.html">
+      <div class="sl-num">3</div>
+      <div class="sl-body">
+        <div class="sl-title">Implement, Verify, Release</div>
+        <div class="sl-desc">Live diff, test runner output, changelog and PR</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+    <a class="screen-link" href="04-run-history.html">
+      <div class="sl-num">4</div>
+      <div class="sl-body">
+        <div class="sl-title">Run history</div>
+        <div class="sl-desc">Full timeline of a run including bounces and iterations</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="section-label">Stuck & escalation</div>
+  <div class="screens">
+    <a class="screen-link" href="05-stuck-states.html">
+      <div class="sl-num">5</div>
+      <div class="sl-body">
+        <div class="sl-title">Stuck states</div>
+        <div class="sl-desc">Iteration cap, timeout, agent uncertainty, external blocker</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="section-label">Workspace & settings</div>
+  <div class="screens">
+    <a class="screen-link" href="06-activity-feed.html">
+      <div class="sl-num">6</div>
+      <div class="sl-body">
+        <div class="sl-title">Activity feed</div>
+        <div class="sl-desc">Global pipeline health — stats, pipeline snapshot, event stream</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+    <a class="screen-link" href="07-intake.html">
+      <div class="sl-num">7</div>
+      <div class="sl-body">
+        <div class="sl-title">Intake & integrations</div>
+        <div class="sl-desc">Connected sources, filter rules, incoming queue</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+    <a class="screen-link" href="08-configure-autonomy.html">
+      <div class="sl-num">8</div>
+      <div class="sl-body">
+        <div class="sl-title">Configure autonomy</div>
+        <div class="sl-desc">Global level, per-stage overrides, escalation rules</div>
+      </div>
+      <div class="sl-arrow">→</div>
+    </a>
+  </div>
+</body>
+</html>

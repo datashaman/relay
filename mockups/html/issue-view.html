@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#690005",
+                    "surface-dim": "#131315",
+                    "on-background": "#e5e1e4",
+                    "error-container": "#93000a",
+                    "on-secondary-container": "#003121",
+                    "surface-variant": "#353437",
+                    "on-error-container": "#ffdad6",
+                    "on-secondary-fixed": "#002115",
+                    "on-primary-fixed": "#140067",
+                    "on-primary-container": "#d1ccff",
+                    "on-tertiary-fixed": "#2b1700",
+                    "primary": "#c5c0ff",
+                    "tertiary": "#ffb869",
+                    "surface-container-low": "#1b1b1d",
+                    "secondary": "#68dbae",
+                    "inverse-primary": "#584fbc",
+                    "primary-fixed": "#e3dfff",
+                    "primary-container": "#534ab7",
+                    "secondary-container": "#26a37a",
+                    "on-primary-fixed-variant": "#3f35a3",
+                    "on-secondary": "#003827",
+                    "inverse-on-surface": "#303032",
+                    "inverse-surface": "#e5e1e4",
+                    "tertiary-fixed-dim": "#ffb869",
+                    "on-tertiary-fixed-variant": "#673d00",
+                    "on-surface": "#e5e1e4",
+                    "on-primary": "#28188c",
+                    "surface-container-lowest": "#0e0e10",
+                    "surface": "#131315",
+                    "surface-container": "#201f21",
+                    "on-tertiary": "#482900",
+                    "background": "#131315",
+                    "tertiary-fixed": "#ffdcbb",
+                    "on-tertiary-container": "#ffc78c",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "surface-container-high": "#2a2a2c",
+                    "surface-bright": "#39393b",
+                    "tertiary-container": "#824e00",
+                    "surface-tint": "#c5c0ff",
+                    "on-surface-variant": "#c8c4d5",
+                    "secondary-fixed": "#86f8c9",
+                    "on-secondary-fixed-variant": "#00513a",
+                    "surface-container-highest": "#353437",
+                    "secondary-fixed-dim": "#68dbae",
+                    "outline": "#928f9e",
+                    "outline-variant": "#474553",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["JetBrains Mono"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 min-h-screen pb-24">
+<!-- TopAppBar Shell -->
+<header class="bg-[#131315] dark:bg-[#131315] fixed top-0 w-full z-50">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#C5C0FF]" data-icon="terminal">terminal</span>
+<h1 class="font-['Space_Grotesk'] text-lg font-bold tracking-tight text-[#C5C0FF]">Relay Pipeline</h1>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Close up professional headshot of a developer in high-tech office environment with soft bokeh neon lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCu3o0-SicqPwd8AbjE-MlA_FKPAFdEJdy-iTv1v1eeOXO9oYxHg7M2VYItOH-Y0V2Th0cX5iZCvNixQ9t6X1K_zp6Ygs8SzUbPmInC_mKw-KGnHAinMIbvWH8BGfLZivO8isuIiBnIGCB6S5F3tfa59XKIYn59pWOoMhEgEdlFNyrl296J9V3pTJspRTdidmUMGTegEKyGl8ZU572R3QVkEYHtdh8kK8b7swPZBxOIU66IWoGZL_sklqltkNUqFA1AlE1S69gsVekO"/>
+</div>
+</div>
+</header>
+<main class="pt-20 px-4 space-y-6">
+<!-- Issue Header & Global Progress -->
+<section class="space-y-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="font-label text-[10px] text-primary uppercase tracking-widest bg-primary-container/20 px-2 py-0.5 rounded">REL-8429</span>
+<span class="font-label text-[10px] text-secondary uppercase tracking-widest border border-secondary/30 px-2 py-0.5 rounded">Supervised</span>
+</div>
+<h2 class="font-headline text-2xl font-bold leading-tight">Optimization of Memory-Leaking WebSocket Handlers</h2>
+</div>
+<!-- Pipeline Progress Track -->
+<div class="bg-surface-container-low rounded-xl p-4">
+<div class="flex justify-between mb-3">
+<span class="font-label text-[10px] text-outline uppercase tracking-tighter">Pipeline Stage</span>
+<span class="font-label text-[10px] text-tertiary uppercase tracking-tighter">Status: Implement</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="h-1.5 flex-1 rounded-full bg-primary-container"></div>
+<div class="h-1.5 flex-1 rounded-full bg-tertiary relative overflow-hidden">
+<div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+</div>
+<div class="h-1.5 flex-1 rounded-full bg-surface-container-high"></div>
+<div class="h-1.5 flex-1 rounded-full bg-surface-container-high"></div>
+</div>
+<div class="flex justify-between mt-2 px-1">
+<span class="font-label text-[9px] text-primary">Preflight</span>
+<span class="font-label text-[9px] text-tertiary">Implement</span>
+<span class="font-label text-[9px] text-outline">Verify</span>
+<span class="font-label text-[9px] text-outline">Release</span>
+</div>
+</div>
+</section>
+<!-- 1. Queue/Context Panel -->
+<section class="bg-surface-container-low rounded-xl overflow-hidden">
+<div class="px-4 py-3 bg-surface-container flex justify-between items-center">
+<h3 class="font-label text-xs font-bold text-on-surface-variant uppercase tracking-widest">Queue Context</h3>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="info">info</span>
+</div>
+<div class="p-4 space-y-4">
+<div class="flex items-start gap-3">
+<div class="mt-1 flex-shrink-0 w-8 h-8 rounded bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-outline" data-icon="history">history</span>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Origin: Sentry Event #9022</p>
+<p class="text-xs text-outline leading-relaxed mt-1">High memory pressure detected on `ws-cluster-04`. Leak identified in payload serialization loop.</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-container-highest px-2 py-1 rounded text-[10px] font-label text-on-surface-variant">NODEJS-V20</span>
+<span class="bg-surface-container-highest px-2 py-1 rounded text-[10px] font-label text-on-surface-variant">WS-ENGINE</span>
+<span class="bg-surface-container-highest px-2 py-1 rounded text-[10px] font-label text-on-surface-variant">PRIORITY-1</span>
+</div>
+</div>
+</section>
+<!-- 2. Active Agent Work (The Diff) -->
+<section class="bg-surface-container-low rounded-xl overflow-hidden">
+<div class="px-4 py-3 bg-surface-container flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary animate-pulse shadow-[0_0_8px_rgba(186,117,23,0.5)]"></div>
+<h3 class="font-label text-xs font-bold text-on-surface-variant uppercase tracking-widest">Active Computation</h3>
+</div>
+<span class="font-label text-[10px] text-tertiary">Agent Relay: v2.4.0</span>
+</div>
+<div class="bg-surface-container-lowest p-0 font-label text-[13px] leading-6 overflow-x-auto hide-scrollbar">
+<div class="flex">
+<div class="w-10 bg-surface-container-low text-outline text-right pr-2 select-none border-r border-outline-variant/20 py-2">
+                        81<br/>82<br/>83<br/>84<br/>85<br/>86
+                    </div>
+<div class="p-2 whitespace-pre min-w-full">
+<span class="text-outline">  async handle(payload) {</span>
+<span class="bg-error-container/40 text-error block w-full px-1">-   const buffer = Buffer.from(JSON.stringify(payload));</span>
+<span class="bg-secondary-container/30 text-secondary block w-full px-1">+   const buffer = PayloadSerializer.encode(payload);</span>
+<span class="bg-secondary-container/30 text-secondary block w-full px-1">+   // Memory-safe stream allocation</span>
+<span class="text-outline">    this.stream.push(buffer);</span>
+<span class="text-outline">  }</span>
+</div>
+</div>
+</div>
+<div class="p-3 border-t border-outline-variant/10">
+<div class="flex items-center gap-2 text-[11px] text-outline italic">
+<span class="material-symbols-outlined text-xs" data-icon="auto_fix">auto_fix</span>
+                    Relay is refactoring buffer allocation to prevent heap fragmentation.
+                </div>
+</div>
+</section>
+<!-- 3. Approval Panel (Human-in-the-loop) -->
+<section class="bg-surface-container-high rounded-xl p-5 border-l-2 border-tertiary shadow-xl">
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="front_hand">front_hand</span>
+</div>
+<div>
+<h3 class="font-headline text-lg font-bold leading-none">Intervention Required</h3>
+<p class="font-label text-[10px] text-tertiary uppercase tracking-widest mt-1">Status: Stuck</p>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                    Agent encountered a legacy dependency `ws-buffer-mgr` that conflicts with the proposed fix. Manual override or path confirmation required.
+                </p>
+<div class="grid grid-cols-2 gap-3 pt-2">
+<button class="bg-surface-container-highest hover:bg-surface-bright text-on-surface py-3 rounded-lg font-bold text-sm transition-colors border border-outline-variant/40">
+                        Reject Fix
+                    </button>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary py-3 rounded-lg font-bold text-sm shadow-lg shadow-primary-container/20">
+                        Approve &amp; Patch
+                    </button>
+</div>
+<button class="w-full flex items-center justify-center gap-2 py-2 text-xs text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="chat_bubble">chat_bubble</span>
+                    Ask Agent for Clarification
+                </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Shell -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center pb-6 pt-2 px-4 bg-[#131315]/80 backdrop-blur-xl border-t border-[#474553]/40 shadow-[0_-4px_20px_rgba(83,74,183,0.08)] z-50">
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300 ease-in-out">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest">Overview</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-xl py-2 px-4 transition-all duration-300 ease-in-out">
+<span class="material-symbols-outlined" data-icon="Receipt_Long" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest">Activity</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300 ease-in-out">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest">Intake</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300 ease-in-out">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest">Config</span>
+</div>
+</nav>
+</body></html>

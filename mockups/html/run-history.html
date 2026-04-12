@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#201f21",
+                    "primary-fixed-dim": "#c5c0ff",
+                    "outline-variant": "#474553",
+                    "inverse-on-surface": "#303032",
+                    "tertiary-container": "#824e00",
+                    "on-tertiary-container": "#ffc78c",
+                    "surface": "#131315",
+                    "surface-tint": "#c5c0ff",
+                    "on-tertiary-fixed-variant": "#673d00",
+                    "error-container": "#93000a",
+                    "secondary-fixed": "#86f8c9",
+                    "surface-container-low": "#1b1b1d",
+                    "on-tertiary-fixed": "#2b1700",
+                    "on-secondary-fixed-variant": "#00513a",
+                    "secondary-fixed-dim": "#68dbae",
+                    "on-primary": "#28188c",
+                    "tertiary": "#ffb869",
+                    "inverse-primary": "#584fbc",
+                    "on-surface": "#e5e1e4",
+                    "on-secondary": "#003827",
+                    "tertiary-fixed-dim": "#ffb869",
+                    "secondary-container": "#26a37a",
+                    "on-background": "#e5e1e4",
+                    "tertiary-fixed": "#ffdcbb",
+                    "primary-fixed": "#e3dfff",
+                    "on-surface-variant": "#c8c4d5",
+                    "inverse-surface": "#e5e1e4",
+                    "surface-container-highest": "#353437",
+                    "background": "#131315",
+                    "surface-dim": "#131315",
+                    "surface-container-high": "#2a2a2c",
+                    "on-error": "#690005",
+                    "surface-container-lowest": "#0e0e10",
+                    "error": "#ffb4ab",
+                    "on-tertiary": "#482900",
+                    "surface-bright": "#39393b",
+                    "primary": "#c5c0ff",
+                    "on-secondary-fixed": "#002115",
+                    "primary-container": "#534ab7",
+                    "on-primary-fixed": "#140067",
+                    "surface-variant": "#353437",
+                    "secondary": "#68dbae",
+                    "on-primary-fixed-variant": "#3f35a3",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-container": "#d1ccff",
+                    "outline": "#928f9e",
+                    "on-secondary-container": "#003121"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pipeline-gradient-primary {
+            background: linear-gradient(135deg, #c5c0ff 0%, #534ab7 100%);
+        }
+        .glass-panel {
+            background: rgba(53, 52, 55, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary/30 antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#131315] dark:bg-[#131315]">
+<div class="flex items-center justify-between px-6 h-16 w-full max-w-full bg-[#1B1B1D]">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#C5C0FF]" data-icon="terminal">terminal</span>
+<h1 class="text-xl font-bold tracking-tighter text-[#C5C0FF] font-['Space_Grotesk']">RELAY</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8 font-['JetBrains_Mono'] text-xs tracking-widest uppercase">
+<a class="text-[#474553] hover:text-[#BA7517] transition-colors" href="#">Overview</a>
+<a class="text-[#C5C0FF]" href="#">Activity</a>
+<a class="text-[#474553] hover:text-[#BA7517] transition-colors" href="#">Intake</a>
+<a class="text-[#474553] hover:text-[#BA7517] transition-colors" href="#">Config</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="cursor-pointer active:opacity-80 rounded-full overflow-hidden w-8 h-8 border border-outline-variant/30">
+<img alt="User profile photo" data-alt="close-up portrait of a tech professional in a dark studio setting with soft purple rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOsrCII4631ROiKkCSTEMXFGWM5l_AXxxOBFFrERxm5QPW51n7Vj6hC3HbJErXe0ELAhy8lB0vubRYn0ZzPpR3xnj5AYm2qQZGWwbtSh7btmVyJkZpsYa3gbD5jvcY0Ciz2BXI8EcpwgMsVNM3_GbWXGvsN7GJIOczmFEhPaVRiYRPRxTOuLTM9nT_Op75dQZGILujSK7i0P7W1ZAtUFgALDN8dXT9woEpkf2ZspI_whIXuGOT27cjq69NJ-WzPIT3xtQS-gkDMIZS"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Header Info -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="font-label text-[10px] tracking-[0.2em] text-outline uppercase bg-surface-container-high px-2 py-0.5 rounded">Issue-402</span>
+<span class="font-label text-[10px] tracking-[0.2em] text-[#BA7517] uppercase bg-[#BA7517]/10 px-2 py-0.5 rounded border border-[#BA7517]/20">Stuck</span>
+</div>
+<h2 class="font-headline text-4xl font-bold tracking-tight text-on-surface">Memory leak in WebSocket orchestration</h2>
+<p class="text-on-surface-variant mt-2 max-w-2xl">Full execution trace of the automated resolution pipeline. System encountered logic conflicts during the verification phase of Iteration 2.</p>
+</div>
+<div class="flex gap-3">
+<button class="pipeline-gradient-primary text-on-primary font-label text-xs font-bold px-4 py-2 rounded-md transition-transform active:scale-95">RETRY RUN</button>
+<button class="bg-surface-container-high hover:bg-surface-bright text-on-surface font-label text-xs px-4 py-2 rounded-md transition-colors">EXPORT LOGS</button>
+</div>
+</div>
+</section>
+<!-- Timeline Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: The Timeline -->
+<div class="lg:col-span-8 space-y-12 relative">
+<!-- Vertical Line -->
+<div class="absolute left-[19px] top-4 bottom-4 w-[2px] bg-outline-variant/20"></div>
+<!-- Iteration 1 -->
+<div class="relative pl-12 group">
+<div class="absolute left-0 top-1 w-10 h-10 rounded-full bg-surface-container border-2 border-primary-container flex items-center justify-center z-10">
+<span class="font-label text-xs text-primary font-bold">01</span>
+</div>
+<div class="mb-4">
+<span class="font-label text-xs text-outline uppercase tracking-widest">Iteration 1 — Complete</span>
+<h3 class="font-headline text-xl font-semibold mt-1">Initial Analysis &amp; Implementation</h3>
+</div>
+<div class="space-y-4">
+<!-- Stage: Preflight -->
+<div class="bg-surface-container-low rounded-xl p-5 border-l-4 border-[#534AB7]">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#534AB7] text-sm" data-icon="rocket_launch">rocket_launch</span>
+<span class="font-label text-[10px] text-[#534AB7] uppercase font-bold tracking-widest">Preflight</span>
+</div>
+<span class="font-label text-[10px] text-outline">14:20:01.442</span>
+</div>
+<p class="text-sm text-on-surface-variant font-label">Analyzed 14 files. Identified primary leak source in <code class="text-primary-fixed-dim">src/network/ws_manager.ts</code> line 242.</p>
+</div>
+<!-- Stage: Implement -->
+<div class="bg-surface-container-low rounded-xl p-5 border-l-4 border-[#BA7517]">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#BA7517] text-sm" data-icon="construction">construction</span>
+<span class="font-label text-[10px] text-[#BA7517] uppercase font-bold tracking-widest">Implement</span>
+</div>
+<span class="font-label text-[10px] text-outline">14:21:15.890</span>
+</div>
+<div class="bg-surface-container-lowest rounded p-3 font-label text-[13px] leading-relaxed overflow-x-auto">
+<div class="text-secondary opacity-70">- this.clients.delete(id);</div>
+<div class="text-secondary">+ this.cleanup(id);</div>
+<div class="text-secondary">+ this.clients.delete(id);</div>
+</div>
+</div>
+<!-- Stage: Verify -->
+<div class="bg-surface-container-low rounded-xl p-5 border-l-4 border-[#639922]">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#639922] text-sm" data-icon="task_alt">task_alt</span>
+<span class="font-label text-[10px] text-[#639922] uppercase font-bold tracking-widest">Verify</span>
+</div>
+<span class="font-label text-[10px] text-outline">14:22:40.112</span>
+</div>
+<p class="text-sm text-on-surface-variant">Unit tests passed. Integration tests failed on <code class="text-error">concurrency_stress_test</code>. Initiating bounce to Iteration 2.</p>
+</div>
+</div>
+</div>
+<!-- Iteration 2 (Active/Stuck) -->
+<div class="relative pl-12">
+<!-- Bounce Indicator -->
+<div class="absolute -top-8 left-4 flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-[#EF9F27] text-xl animate-bounce" data-icon="keyboard_double_arrow_down">keyboard_double_arrow_down</span>
+</div>
+<div class="absolute left-0 top-1 w-10 h-10 rounded-full bg-surface-container border-2 border-[#EF9F27] flex items-center justify-center z-10 shadow-[0_0_15px_rgba(239,159,39,0.2)]">
+<span class="font-label text-xs text-[#EF9F27] font-bold">02</span>
+</div>
+<div class="mb-4">
+<span class="font-label text-xs text-[#EF9F27] uppercase tracking-widest">Iteration 2 — Stuck</span>
+<h3 class="font-headline text-xl font-semibold mt-1">Refining Concurrency Logic</h3>
+</div>
+<div class="space-y-4">
+<!-- Stage: Implement -->
+<div class="bg-surface-container-low rounded-xl p-5 border-l-4 border-[#BA7517]">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#BA7517] text-sm" data-icon="construction">construction</span>
+<span class="font-label text-[10px] text-[#BA7517] uppercase font-bold tracking-widest">Implement</span>
+</div>
+<span class="font-label text-[10px] text-outline">14:25:30.004</span>
+</div>
+<p class="text-sm text-on-surface-variant font-label">Applying mutex lock around the socket collection to prevent race conditions during heavy ingress.</p>
+</div>
+<!-- Stage: Verify (The Point of Failure) -->
+<div class="bg-surface-container-high rounded-xl p-6 border border-[#EF9F27]/40 ring-1 ring-[#EF9F27]/10">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#EF9F27] text-sm" data-icon="error">error</span>
+<span class="font-label text-[10px] text-[#EF9F27] uppercase font-bold tracking-widest">Verify (Critical Halt)</span>
+</div>
+<span class="font-label text-[10px] text-outline">14:28:12.981</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded mb-4">
+<h4 class="font-label text-xs text-error mb-2 uppercase tracking-tighter">Stack Trace / Failure Context:</h4>
+<pre class="font-label text-[12px] text-on-surface-variant leading-tight">FatalError: Deadlock detected in Thread 4
+  at SocketPool.acquire (src/core/pool.ts:88:12)
+  at ws_manager.ts:245:10
+  ---
+  Waiting for: Mutex(0x8f22) held by Thread 2
+  Thread 2 is waiting for: Mutex(0x44a1) held by Thread 4
+                                </pre>
+</div>
+<div class="flex flex-col gap-3">
+<label class="font-label text-[10px] text-outline uppercase tracking-widest">Provide Guidance to Resume:</label>
+<textarea class="w-full bg-surface-container-lowest border-none rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary h-24 placeholder:text-outline/50" placeholder="e.g. 'Use a try-finally block to ensure the mutex is always released...'"></textarea>
+<button class="w-full bg-[#EF9F27] hover:bg-[#EF9F27]/90 text-[#131315] font-label text-xs font-bold py-3 rounded-lg transition-all">RESOLVE &amp; RE-RUN PIPELINE</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Metadata & System Stats -->
+<div class="lg:col-span-4 space-y-6">
+<!-- System Output Bento -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<h4 class="font-label text-[10px] text-outline uppercase tracking-[0.2em] mb-6">Run Statistics</h4>
+<div class="grid grid-cols-2 gap-6">
+<div>
+<span class="block text-xs text-outline font-label mb-1">Total Time</span>
+<span class="text-2xl font-headline font-bold">08:12<small class="text-xs text-outline font-normal">s</small></span>
+</div>
+<div>
+<span class="block text-xs text-outline font-label mb-1">Iterations</span>
+<span class="text-2xl font-headline font-bold">02</span>
+</div>
+<div>
+<span class="block text-xs text-outline font-label mb-1">Files Mod</span>
+<span class="text-2xl font-headline font-bold">04</span>
+</div>
+<div>
+<span class="block text-xs text-outline font-label mb-1">Confidence</span>
+<span class="text-2xl font-headline font-bold text-secondary">88%</span>
+</div>
+</div>
+</div>
+<!-- Guidance Logs -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<h4 class="font-label text-[10px] text-outline uppercase tracking-[0.2em] mb-4">Human Input History</h4>
+<div class="space-y-4">
+<div class="flex gap-3">
+<div class="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="person">person</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant leading-relaxed">"Ensure you check for null pointers on the client object before calling cleanup."</p>
+<span class="text-[10px] text-outline font-label mt-1 block">Applied to Iteration 1</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Environment Details -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10">
+<div class="px-6 py-4 border-b border-outline-variant/10">
+<h4 class="font-label text-[10px] text-outline uppercase tracking-[0.2em]">Runtime Context</h4>
+</div>
+<div class="p-6 space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-xs text-outline font-label">Engine</span>
+<span class="text-xs font-label">Relay-v2.1.0-alpha</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-outline font-label">Sandbox</span>
+<span class="text-xs font-label text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Isolated
+                            </span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-outline font-label">Commit</span>
+<span class="text-xs font-label text-primary hover:underline cursor-pointer">8af3c2e</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-[#131315]/80 backdrop-blur-xl border-t border-[#2A2A2C] z-50 md:hidden">
+<button class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 transition-all hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Overview</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-lg px-4 py-1 transition-all">
+<span class="material-symbols-outlined" data-icon="Receipt_Long">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Activity</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 transition-all hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Intake</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 transition-all hover:text-[#BA7517]">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Config</span>
+</button>
+</nav>
+</body></html>

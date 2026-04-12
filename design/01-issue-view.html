@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relay — Issue View</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { padding: 24px; }
+    .back { font-size: 12px; color: var(--color-text-tertiary); text-decoration: none; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 16px; }
+    .back:hover { color: var(--color-text-primary); }
+    .shell {
+      display: grid;
+      grid-template-columns: 220px 1fr 260px;
+      grid-template-rows: 38px 1fr;
+      height: 580px;
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+      background: var(--color-background-primary);
+    }
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 14px;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+      background: var(--color-background-secondary);
+    }
+    .topbar-logo { font-weight: 500; font-size: 13px; color: var(--color-text-primary); display: flex; align-items: center; gap: 6px; }
+    .logo-dot { width: 7px; height: 7px; border-radius: 50%; background: #534AB7; }
+    .topbar-sep { flex: 1; }
+    .topbar-chip { font-size: 11px; color: var(--color-text-secondary); background: var(--color-background-tertiary); border: 0.5px solid var(--color-border-tertiary); border-radius: 4px; padding: 2px 7px; }
+    .avatar { width: 22px; height: 22px; border-radius: 50%; background: #AFA9EC; color: #3C3489; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+    .sidebar { border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; overflow: hidden; background: var(--color-background-secondary); }
+    .sidebar-section { padding: 10px 10px 6px; font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: .06em; text-transform: uppercase; }
+    .issue-row { display: flex; flex-direction: column; padding: 7px 12px; cursor: pointer; border-left: 2px solid transparent; gap: 2px; }
+    .issue-row:hover { background: var(--color-background-tertiary); }
+    .issue-row.active { background: var(--color-background-primary); border-left-color: #534AB7; }
+    .issue-title { font-size: 12px; color: var(--color-text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .issue-meta { display: flex; align-items: center; gap: 5px; }
+    .stage-pill { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 500; }
+    .s-specify   { background: #E6F1FB; color: #185FA5; }
+    .s-plan      { background: #EEEDFE; color: #534AB7; }
+    .s-implement { background: #FAEEDA; color: #854F0B; }
+    .s-verify    { background: #EAF3DE; color: #3B6D11; }
+    .s-release   { background: #E1F5EE; color: #0F6E56; }
+    .s-queued    { background: var(--color-background-tertiary); color: var(--color-text-tertiary); }
+    .issue-id { font-size: 10px; color: var(--color-text-tertiary); }
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+    .pipeline-bar { display: flex; align-items: stretch; border-bottom: 0.5px solid var(--color-border-tertiary); height: 48px; padding: 0 20px; }
+    .stage-step { display: flex; align-items: center; gap: 6px; padding: 0 14px; font-size: 12px; color: var(--color-text-tertiary); position: relative; }
+    .stage-step.done { color: var(--color-text-secondary); }
+    .stage-step.active { color: #534AB7; font-weight: 500; }
+    .stage-step.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #534AB7; border-radius: 1px 1px 0 0; }
+    .step-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-border-secondary); flex-shrink: 0; }
+    .stage-step.done .step-dot { background: #639922; }
+    .stage-step.active .step-dot { background: #534AB7; }
+    .step-arrow { color: var(--color-border-secondary); font-size: 11px; padding: 0 2px; align-self: center; }
+    .main-content { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+    .issue-header { display: flex; flex-direction: column; gap: 4px; }
+    .issue-title-lg { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+    .issue-sub { font-size: 12px; color: var(--color-text-tertiary); display: flex; gap: 10px; }
+    .agent-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+    .agent-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+    .agent-badge { width: 22px; height: 22px; border-radius: 50%; background: #EEEDFE; color: #534AB7; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .agent-name { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+    .agent-status { font-size: 11px; color: var(--color-text-tertiary); }
+    .pulse { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; margin-left: auto; flex-shrink: 0; animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .agent-log { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 11px; }
+    .log-line { display: flex; gap: 8px; align-items: flex-start; }
+    .log-time { color: var(--color-text-tertiary); flex-shrink: 0; padding-top: 1px; }
+    .log-msg { color: var(--color-text-secondary); line-height: 1.5; }
+    .log-msg.active { color: var(--color-text-primary); }
+    .log-msg .hl { color: #7F77DD; }
+    .log-msg .ok { color: #639922; }
+    .diff-block { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+    .diff-header { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+    .diff-body { padding: 8px 14px; font-family: var(--font-mono); font-size: 11px; line-height: 1.6; }
+    .diff-add { color: #3B6D11; background: #EAF3DE; display: block; margin: 0 -14px; padding: 0 14px; }
+    .diff-del { color: #A32D2D; background: #FCEBEB; display: block; margin: 0 -14px; padding: 0 14px; }
+    .diff-ctx { color: var(--color-text-tertiary); display: block; }
+    .right-panel { border-left: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; overflow: hidden; }
+    .rp-section { padding: 12px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; gap: 8px; }
+    .rp-label { font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: .06em; }
+    .rp-row { display: flex; justify-content: space-between; align-items: center; }
+    .rp-key { font-size: 12px; color: var(--color-text-secondary); }
+    .rp-val { font-size: 12px; color: var(--color-text-primary); font-weight: 500; }
+    .checklist { display: flex; flex-direction: column; gap: 5px; }
+    .check-row { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+    .chk-done { color: #3B6D11; font-size: 11px; }
+    .chk-pending { color: var(--color-text-tertiary); font-size: 11px; }
+    .chk-active { color: #534AB7; font-size: 11px; }
+    .approval-box { margin: 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
+    .approval-header { padding: 10px 12px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+    .approval-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .approval-msg { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+    .btn-approve { display: flex; align-items: center; justify-content: center; padding: 7px 0; background: #534AB7; color: #fff; border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500; cursor: pointer; border: none; }
+    .btn-request { display: flex; align-items: center; justify-content: center; padding: 6px 0; background: transparent; color: var(--color-text-secondary); border-radius: var(--border-radius-md); font-size: 12px; cursor: pointer; border: 0.5px solid var(--color-border-tertiary); }
+    .rp-spacer { flex: 1; }
+  </style>
+</head>
+<body>
+  <a class="back" href="index.html">← Back to index</a>
+  <div class="shell">
+    <div class="topbar">
+      <div class="topbar-logo"><div class="logo-dot"></div>Relay</div>
+      <div class="topbar-sep"></div>
+      <div class="topbar-chip">3 active</div>
+      <div class="topbar-chip">1 awaiting review</div>
+      <div class="avatar">ML</div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-section">In progress</div>
+      <div class="issue-row active">
+        <div class="issue-title">Auth token expiry bug</div>
+        <div class="issue-meta"><span class="stage-pill s-implement">implement</span><span class="issue-id">#418</span></div>
+      </div>
+      <div class="issue-row">
+        <div class="issue-title">Add export to CSV</div>
+        <div class="issue-meta"><span class="stage-pill s-verify">verify</span><span class="issue-id">#412</span></div>
+      </div>
+      <div class="issue-row">
+        <div class="issue-title">Search ranking tweak</div>
+        <div class="issue-meta"><span class="stage-pill s-plan">plan</span><span class="issue-id">#407</span></div>
+      </div>
+      <div class="sidebar-section" style="margin-top:8px">Queue</div>
+      <div class="issue-row">
+        <div class="issue-title">Dark mode flicker fix</div>
+        <div class="issue-meta"><span class="stage-pill s-queued">queued</span><span class="issue-id">#421</span></div>
+      </div>
+      <div class="issue-row">
+        <div class="issue-title">Notifications refactor</div>
+        <div class="issue-meta"><span class="stage-pill s-queued">queued</span><span class="issue-id">#419</span></div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="pipeline-bar">
+        <div class="stage-step done"><div class="step-dot"></div>Preflight</div>
+        <span class="step-arrow">›</span>
+        <div class="stage-step active"><div class="step-dot"></div>Implement</div>
+        <span class="step-arrow">›</span>
+        <div class="stage-step"><div class="step-dot"></div>Verify</div>
+        <span class="step-arrow">›</span>
+        <div class="stage-step"><div class="step-dot"></div>Release</div>
+      </div>
+      <div class="main-content">
+        <div class="issue-header">
+          <div class="issue-title-lg">Auth token expiry not handled in middleware</div>
+          <div class="issue-sub"><span>#418</span><span>opened 2h ago</span><span>implement agent · running</span></div>
+        </div>
+        <div class="agent-card">
+          <div class="agent-header">
+            <div class="agent-badge">IA</div>
+            <div>
+              <div class="agent-name">Implement agent</div>
+              <div class="agent-status">Editing src/middleware/auth.ts</div>
+            </div>
+            <div class="pulse"></div>
+          </div>
+          <div class="agent-log">
+            <div class="log-line"><span class="log-time">09:14</span><span class="log-msg"><span class="ok">✓</span> Read pre-flight doc · 4 requirements loaded</span></div>
+            <div class="log-line"><span class="log-time">09:14</span><span class="log-msg"><span class="ok">✓</span> Located <span class="hl">verifyToken()</span> in middleware/auth.ts:42</span></div>
+            <div class="log-line"><span class="log-time">09:15</span><span class="log-msg"><span class="ok">✓</span> Added 401 path for expired tokens</span></div>
+            <div class="log-line"><span class="log-time">09:15</span><span class="log-msg active"><span class="hl">→</span> Writing refresh token fallback logic…</span></div>
+          </div>
+        </div>
+        <div class="diff-block">
+          <div class="diff-header"><span>src/middleware/auth.ts</span><span style="color:var(--color-text-tertiary)">+12 −3</span></div>
+          <div class="diff-body">
+            <span class="diff-ctx">  const decoded = jwt.decode(token);</span>
+            <span class="diff-del">- if (!decoded) return res.status(401).json({ error: 'Invalid token' });</span>
+            <span class="diff-add">+ if (!decoded) return res.status(401).json({ error: 'Invalid token', code: 'TOKEN_INVALID' });</span>
+            <span class="diff-add">+ if (decoded.exp &lt; Date.now() / 1000) {</span>
+            <span class="diff-add">+   return res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });</span>
+            <span class="diff-add">+ }</span>
+            <span class="diff-ctx">  req.user = decoded;</span>
+            <span class="diff-ctx">  next();</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <div class="rp-section">
+        <div class="rp-label">Details</div>
+        <div class="rp-row"><span class="rp-key">Stage</span><span class="stage-pill s-implement">implement</span></div>
+        <div class="rp-row"><span class="rp-key">Agent</span><span class="rp-val">Implement agent</span></div>
+        <div class="rp-row"><span class="rp-key">Elapsed</span><span class="rp-val">1m 34s</span></div>
+        <div class="rp-row"><span class="rp-key">Files changed</span><span class="rp-val">2</span></div>
+      </div>
+      <div class="rp-section">
+        <div class="rp-label">Stage checklist</div>
+        <div class="checklist">
+          <div class="check-row"><span class="chk-done">✓</span><span>Plan reviewed</span></div>
+          <div class="check-row"><span class="chk-done">✓</span><span>Repo context loaded</span></div>
+          <div class="check-row"><span class="chk-active">·</span><span style="color:var(--color-text-primary)">Code changes written</span></div>
+          <div class="check-row"><span class="chk-pending">○</span><span style="color:var(--color-text-tertiary)">Tests updated</span></div>
+          <div class="check-row"><span class="chk-pending">○</span><span style="color:var(--color-text-tertiary)">Ready for verify</span></div>
+        </div>
+      </div>
+      <div class="rp-spacer"></div>
+      <div class="approval-box">
+        <div class="approval-header">Approve to next stage</div>
+        <div class="approval-body">
+          <div class="approval-msg">Implementation complete. Review the diff and approve to hand off to the verify agent.</div>
+          <button class="btn-approve">Approve → Verify</button>
+          <button class="btn-request">Request changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

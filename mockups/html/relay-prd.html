@@ -1,0 +1,53 @@
+# Relay — Design Documentation
+An agentic issue pipeline. Each stage is handled by a focused agent with a specific tool set. Human-in-the-loop is configurable at the workspace, stage, and issue level.
+---
+## Pipeline
+Preflight → Implement → Verify → Release
+Four stages. Each agent only has access to the tools relevant to its stage.
+| Stage | Agent tools |
+|-------|-------------|
+| Preflight | Issue tracker, web search, clarification dialogue |
+| Implement | File editor, terminal, linter |
+| Verify | Test runner, static analysis, coverage diff |
+| Release | Git, CI/CD, changelog writer, deploy API |
+---
+## Screens
+- index.html: Overview and navigation
+- 01-issue-view.html: 3-panel layout — queue, active issue, approval panel
+- 02-preflight.html: Clarification mode + pre-flight doc output (interactive)
+- 03-implement-verify-release.html: Live diff, test runner, changelog, PR
+- 04-run-history.html: Full run timeline with bounces and iteration labels
+- 05-stuck-states.html: Four stuck state scenarios with resolution actions
+- 06-activity-feed.html: Global pipeline health — stats, snapshot, event stream
+- 07-intake.html: Connected sources, filter rules, incoming queue
+- 08-configure-autonomy.html: Global level, per-stage overrides, escalation rules
+---
+## Key Design Decisions
+### 1. Why four stages (not five)
+An earlier design had Specify and Plan as separate stages, but they were merged into Preflight. The context needed to do both is identical — the agent reads the issue and the codebase regardless.
+### 2. Autonomy model
+Four levels: Manual, Supervised, Assisted, Autonomous.
+Scopes: Escalation rules, Issue level, Stage level, Global default.
+### 3. Preflight document
+The pre-flight doc is the contract between Preflight and Implement. Sections: Summary, Requirements, Acceptance criteria, Affected files, Approach, Scope assessment.
+### 4. Clarification mode
+Structured as choices (radio buttons) where possible.
+### 5. The verify → implement loop
+Failure context travels with the bounce.
+### 6. Stuck states
+Iteration cap, Timeout, Agent uncertain, External blocker.
+### 7. Run history
+↺ N badge for iterations.
+### 8. Activity feed
+Agent events + human actions.
+### 9. Intake model
+Connected sources (GitHub, Linear, Jira). Filter rules. Queue checkpoint.
+### 10. Focused agents with bounded tool sets
+Stage-specific tools only.
+---
+## Color system (stage reference)
+- Preflight: Purple #534AB7
+- Implement: Amber #BA7517
+- Verify: Green #639922
+- Release: Teal #1D9E75
+- Stuck: Amber with border #EF9F27

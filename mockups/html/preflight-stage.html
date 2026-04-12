@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Relay Pipeline - Preflight Stage</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#690005",
+                        "surface-dim": "#131315",
+                        "on-background": "#e5e1e4",
+                        "error-container": "#93000a",
+                        "on-secondary-container": "#003121",
+                        "surface-variant": "#353437",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed": "#002115",
+                        "on-primary-fixed": "#140067",
+                        "on-primary-container": "#d1ccff",
+                        "on-tertiary-fixed": "#2b1700",
+                        "primary": "#c5c0ff",
+                        "tertiary": "#ffb869",
+                        "surface-container-low": "#1b1b1d",
+                        "secondary": "#68dbae",
+                        "inverse-primary": "#584fbc",
+                        "primary-fixed": "#e3dfff",
+                        "primary-container": "#534ab7",
+                        "secondary-container": "#26a37a",
+                        "on-primary-fixed-variant": "#3f35a3",
+                        "on-secondary": "#003827",
+                        "inverse-on-surface": "#303032",
+                        "inverse-surface": "#e5e1e4",
+                        "tertiary-fixed-dim": "#ffb869",
+                        "on-tertiary-fixed-variant": "#673d00",
+                        "on-surface": "#e5e1e4",
+                        "on-primary": "#28188c",
+                        "surface-container-lowest": "#0e0e10",
+                        "surface": "#131315",
+                        "surface-container": "#201f21",
+                        "on-tertiary": "#482900",
+                        "background": "#131315",
+                        "tertiary-fixed": "#ffdcbb",
+                        "on-tertiary-container": "#ffc78c",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "surface-container-high": "#2a2a2c",
+                        "surface-bright": "#39393b",
+                        "tertiary-container": "#824e00",
+                        "surface-tint": "#c5c0ff",
+                        "on-surface-variant": "#c8c4d5",
+                        "secondary-fixed": "#86f8c9",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "surface-container-highest": "#353437",
+                        "secondary-fixed-dim": "#68dbae",
+                        "outline": "#928f9e",
+                        "outline-variant": "#474553",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen flex flex-col">
+<!-- TopAppBar Component -->
+<header class="bg-[#131315] flex justify-between items-center px-6 h-16 w-full max-w-full sticky top-0 z-50">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 flex items-center justify-center bg-surface-container-high rounded-lg">
+<span class="material-symbols-outlined text-[#C5C0FF]">terminal</span>
+</div>
+<h1 class="font-['Space_Grotesk'] text-lg font-bold tracking-tight text-[#C5C0FF]">Relay Pipeline</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-['JetBrains_Mono'] text-xs uppercase tracking-widest text-[#C5C0FF] hover:bg-[#2A2A2C] transition-colors px-3 py-1 rounded" href="#">Overview</a>
+<a class="font-['JetBrains_Mono'] text-xs uppercase tracking-widest text-[#474553] hover:bg-[#2A2A2C] transition-colors px-3 py-1 rounded" href="#">Activity</a>
+<a class="font-['JetBrains_Mono'] text-xs uppercase tracking-widest text-[#474553] hover:bg-[#2A2A2C] transition-colors px-3 py-1 rounded" href="#">Intake</a>
+<a class="font-['JetBrains_Mono'] text-xs uppercase tracking-widest text-[#474553] hover:bg-[#2A2A2C] transition-colors px-3 py-1 rounded" href="#">Config</a>
+</nav>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest ring-1 ring-outline-variant/40">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Close up portrait of a professional system administrator avatar in a digital minimalist style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeikhM3Setqnu0ZxUQSsqMsOJuGex8iXtCOlc1zsbKv__LZPvgoJ99pk7YaZW3T_YXi2mVEZnI85j3kMSaOesFusmKwsKzEyLCcweq7iyAJpPCmGHV1XXstz2YYVdQ_EPl24MRC5-yvHXP-HQ6YJhQXKVSm4v0xsu_V0bWGcgI_8UndpHwA4TBhY_Ab8SjV046-H8aFhA6wooLD_yfvoqphY0AUf0p9DkYgyX64qCN__jhZkJBmVm6l9DKT5CWBKGR9ssQnuZKEdzB"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- NavigationDrawer Component -->
+<aside class="hidden lg:flex flex-col h-full w-72 bg-[#1B1B1D] py-8 border-r border-outline-variant/10">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 mb-1">
+<span class="text-sm font-bold text-[#534AB7] font-['Space_Grotesk']">Relay Engine</span>
+<span class="text-[10px] font-['JetBrains_Mono'] bg-surface-container-high px-1.5 py-0.5 rounded text-secondary">ACTIVE</span>
+</div>
+<p class="text-xs text-outline font-['JetBrains_Mono']">v2.4.0-stable</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-sm text-[#474553] hover:bg-[#201F21] transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">terminal</span>
+<span>System Logs</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-sm bg-[#2A2A2C] text-[#C5C0FF] border-l-2 border-[#68DBAE] transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">analytics</span>
+<span>Pipeline Health</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-sm text-[#474553] hover:bg-[#201F21] transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">group</span>
+<span>Team Access</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-sm text-[#474553] hover:bg-[#201F21] transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-lg">description</span>
+<span>Documentation</span>
+</a>
+</nav>
+<div class="mt-auto px-6">
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-2 h-2 rounded-full bg-[#534AB7] animate-pulse"></div>
+<span class="text-[10px] font-['JetBrains_Mono'] text-outline uppercase">Phase: Preflight</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-[#534AB7] h-full w-[15%]"></div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-surface p-6 md:p-8 no-scrollbar">
+<div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Agent Dialogue & Input -->
+<div class="lg:col-span-5 space-y-6">
+<div class="flex items-center gap-3 mb-2">
+<span class="text-[10px] font-['JetBrains_Mono'] text-[#534AB7] bg-primary-container/20 px-2 py-1 rounded border border-primary-container/30 uppercase tracking-widest">Stage 02</span>
+<h2 class="font-headline text-2xl font-bold tracking-tight text-on-surface">Agentic Clarification</h2>
+</div>
+<!-- Agent Dialogue Card -->
+<div class="bg-surface-container-low rounded-2xl p-6 border-l-4 border-[#534AB7] shadow-xl">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary">smart_toy</span>
+</div>
+<div class="space-y-4">
+<p class="text-on-surface leading-relaxed text-sm">
+                                    I've analyzed the initial intake requirements for the <span class="font-['JetBrains_Mono'] text-primary">auth-migration-v2</span> ticket. To finalize the Pre-flight Doc, I need to clarify the scope of the token invalidation strategy. 
+                                </p>
+<p class="text-on-surface/80 text-sm italic">
+                                    "Should we trigger a global sign-out across all sessions, or allow existing JWTs to expire naturally?"
+                                </p>
+</div>
+</div>
+</div>
+<!-- Input Mode: Structured Radio Group -->
+<div class="space-y-3">
+<p class="font-['JetBrains_Mono'] text-[10px] text-outline uppercase tracking-wider px-1">Select Implementation Strategy</p>
+<label class="block cursor-pointer group">
+<input checked="" class="hidden peer" name="strategy" type="radio"/>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low border border-transparent peer-checked:bg-surface-container-highest peer-checked:border-l-2 peer-checked:border-secondary transition-all">
+<div class="w-5 h-5 rounded-full border-2 border-outline peer-checked:border-secondary flex items-center justify-center shrink-0">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary scale-0 peer-checked:scale-100 transition-transform"></div>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Global Session Invalidation</p>
+<p class="text-xs text-outline">Forces all users to re-authenticate. High security, disruptive.</p>
+</div>
+</div>
+</label>
+<label class="block cursor-pointer group">
+<input class="hidden peer" name="strategy" type="radio"/>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low border border-transparent peer-checked:bg-surface-container-highest peer-checked:border-l-2 peer-checked:border-secondary transition-all">
+<div class="w-5 h-5 rounded-full border-2 border-outline flex items-center justify-center shrink-0">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary scale-0 transition-transform"></div>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Graceful Expiration</p>
+<p class="text-xs text-outline">Existing tokens remain valid until TTL. Low disruption, transient risk.</p>
+</div>
+</div>
+</label>
+<label class="block cursor-pointer group">
+<input class="hidden peer" name="strategy" type="radio"/>
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low border border-transparent peer-checked:bg-surface-container-highest peer-checked:border-l-2 peer-checked:border-secondary transition-all">
+<div class="w-5 h-5 rounded-full border-2 border-outline flex items-center justify-center shrink-0">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary scale-0 transition-transform"></div>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Hybrid Canary Rollout</p>
+<p class="text-xs text-outline">Invalidate sessions for 10% of internal traffic first.</p>
+</div>
+</div>
+</label>
+</div>
+<button class="w-full py-4 rounded-xl bg-gradient-to-br from-[#c5c0ff] to-[#534ab7] text-[#140067] font-bold text-sm tracking-wide shadow-lg shadow-primary-container/20 active:scale-[0.98] transition-all">
+                        CONFIRM PREFLIGHT PARAMETERS
+                    </button>
+</div>
+<!-- Right Column: Pre-flight Doc Output -->
+<div class="lg:col-span-7">
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/30 flex flex-col h-full shadow-2xl overflow-hidden">
+<!-- Terminal Header -->
+<div class="bg-surface-container px-6 py-3 flex items-center justify-between border-b border-outline-variant/10">
+<div class="flex items-center gap-2">
+<div class="flex gap-1.5">
+<div class="w-2.5 h-2.5 rounded-full bg-error/40"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary/40"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-secondary/40"></div>
+</div>
+<span class="ml-4 font-['JetBrains_Mono'] text-xs text-outline">PREFLIGHT_DOC_GENERATED.md</span>
+</div>
+<span class="material-symbols-outlined text-outline text-sm">content_copy</span>
+</div>
+<!-- Content Area -->
+<div class="p-8 space-y-8 overflow-y-auto no-scrollbar font-body text-sm">
+<!-- Summary -->
+<section>
+<h3 class="font-['JetBrains_Mono'] text-[#534AB7] text-xs font-bold uppercase tracking-widest mb-4">01. Executive Summary</h3>
+<p class="text-on-surface/90 leading-relaxed bg-surface-container/30 p-4 rounded-lg border-l-2 border-[#534AB7]/30">
+                                    The proposed migration shifts the authentication layer from legacy session-cookies to a stateless JWT architecture using the <span class="text-primary">@relay/auth-v2</span> library. This move aims to reduce database latency by 140ms per request.
+                                </p>
+</section>
+<!-- Requirements -->
+<section>
+<h3 class="font-['JetBrains_Mono'] text-[#534AB7] text-xs font-bold uppercase tracking-widest mb-4">02. Technical Requirements</h3>
+<ul class="space-y-3">
+<li class="flex items-start gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-base">check_circle</span>
+<span>Update <code class="font-['JetBrains_Mono'] text-primary-fixed-dim">middleware.ts</code> to handle Authorization headers.</span>
+</li>
+<li class="flex items-start gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-base">check_circle</span>
+<span>Rotate encryption keys in the <code class="font-['JetBrains_Mono'] text-primary-fixed-dim">SecretStore</code> module.</span>
+</li>
+<li class="flex items-start gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-[#BA7517] text-base">pending</span>
+<span class="text-tertiary-fixed-dim">Configure Redis TTL for blacklisted tokens (Pending confirmation).</span>
+</li>
+</ul>
+</section>
+<!-- Affected Files -->
+<section>
+<h3 class="font-['JetBrains_Mono'] text-[#534AB7] text-xs font-bold uppercase tracking-widest mb-4">03. Impacted File Tree</h3>
+<div class="bg-surface-container-low p-4 rounded-lg font-['JetBrains_Mono'] text-[13px] leading-6 border border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="text-outline">src/</span>
+</div>
+<div class="flex items-center gap-2 ml-4">
+<span class="material-symbols-outlined text-sm text-tertiary">folder</span>
+<span class="text-on-surface">auth/</span>
+</div>
+<div class="flex items-center gap-2 ml-8 border-l border-outline-variant/30 pl-4">
+<span class="material-symbols-outlined text-sm text-secondary">description</span>
+<span class="text-on-surface">service.ts</span>
+<span class="ml-auto text-[10px] bg-secondary-container/20 text-secondary px-1.5 rounded">MODIFIED</span>
+</div>
+<div class="flex items-center gap-2 ml-8 border-l border-outline-variant/30 pl-4">
+<span class="material-symbols-outlined text-sm text-secondary">description</span>
+<span class="text-on-surface">types.d.ts</span>
+<span class="ml-auto text-[10px] bg-secondary-container/20 text-secondary px-1.5 rounded">MODIFIED</span>
+</div>
+<div class="flex items-center gap-2 ml-4">
+<span class="material-symbols-outlined text-sm text-primary">description</span>
+<span class="text-on-surface">middleware.ts</span>
+<span class="ml-auto text-[10px] bg-primary-container/20 text-primary px-1.5 rounded">REFACTORED</span>
+</div>
+</div>
+</section>
+<!-- Acceptance Criteria -->
+<section>
+<h3 class="font-['JetBrains_Mono'] text-[#534AB7] text-xs font-bold uppercase tracking-widest mb-4">04. Acceptance Criteria</h3>
+<div class="space-y-4">
+<div class="flex gap-4 p-4 bg-surface-container/50 rounded-xl">
+<div class="shrink-0 font-['JetBrains_Mono'] text-outline font-bold">AC-01</div>
+<p class="text-on-surface/80">User must be redirected to /login if JWT is missing or tampered with.</p>
+</div>
+<div class="flex gap-4 p-4 bg-surface-container/50 rounded-xl">
+<div class="shrink-0 font-['JetBrains_Mono'] text-outline font-bold">AC-02</div>
+<p class="text-on-surface/80">API response time for authenticated requests must remain &lt; 50ms.</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar Component -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center pb-6 pt-2 px-4 bg-[#131315]/80 backdrop-blur-xl border-t border-[#474553]/40 shadow-[0_-4px_20px_rgba(83,74,183,0.08)] md:hidden">
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Overview</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-xl py-2 px-4 transition-all duration-300">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Activity</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300">
+<span class="material-symbols-outlined">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Intake</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] py-2 px-4 hover:text-[#BA7517] transition-all duration-300">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Config</span>
+</div>
+</nav>
+</body></html>

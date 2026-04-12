@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container": "#201f21",
+            "primary-fixed-dim": "#c5c0ff",
+            "outline-variant": "#474553",
+            "inverse-on-surface": "#303032",
+            "tertiary-container": "#824e00",
+            "on-tertiary-container": "#ffc78c",
+            "surface": "#131315",
+            "surface-tint": "#c5c0ff",
+            "on-tertiary-fixed-variant": "#673d00",
+            "error-container": "#93000a",
+            "secondary-fixed": "#86f8c9",
+            "surface-container-low": "#1b1b1d",
+            "on-tertiary-fixed": "#2b1700",
+            "on-secondary-fixed-variant": "#00513a",
+            "secondary-fixed-dim": "#68dbae",
+            "on-primary": "#28188c",
+            "tertiary": "#ffb869",
+            "inverse-primary": "#584fbc",
+            "on-surface": "#e5e1e4",
+            "on-secondary": "#003827",
+            "tertiary-fixed-dim": "#ffb869",
+            "secondary-container": "#26a37a",
+            "on-background": "#e5e1e4",
+            "tertiary-fixed": "#ffdcbb",
+            "primary-fixed": "#e3dfff",
+            "on-surface-variant": "#c8c4d5",
+            "inverse-surface": "#e5e1e4",
+            "surface-container-highest": "#353437",
+            "background": "#131315",
+            "surface-dim": "#131315",
+            "surface-container-high": "#2a2a2c",
+            "on-error": "#690005",
+            "surface-container-lowest": "#0e0e10",
+            "error": "#ffb4ab",
+            "on-tertiary": "#482900",
+            "surface-bright": "#39393b",
+            "primary": "#c5c0ff",
+            "on-secondary-fixed": "#002115",
+            "primary-container": "#534ab7",
+            "on-primary-fixed": "#140067",
+            "surface-variant": "#353437",
+            "secondary": "#68dbae",
+            "on-primary-fixed-variant": "#3f35a3",
+            "on-error-container": "#ffdad6",
+            "on-primary-container": "#d1ccff",
+            "outline": "#928f9e",
+            "on-secondary-container": "#003121",
+            "stuck": "#EF9F27"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk"],
+            "body": ["Inter"],
+            "label": ["JetBrains Mono"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .stuck-pulse {
+      box-shadow: 0 0 0 0 rgba(239, 159, 39, 0.4);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 159, 39, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 159, 39, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 159, 39, 0); }
+    }
+    .glass-terminal {
+      background: rgba(53, 52, 55, 0.8);
+      backdrop-filter: blur(20px);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#131315] flex items-center justify-between px-6 h-16 w-full max-w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#C5C0FF]" data-icon="terminal">terminal</span>
+<h1 class="text-xl font-bold tracking-tighter text-[#C5C0FF] font-['Space_Grotesk']">RELAY</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#474553] font-['JetBrains_Mono'] text-xs uppercase tracking-widest hover:text-[#C5C0FF] transition-colors" href="#">Pipeline</a>
+<a class="text-[#C5C0FF] font-['JetBrains_Mono'] text-xs uppercase tracking-widest transition-colors" href="#">Incidents</a>
+<a class="text-[#474553] font-['JetBrains_Mono'] text-xs uppercase tracking-widest hover:text-[#C5C0FF] transition-colors" href="#">Resources</a>
+</nav>
+<div class="h-8 w-8 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="high contrast studio portrait of a professional developer with neutral lighting and dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX9PAUGQLBP6gjbcrCDUofWvfSTOxOSNefsOaOEUBfN2fNR5oQUpR93m8Z6F85hIn7tEOFV7j2lxq5AT74oLd8IZ82B_Y5m5p2GaeQTAWC-Z4K0LiB86yxSpzVGCTxHEHHr2TniSiDOOq4H3xgb6IB2cX2f7aeMOHi1Ooc_Rv0WHKmFc2vE6doR68xiCUWbAU4bA4jLDkLBWjm2Qm2OUjj8uvxK6Ti9ROpUPEucAkcg2iD7imzaGRPOR74hjW38Fi2RPWwz_nbt3jj"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Header Section -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="w-2 h-2 rounded-full bg-stuck stuck-pulse"></span>
+<span class="font-label text-stuck text-xs tracking-widest uppercase font-medium">Attention Required</span>
+</div>
+<h2 class="font-headline text-4xl font-bold tracking-tight text-on-surface">Stuck States</h2>
+<p class="text-on-surface-variant mt-2 max-w-xl">The agentic pipeline has encountered operational anomalies. Human intervention is required to resolve execution logic and resume progress.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-surface text-sm font-medium hover:bg-surface-bright transition-colors">
+            Export Logs
+          </button>
+<button class="px-4 py-2 rounded-lg bg-gradient-to-br from-primary to-primary-container text-on-primary text-sm font-bold shadow-lg shadow-primary/10 transition-transform active:scale-95">
+            Resolve All
+          </button>
+</div>
+</div>
+</section>
+<!-- Stuck States Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Scenario 1: Iteration Cap -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-xl overflow-hidden border border-stuck/20 hover:border-stuck/50 transition-all duration-300">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-stuck/10 p-3 rounded-lg border border-stuck/20">
+<span class="material-symbols-outlined text-stuck" data-icon="block">block</span>
+</div>
+<span class="font-label text-[10px] tracking-tighter text-outline bg-surface-container-lowest px-2 py-1 rounded">ID: SC-0492</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-2">Iteration Cap Reached</h3>
+<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Agent has exceeded the maximum safety limit of 50 loops without reaching a valid exit condition. Execution halted to prevent resource exhaustion.</p>
+<div class="bg-surface-container-lowest rounded-lg p-4 mb-6 font-label text-xs space-y-2">
+<div class="flex justify-between">
+<span class="text-outline">CAUSE</span>
+<span class="text-on-surface">Infinite Loop Risk</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline">ITERS</span>
+<span class="text-error font-bold">50 / 50</span>
+</div>
+</div>
+</div>
+<div class="mt-auto border-t border-outline-variant/20 p-4 bg-surface-container-high flex gap-3">
+<button class="flex-1 py-2 rounded-md bg-gradient-to-r from-stuck to-[#EF9F27]/80 text-on-tertiary-fixed font-bold text-sm transition-transform active:scale-95">Restart</button>
+<button class="px-3 py-2 rounded-md border border-outline-variant text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Scenario 2: Timeout -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-xl overflow-hidden border border-stuck/20 hover:border-stuck/50 transition-all duration-300">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-stuck/10 p-3 rounded-lg border border-stuck/20">
+<span class="material-symbols-outlined text-stuck" data-icon="timer_off">timer_off</span>
+</div>
+<span class="font-label text-[10px] tracking-tighter text-outline bg-surface-container-lowest px-2 py-1 rounded">ID: SC-0811</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-2">Timeout (No Progress)</h3>
+<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">System heartbeat detected no state changes in the last 300 seconds. Sub-process <code>v-env-runner</code> is unresponsive.</p>
+<div class="bg-surface-container-lowest rounded-lg p-4 mb-6 font-label text-xs space-y-2">
+<div class="flex justify-between">
+<span class="text-outline">CAUSE</span>
+<span class="text-on-surface">Sub-process Hang</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline">IDLE</span>
+<span class="text-stuck">05:12m</span>
+</div>
+</div>
+</div>
+<div class="mt-auto border-t border-outline-variant/20 p-4 bg-surface-container-high flex gap-3">
+<button class="flex-1 py-2 rounded-md bg-gradient-to-r from-stuck to-[#EF9F27]/80 text-on-tertiary-fixed font-bold text-sm transition-transform active:scale-95">Fix Environment</button>
+<button class="px-3 py-2 rounded-md border border-outline-variant text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+</button>
+</div>
+</div>
+<!-- Scenario 3: Agent Uncertain -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-xl overflow-hidden border border-stuck/20 hover:border-stuck/50 transition-all duration-300">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-stuck/10 p-3 rounded-lg border border-stuck/20">
+<span class="material-symbols-outlined text-stuck" data-icon="psychology_alt">psychology_alt</span>
+</div>
+<span class="font-label text-[10px] tracking-tighter text-outline bg-surface-container-lowest px-2 py-1 rounded">ID: SC-1022</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-2">Agent Uncertain</h3>
+<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Agent has encountered conflicting requirements in the specification. Confidence score dropped below the 0.82 threshold.</p>
+<div class="bg-surface-container-lowest rounded-lg p-4 mb-6 font-label text-xs space-y-2">
+<div class="flex justify-between">
+<span class="text-outline">CONFIDENCE</span>
+<span class="text-error">0.44</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline">CONFLICT</span>
+<span class="text-on-surface">API Ambiguity</span>
+</div>
+</div>
+</div>
+<div class="mt-auto border-t border-outline-variant/20 p-4 bg-surface-container-high flex gap-3">
+<button class="flex-1 py-2 rounded-md bg-gradient-to-r from-stuck to-[#EF9F27]/80 text-on-tertiary-fixed font-bold text-sm transition-transform active:scale-95">Give Guidance</button>
+<button class="px-3 py-2 rounded-md border border-outline-variant text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="chat_bubble">chat_bubble</span>
+</button>
+</div>
+</div>
+<!-- Scenario 4: External Blocker -->
+<div class="group relative flex flex-col bg-surface-container-low rounded-xl overflow-hidden border border-stuck/20 hover:border-stuck/50 transition-all duration-300">
+<div class="p-6">
+<div class="flex justify-between items-start mb-6">
+<div class="bg-stuck/10 p-3 rounded-lg border border-stuck/20">
+<span class="material-symbols-outlined text-stuck" data-icon="vpn_key">vpn_key</span>
+</div>
+<span class="font-label text-[10px] tracking-tighter text-outline bg-surface-container-lowest px-2 py-1 rounded">ID: SC-0021</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-2">External Blocker</h3>
+<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Deployment failed due to missing <code>AWS_SECRET_ACCESS_KEY</code> in the runtime environment secrets vault.</p>
+<div class="bg-surface-container-lowest rounded-lg p-4 mb-6 font-label text-xs space-y-2">
+<div class="flex justify-between">
+<span class="text-outline">TARGET</span>
+<span class="text-on-surface">Production-US-East</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline">MISSING</span>
+<span class="text-error">Credentials</span>
+</div>
+</div>
+</div>
+<div class="mt-auto border-t border-outline-variant/20 p-4 bg-surface-container-high flex gap-3">
+<button class="flex-1 py-2 rounded-md bg-gradient-to-r from-stuck to-[#EF9F27]/80 text-on-tertiary-fixed font-bold text-sm transition-transform active:scale-95">Update Credentials</button>
+<button class="px-3 py-2 rounded-md border border-outline-variant text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="lock_open">lock_open</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Terminal Overlay (Glassmorphism) -->
+<div class="mt-12 glass-terminal rounded-xl border border-outline-variant/30 overflow-hidden shadow-2xl">
+<div class="bg-surface-container-highest/40 px-4 py-2 flex items-center justify-between border-b border-outline-variant/20">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-error/40"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-stuck/40"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-secondary/40"></div>
+<span class="ml-4 font-label text-[10px] uppercase text-outline tracking-widest">Global Stuck Log</span>
+</div>
+<span class="font-label text-[10px] text-outline">STUCK_DAEMON_V2.0</span>
+</div>
+<div class="p-6 font-label text-xs space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+<p class="text-[#639922]">[SUCCESS] Pipeline initialized.</p>
+<p class="text-on-surface-variant">[INFO] Listening for agentic interruptions...</p>
+<p class="text-stuck">[WARN] Agent SC-0492 hit loop cap. Halting secondary process.</p>
+<p class="text-stuck">[WARN] System latency detected in worker-node-04.</p>
+<p class="text-error">[CRITICAL] Missing credentials for bucket: relay-assets-prod.</p>
+<p class="text-on-surface-variant cursor-blink border-r-2 border-primary-fixed-dim w-fit pr-1 animate-pulse">_</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<footer class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-[#131315]/80 backdrop-blur-xl border-t border-[#2A2A2C] shadow-[0_-4px_20px_rgba(83,74,183,0.08)] z-50">
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 hover:text-[#BA7517] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Overview</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-lg px-4 py-1 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="Receipt_Long">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Activity</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 hover:text-[#BA7517] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Intake</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1 hover:text-[#BA7517] transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Config</span>
+</div>
+</footer>
+</body></html>

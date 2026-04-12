@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Space+Grotesk:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#201f21",
+                        "primary-fixed-dim": "#c5c0ff",
+                        "outline-variant": "#474553",
+                        "inverse-on-surface": "#303032",
+                        "tertiary-container": "#824e00",
+                        "on-tertiary-container": "#ffc78c",
+                        "surface": "#131315",
+                        "surface-tint": "#c5c0ff",
+                        "on-tertiary-fixed-variant": "#673d00",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#86f8c9",
+                        "surface-container-low": "#1b1b1d",
+                        "on-tertiary-fixed": "#2b1700",
+                        "on-secondary-fixed-variant": "#00513a",
+                        "secondary-fixed-dim": "#68dbae",
+                        "on-primary": "#28188c",
+                        "tertiary": "#ffb869",
+                        "inverse-primary": "#584fbc",
+                        "on-surface": "#e5e1e4",
+                        "on-secondary": "#003827",
+                        "tertiary-fixed-dim": "#ffb869",
+                        "secondary-container": "#26a37a",
+                        "on-background": "#e5e1e4",
+                        "tertiary-fixed": "#ffdcbb",
+                        "primary-fixed": "#e3dfff",
+                        "on-surface-variant": "#c8c4d5",
+                        "inverse-surface": "#e5e1e4",
+                        "surface-container-highest": "#353437",
+                        "background": "#131315",
+                        "surface-dim": "#131315",
+                        "surface-container-high": "#2a2a2c",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#0e0e10",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#482900",
+                        "surface-bright": "#39393b",
+                        "primary": "#c5c0ff",
+                        "on-secondary-fixed": "#002115",
+                        "primary-container": "#534ab7",
+                        "on-primary-fixed": "#140067",
+                        "surface-variant": "#353437",
+                        "secondary": "#68dbae",
+                        "on-primary-fixed-variant": "#3f35a3",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#d1ccff",
+                        "outline": "#928f9e",
+                        "on-secondary-container": "#003121"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["JetBrains Mono"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #131315; }
+        ::-webkit-scrollbar-thumb { background: #2a2a2c; border-radius: 10px; }
+        .glass-overlay {
+            background: rgba(53, 52, 55, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#131315] dark:bg-[#131315]">
+<nav class="flex items-center justify-between px-6 h-16 w-full max-w-full bg-[#1B1B1D]">
+<div class="flex items-center gap-3 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-[#C5C0FF]" data-icon="terminal">terminal</span>
+<h1 class="text-xl font-bold tracking-tighter text-[#C5C0FF] font-['Space_Grotesk']">RELAY</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center gap-8 font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest">
+<a class="text-[#474553] hover:bg-[#2A2A2C] transition-colors px-2 py-1" href="#">Overview</a>
+<a class="text-[#474553] hover:bg-[#2A2A2C] transition-colors px-2 py-1" href="#">Activity</a>
+<a class="text-[#474553] hover:bg-[#2A2A2C] transition-colors px-2 py-1" href="#">Intake</a>
+<a class="text-[#C5C0FF] px-2 py-1" href="#">Config</a>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User profile photo" data-alt="Abstract geometric avatar with soft purple and dark grey shapes representing a developer profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9N-EAqKRp6Ihzqt0QwMQTsUP81UzxBmqKX4i21-xz4G-yhcTWBRbsikkfl_aTHVZ7ZrcQSmUQ8EITwopSeFH2rn0ENWRy0E-WpfQlM4jfUtOrxF-b3lHOASaN8rBNezky80D7YbpOq4tlneL0YowesSahzN1rwKhmW2UVyDFmOnVA6uIH7hP9CTHDlcHZ4YfzgcltPstBsCKysy5QMt7EydTodDX0NX50HNMk7eevBno_49tMUxSG02cpB1K7LopA9wwjNsXJSCUg"/>
+</div>
+</div>
+</nav>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Scoping Logic & Hierarchy -->
+<aside class="lg:col-span-4 space-y-6">
+<div class="p-6 bg-surface-container-low rounded-xl">
+<h2 class="font-headline text-2xl font-bold text-primary mb-4">Autonomy Engine</h2>
+<p class="text-on-surface-variant text-sm mb-8 leading-relaxed">
+                Relay agents operate on a hierarchical constraint model. Higher-level rules take precedence, ensuring strict human-in-the-loop oversight where it matters most.
+            </p>
+<!-- Scoping Logic Visualization -->
+<div class="space-y-4 font-label text-[0.75rem]">
+<div class="relative pl-6 pb-4 border-l-2 border-primary-container">
+<div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary shadow-[0_0_15px_rgba(197,192,255,0.3)]"></div>
+<span class="text-primary font-bold">LEVEL 01: ESCALATION</span>
+<p class="text-outline mt-1 font-body">Override rules triggered by sensitive files or logic patterns.</p>
+</div>
+<div class="relative pl-6 pb-4 border-l-2 border-outline-variant">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-outline"></div>
+<span class="text-on-surface-variant">LEVEL 02: ISSUE</span>
+<p class="text-outline mt-1 font-body">Specific agent instructions assigned to individual tickets.</p>
+</div>
+<div class="relative pl-6 pb-4 border-l-2 border-outline-variant">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-outline"></div>
+<span class="text-on-surface-variant">LEVEL 03: STAGE</span>
+<p class="text-outline mt-1 font-body">Pipeline-specific constraints (Preflight, Verify, Release).</p>
+</div>
+<div class="relative pl-6">
+<div class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-outline"></div>
+<span class="text-on-surface-variant">LEVEL 04: GLOBAL</span>
+<p class="text-outline mt-1 font-body">Default operational posture for all agent interactions.</p>
+</div>
+</div>
+</div>
+<!-- Operational Status Display -->
+<div class="p-6 bg-surface-container-high rounded-xl border-l-2 border-secondary">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label text-xs text-secondary uppercase">Active Posture</span>
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="security">security</span>
+</div>
+<div class="text-2xl font-headline font-bold text-on-surface">Supervised</div>
+<div class="mt-2 text-xs font-label text-outline uppercase tracking-tighter">Current Effective Level</div>
+</div>
+</aside>
+<!-- Right Column: Settings Controls -->
+<section class="lg:col-span-8 space-y-8">
+<!-- Global Default Level -->
+<div class="bg-surface-container-low p-8 rounded-xl">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="settings_suggest">settings_suggest</span>
+<h3 class="font-headline text-xl font-bold">Global Default Level</h3>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Manual -->
+<button class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-high hover:bg-surface-bright transition-all group text-left">
+<div class="w-2 h-full bg-outline-variant group-hover:bg-outline transition-colors rounded-full"></div>
+<div>
+<span class="font-label text-xs uppercase text-on-surface-variant">Manual</span>
+<p class="text-xs text-outline font-body mt-1">Requires approval for every action taken by the agent.</p>
+</div>
+</button>
+<!-- Supervised -->
+<button class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-highest border-l-2 border-secondary text-left">
+<div class="hidden"></div>
+<div>
+<span class="font-label text-xs uppercase text-secondary">Supervised</span>
+<p class="text-xs text-on-surface-variant font-body mt-1">Agent suggests plans; requires approval for execution only.</p>
+</div>
+</button>
+<!-- Assisted -->
+<button class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-high hover:bg-surface-bright transition-all group text-left">
+<div class="w-2 h-full bg-outline-variant group-hover:bg-outline transition-colors rounded-full"></div>
+<div>
+<span class="font-label text-xs uppercase text-on-surface-variant">Assisted</span>
+<p class="text-xs text-outline font-body mt-1">Agent executes low-risk tasks automatically; requests help for blockers.</p>
+</div>
+</button>
+<!-- Autonomous -->
+<button class="flex items-start gap-4 p-4 rounded-lg bg-surface-container-high hover:bg-surface-bright transition-all group text-left">
+<div class="w-2 h-full bg-outline-variant group-hover:bg-outline transition-colors rounded-full"></div>
+<div>
+<span class="font-label text-xs uppercase text-on-surface-variant">Autonomous</span>
+<p class="text-xs text-outline font-body mt-1">Full end-to-end execution with passive monitoring logs only.</p>
+</div>
+</button>
+</div>
+</div>
+<!-- Per-Stage Overrides -->
+<div class="bg-surface-container-low p-8 rounded-xl">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="alt_route">alt_route</span>
+<h3 class="font-headline text-xl font-bold">Pipeline Stage Overrides</h3>
+</div>
+<span class="font-label text-[10px] text-tertiary uppercase bg-tertiary-container/20 px-3 py-1.5 rounded border border-tertiary/20">Constraint Mode Only</span>
+</div>
+<div class="space-y-6">
+<!-- Stage Row: Preflight -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-surface-container-lowest rounded-lg border border-outline-variant/30 gap-6 transition-all hover:border-primary/20">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 flex items-center justify-center rounded-lg bg-surface-container-high border border-outline-variant/20">
+<span class="material-symbols-outlined text-[#534AB7] text-2xl" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<div>
+<div class="font-label text-xs font-bold uppercase text-on-surface tracking-wider">Preflight</div>
+<div class="text-[11px] text-outline mt-1 font-body">Environment setup &amp; dependencies orchestration</div>
+</div>
+</div>
+<div class="w-full sm:w-auto">
+<select class="w-full sm:w-48 bg-surface-container-highest border border-outline-variant/40 text-xs font-label text-on-surface-variant focus:ring-1 focus:ring-primary rounded px-4 py-2.5 cursor-pointer">
+<option>Inherit (Supervised)</option>
+<option>Manual</option>
+<option>Autonomous (Relaxed)</option>
+</select>
+</div>
+</div>
+<!-- Stage Row: Implement -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-surface-container-lowest rounded-lg border border-outline-variant/30 gap-6 transition-all hover:border-primary/20">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 flex items-center justify-center rounded-lg bg-surface-container-high border border-outline-variant/20">
+<span class="material-symbols-outlined text-[#BA7517] text-2xl" data-icon="code">code</span>
+</div>
+<div>
+<div class="font-label text-xs font-bold uppercase text-on-surface tracking-wider">Implement</div>
+<div class="text-[11px] text-outline mt-1 font-body">Code generation, refactoring &amp; architectural changes</div>
+</div>
+</div>
+<div class="w-full sm:w-auto">
+<select class="w-full sm:w-48 bg-surface-container-highest border border-outline-variant/40 text-xs font-label text-on-surface-variant focus:ring-1 focus:ring-primary rounded px-4 py-2.5 cursor-pointer">
+<option>Inherit (Supervised)</option>
+<option>Manual</option>
+<option>Autonomous (Relaxed)</option>
+</select>
+</div>
+</div>
+<!-- Stage Row: Verify -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-surface-container-lowest rounded-lg border border-outline-variant/30 gap-6 transition-all hover:border-primary/20">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 flex items-center justify-center rounded-lg bg-surface-container-high border border-outline-variant/20">
+<span class="material-symbols-outlined text-[#639922] text-2xl" data-icon="fact_check">fact_check</span>
+</div>
+<div>
+<div class="font-label text-xs font-bold uppercase text-on-surface tracking-wider">Verify</div>
+<div class="text-[11px] text-outline mt-1 font-body">Automated testing, validation &amp; performance cycles</div>
+</div>
+</div>
+<div class="w-full sm:w-auto">
+<select class="w-full sm:w-48 bg-surface-container-highest border border-outline-variant/40 text-xs font-label text-on-surface-variant focus:ring-1 focus:ring-primary rounded px-4 py-2.5 cursor-pointer">
+<option>Autonomous (Relaxed)</option>
+<option selected="">Inherit (Supervised)</option>
+<option>Manual</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+<!-- Escalation Rules -->
+<div class="bg-surface-container-low p-8 rounded-xl">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="warning">warning</span>
+<h3 class="font-headline text-xl font-bold">Escalation Rules</h3>
+</div>
+<div class="space-y-3">
+<!-- Rule -->
+<label class="flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors cursor-pointer rounded-lg">
+<div class="flex items-center gap-4">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-highest border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<div>
+<span class="font-body text-sm font-medium">Sensitive Path Access</span>
+<p class="text-[10px] text-outline font-label uppercase mt-0.5">IF path matches /auth/** OR /security/** THEN ESCALATE TO MANUAL</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="lock">lock</span>
+</label>
+<!-- Rule -->
+<label class="flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors cursor-pointer rounded-lg">
+<div class="flex items-center gap-4">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-highest border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<div>
+<span class="font-body text-sm font-medium">Critical Vulnerability Patching</span>
+<p class="text-[10px] text-outline font-label uppercase mt-0.5">IF issue tag == "CVE" OR "CRITICAL" THEN ESCALATE TO SUPERVISED</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="bug_report">bug_report</span>
+</label>
+<!-- Rule -->
+<label class="flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors cursor-pointer rounded-lg">
+<div class="flex items-center gap-4">
+<input class="w-4 h-4 rounded bg-surface-container-highest border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<div>
+<span class="font-body text-sm font-medium">Production Environment Access</span>
+<p class="text-[10px] text-outline font-label uppercase mt-0.5">IF target == "PROD" THEN ESCALATE TO MANUAL</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="cloud_done">cloud_done</span>
+</label>
+</div>
+<button class="mt-6 w-full py-3 border border-dashed border-outline-variant text-outline hover:text-primary hover:border-primary transition-all font-label text-xs uppercase tracking-widest rounded-lg flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Add New Rule
+            </button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-[#131315]/80 backdrop-blur-xl border-t border-[#2A2A2C] shadow-[0_-4px_20px_rgba(83,74,183,0.08)] z-50">
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Overview</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1">
+<span class="material-symbols-outlined" data-icon="Receipt_Long">receipt_long</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Activity</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#474553] px-4 py-1">
+<span class="material-symbols-outlined" data-icon="input">input</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Intake</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#C5C0FF] bg-[#2A2A2C] rounded-lg px-4 py-1">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest mt-1">Config</span>
+</div>
+</nav>
+<!-- Save FAB -->
+<div class="fixed bottom-24 right-8 z-40 hidden md:block">
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary font-label text-xs uppercase tracking-widest px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="save">save</span>
+        Commit Config
+    </button>
+</div>
+</body></html>
