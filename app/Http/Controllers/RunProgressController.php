@@ -30,6 +30,19 @@ class RunProgressController extends Controller
             $liveData['current_stage'] = $currentStage->name->value;
             $liveData['current_status'] = $currentStage->status->value;
 
+            $liveData['tool_calls'] = $currentStage->events
+                ->where('type', 'tool_call')
+                ->map(fn ($e) => [
+                    'id' => $e->id,
+                    'actor' => $e->actor,
+                    'tool' => $e->payload['tool'] ?? null,
+                    'path' => $e->payload['path'] ?? null,
+                    'count' => $e->payload['count'] ?? null,
+                    'mode' => $e->payload['mode'] ?? null,
+                    'timestamp' => $e->created_at->format('H:i:s'),
+                ])
+                ->values();
+
             if ($currentStage->name === StageName::Implement) {
                 $diffEvent = $currentStage->events
                     ->whereIn('type', ['diff_updated', 'implement_complete'])

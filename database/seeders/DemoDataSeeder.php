@@ -357,8 +357,14 @@ MD;
 
         $imp = $this->stage($run, StageName::Implement, StageStatus::Running, 1, $start->copy()->addMinutes(4), null);
         $this->event($imp, 'started', 'implement_agent', [], $start->copy()->addMinutes(4));
-        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'write_file', 'path' => 'src/websocket/handler.ts'], $start->copy()->addMinutes(6));
-        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'run_linter'], $start->copy()->addMinutes(9));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'read_file', 'path' => 'src/websocket/handler.ts'], $start->copy()->addMinutes(5));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'search_code', 'count' => 14, 'mode' => 'regex'], $start->copy()->addMinutes(6));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'read_file', 'path' => 'src/websocket/pool.ts'], $start->copy()->addMinutes(7));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'write_file', 'path' => 'src/websocket/handler.ts'], $start->copy()->addMinutes(8));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'write_file', 'path' => 'src/websocket/pool.ts'], $start->copy()->addMinutes(9));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'write_file', 'path' => 'tests/websocket/handler.test.ts'], $start->copy()->addMinutes(10));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'run_linter', 'count' => 0, 'mode' => 'clean'], $start->copy()->addMinutes(11));
+        $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'run_tests', 'count' => 214], $start->copy()->addMinutes(12));
     }
 
     private function stagesVerifyRunning(Run $run, \Carbon\Carbon $start): void

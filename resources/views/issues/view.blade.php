@@ -87,6 +87,53 @@
                                 </details>
                             @endif
 
+                            {{-- Live agent activity (tool calls) --}}
+                            @php
+                                $currentStageToolCalls = $currentStage?->status === \App\Enums\StageStatus::Running
+                                    ? $currentStage->events->where('type', 'tool_call')->values()
+                                    : collect();
+                                $stageSlug = $currentStage?->name->value ?? 'preflight';
+                                $stageAccent = match ($stageSlug) {
+                                    'implement' => 'stage-implement',
+                                    'verify' => 'stage-verify',
+                                    'release' => 'stage-release',
+                                    default => 'stage-preflight',
+                                };
+                            @endphp
+                            <div id="live-tool-calls-panel" class="{{ $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
+                                <details open>
+                                    <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-{{ $stageAccent }} animate-pulse"></span>
+                                            Live Agent Activity
+                                        </span>
+                                    </summary>
+                                    <div id="live-tool-calls" class="mt-2 rounded-xl bg-surface-container-lowest p-3 font-label text-xs space-y-1 max-h-80 overflow-y-auto" data-last-id="{{ $currentStageToolCalls->last()->id ?? 0 }}">
+                                        @forelse ($currentStageToolCalls as $tc)
+                                            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5" data-tool-call-id="{{ $tc->id }}">
+                                                <span class="text-outline">{{ $tc->created_at->format('H:i:s') }}</span>
+                                                <span class="text-outline">EXEC:</span>
+                                                <span class="text-{{ $stageAccent }}">{{ $tc->payload['tool'] ?? '?' }}</span>
+                                                @if (! empty($tc->payload['path']))
+                                                    <span class="text-outline">PATH:</span>
+                                                    <span class="text-on-surface">{{ $tc->payload['path'] }}</span>
+                                                @endif
+                                                @if (! empty($tc->payload['count']))
+                                                    <span class="text-outline">COUNT:</span>
+                                                    <span class="text-on-surface">{{ $tc->payload['count'] }}</span>
+                                                @endif
+                                                @if (! empty($tc->payload['mode']))
+                                                    <span class="text-outline">MODE:</span>
+                                                    <span class="text-on-surface">{{ $tc->payload['mode'] }}</span>
+                                                @endif
+                                            </div>
+                                        @empty
+                                            <p class="text-on-surface-variant" data-empty>Waiting for agent activity…</p>
+                                        @endforelse
+                                    </div>
+                                </details>
+                            </div>
+
                             {{-- Live diff panel (Implement stage) --}}
                             <div id="live-diff-panel" class="{{ $currentStage?->name === \App\Enums\StageName::Implement && $currentStage?->status === \App\Enums\StageStatus::Running ? '' : 'hidden' }}">
                                 <details open>
@@ -451,8 +498,58 @@
                         });
                     }
 
+                    const toolAccentByStage = {
+                        preflight: 'text-stage-preflight',
+                        implement: 'text-stage-implement',
+                        verify: 'text-stage-verify',
+                        release: 'text-stage-release',
+                    };
+
+                    function updateLiveToolCalls(live) {
+                        const panel = document.getElementById('live-tool-calls-panel');
+                        const list = document.getElementById('live-tool-calls');
+                        if (!panel || !list) return;
+
+                        if (live.current_status !== 'running') {
+                            panel.classList.add('hidden');
+                            return;
+                        }
+                        panel.classList.remove('hidden');
+
+                        const calls = live.tool_calls || [];
+                        if (calls.length === 0) return;
+
+                        const lastSeen = parseInt(list.dataset.lastId || '0', 10);
+                        const accent = toolAccentByStage[live.current_stage] || 'text-on-surface';
+                        const newCalls = calls.filter(c => c.id > lastSeen);
+                        if (newCalls.length === 0) return;
+
+                        const emptyEl = list.querySelector('[data-empty]');
+                        if (emptyEl) emptyEl.remove();
+
+                        newCalls.forEach(c => {
+                            const row = document.createElement('div');
+                            row.className = 'flex flex-wrap items-baseline gap-x-3 gap-y-0.5';
+                            row.dataset.toolCallId = c.id;
+                            const parts = [
+                                '<span class="text-outline">' + escapeHtml(c.timestamp) + '</span>',
+                                '<span class="text-outline">EXEC:</span>',
+                                '<span class="' + accent + '">' + escapeHtml(c.tool || '?') + '</span>',
+                            ];
+                            if (c.path) parts.push('<span class="text-outline">PATH:</span><span class="text-on-surface">' + escapeHtml(c.path) + '</span>');
+                            if (c.count) parts.push('<span class="text-outline">COUNT:</span><span class="text-on-surface">' + escapeHtml(String(c.count)) + '</span>');
+                            if (c.mode) parts.push('<span class="text-outline">MODE:</span><span class="text-on-surface">' + escapeHtml(c.mode) + '</span>');
+                            row.innerHTML = parts.join(' ');
+                            list.appendChild(row);
+                        });
+
+                        list.dataset.lastId = String(newCalls[newCalls.length - 1].id);
+                        list.scrollTop = list.scrollHeight;
+                    }
+
                     function updateLiveContent(data) {
                         const live = data.live;
+                        updateLiveToolCalls(live);
                         const liveDiff = document.getElementById('live-diff-panel');
                         const staticImpl = document.getElementById('static-impl-panel');
                         const liveTest = document.getElementById('live-test-panel');
