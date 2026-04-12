@@ -22,9 +22,16 @@ class OauthToken extends Model
     protected function casts(): array
     {
         return [
+            'access_token' => 'encrypted',
+            'refresh_token' => 'encrypted',
             'expires_at' => 'datetime',
             'scopes' => 'array',
         ];
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at && $this->expires_at->isPast();
     }
 
     public function source(): BelongsTo

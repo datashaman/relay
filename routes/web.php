@@ -1,7 +1,16 @@
 <?php
 
+use App\Http\Controllers\OauthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/oauth/redirect/{provider}', [OauthController::class, 'redirect'])
+    ->name('oauth.redirect')
+    ->whereIn('provider', ['github', 'jira']);
+
+Route::get('/oauth/callback/{provider}', [OauthController::class, 'callback'])
+    ->name('oauth.callback')
+    ->whereIn('provider', ['github', 'jira']);
