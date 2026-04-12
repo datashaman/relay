@@ -29,8 +29,8 @@
         "Factories for each model to support tests"
       ],
       "priority": 2,
-      "passes": false,
-      "inProgress": true
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-003",
@@ -45,7 +45,8 @@
         "Keychain/credential-manager integration via NativePHP secure storage for the master key"
       ],
       "priority": 3,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-004",
@@ -61,7 +62,8 @@
         "Unit tests with a recorded-response fixture for each provider"
       ],
       "priority": 4,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-005",
@@ -75,7 +77,8 @@
         "Error states rendered for denied consent and network failure"
       ],
       "priority": 5,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-006",
@@ -89,7 +92,8 @@
         "Multiple Jira sites per install supported"
       ],
       "priority": 6,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-007",
@@ -103,7 +107,8 @@
         "HTTP interactions mocked via Http::fake() in tests"
       ],
       "priority": 7,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-008",
@@ -117,7 +122,8 @@
         "Tests mock Atlassian REST responses"
       ],
       "priority": 8,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-009",
@@ -125,7 +131,7 @@
       "description": "As the implement agent, I want each run to execute in an isolated git worktree with configurable lifecycle scripts so that concurrent runs don't collide and per-repo setup is automated.",
       "acceptanceCriteria": [
         "Repository model stores path, default branch, worktree root, and three script hooks: setup, teardown, run",
-        "Worktree created per run under the configured root (e.g., \u003croot\u003e/relay-\u003crun_id\u003e)",
+        "Worktree created per run under the configured root (e.g., <root>/relay-<run_id>)",
         "Setup script executed after worktree creation; teardown on run completion (success or failure)",
         "Worktree removed via git worktree remove after teardown",
         "Scripts receive environment variables: RELAY_RUN_ID, RELAY_ISSUE_ID, RELAY_BRANCH, RELAY_WORKTREE",
@@ -133,7 +139,8 @@
         "Stale-worktree recovery on app startup"
       ],
       "priority": 9,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-010",
@@ -146,7 +153,8 @@
         "Remove-source action is confirmation-gated and revokes the token"
       ],
       "priority": 10,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-011",
@@ -160,7 +168,8 @@
         "Validation prevents conflicting include/exclude overlap"
       ],
       "priority": 11,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-012",
@@ -174,7 +183,8 @@
         "NativePHP scheduler wired to run queue workers locally"
       ],
       "priority": 12,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-013",
@@ -188,7 +198,8 @@
         "Auto-accepted issues visible with an \"auto\" badge"
       ],
       "priority": 13,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-014",
@@ -203,7 +214,8 @@
         "Unit tests cover every scope-combination edge case"
       ],
       "priority": 14,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-015",
@@ -218,7 +230,8 @@
         "Matched rule recorded on the stage event for traceability"
       ],
       "priority": 15,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-016",
@@ -232,7 +245,8 @@
         "Broadcast channel pushes live updates to the UI via Laravel Reverb or NativePHP events"
       ],
       "priority": 16,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-017",
@@ -246,7 +260,8 @@
         "\"Skip to doc\" override available for impatient users"
       ],
       "priority": 17,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-018",
@@ -260,7 +275,8 @@
         "Re-runs produce a new doc version; history preserved"
       ],
       "priority": 18,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-019",
@@ -274,7 +290,8 @@
         "Live diff rendered in the UI as the agent works"
       ],
       "priority": 19,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-020",
@@ -288,7 +305,8 @@
         "Pass → advance to Release; fail → bounce back to Implement with the failure report"
       ],
       "priority": 20,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-021",
@@ -302,7 +320,8 @@
         "Iteration cap per workspace — configurable — triggers a stuck state when reached"
       ],
       "priority": 21,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-022",
@@ -316,7 +335,8 @@
         "Release agent cannot modify source code (only commits and pushes what Implement produced)"
       ],
       "priority": 22,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-023",
@@ -330,7 +350,8 @@
         "Stuck issues float to the top of the activity feed with unread dots"
       ],
       "priority": 23,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-024",
@@ -344,7 +365,8 @@
         "Link to the PR once released"
       ],
       "priority": 24,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-025",
@@ -357,7 +379,8 @@
         "Clicking an event deep-links to the run history"
       ],
       "priority": 25,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-026",
@@ -371,7 +394,8 @@
         "Responsive: collapses to a single panel on narrow widths"
       ],
       "priority": 26,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-027",
@@ -385,7 +409,8 @@
         "Reconnects gracefully after app sleep"
       ],
       "priority": 27,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-028",
@@ -399,7 +424,8 @@
         "Preview panel showing the effective autonomy for a sample issue"
       ],
       "priority": 28,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-029",
@@ -413,7 +439,8 @@
         "OAuth flows work with the platform browser in-app"
       ],
       "priority": 29,
-      "passes": false
+      "passes": true,
+      "inProgress": false
     },
     {
       "id": "US-030",

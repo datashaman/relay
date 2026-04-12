@@ -9,7 +9,7 @@
 
     {{-- Filters --}}
     <form method="GET" action="{{ route('activity.index') }}" class="mb-6">
-        <div class="flex flex-wrap items-end gap-3">
+        <div class="grid grid-cols-2 md:flex md:flex-wrap items-end gap-3">
             <div>
                 <label for="source" class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Source</label>
                 <select name="source" id="source" class="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm px-3 py-1.5">

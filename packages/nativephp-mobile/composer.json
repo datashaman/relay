@@ -1,0 +1,54 @@
+{
+    "name": "nativephp/mobile",
+    "description": "Mobile wrapper for the NativePHP framework (iOS & Android).",
+    "keywords": [
+        "nativephp",
+        "laravel",
+        "mobile",
+        "ios",
+        "android"
+    ],
+    "homepage": "https://github.com/nativephp/mobile",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Marcel Pociot",
+            "email": "marcel@beyondco.de",
+            "role": "Developer"
+        },
+        {
+            "name": "Simon Hamp",
+            "email": "simon.hamp@me.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+        "nativephp/laravel": "*",
+        "symfony/filesystem": "^6.4|^7.2|^8.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.18|^9.0|^10.0",
+        "phpunit/phpunit": "^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Native\\Mobile\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Native\\Mobile\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Native\\Mobile\\MobileServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

@@ -50,6 +50,13 @@
       'Window' => 'Native\\Laravel\\Facades\\Window',
     ),
   ),
+  'nativephp/mobile' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Native\\Mobile\\MobileServiceProvider',
+    ),
+  ),
   'nesbot/carbon' => 
   array (
     'providers' => 

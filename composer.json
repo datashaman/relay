@@ -13,7 +13,8 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "nativephp/electron": "*",
-        "nativephp/laravel": "*"
+        "nativephp/laravel": "*",
+        "nativephp/mobile": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -97,6 +98,10 @@
         {
             "type": "path",
             "url": "packages/nativephp-electron"
+        },
+        {
+            "type": "path",
+            "url": "packages/nativephp-mobile"
         }
     ],
     "minimum-stability": "dev",

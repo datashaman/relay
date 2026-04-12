@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Source;
+use App\Services\MobileOauthService;
 use App\Services\OauthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,11 +15,20 @@ class OauthController extends Controller
 {
     public function __construct(
         private OauthService $oauth,
+        private MobileOauthService $mobileOauth,
     ) {}
 
     public function redirect(string $provider): RedirectResponse
     {
-        return redirect()->away($this->oauth->generateAuthUrl($provider));
+        $authUrl = $this->oauth->generateAuthUrl($provider);
+
+        if ($this->mobileOauth->isMobileOauth()) {
+            $this->mobileOauth->openAuthUrl($authUrl);
+
+            return redirect('/sources')->with('success', 'Opening browser for authentication...');
+        }
+
+        return redirect()->away($authUrl);
     }
 
     public function callback(Request $request, string $provider): RedirectResponse

@@ -61,7 +61,7 @@
                     $latestStage = $run->stages->first();
                 @endphp
                 <div class="rounded-lg border border-{{ $stuckMeta['color'] }}-300 dark:border-{{ $stuckMeta['color'] }}-700 bg-{{ $stuckMeta['color'] }}-50 dark:bg-{{ $stuckMeta['color'] }}-900/20 p-4">
-                    <div class="flex items-start justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white">
@@ -88,17 +88,17 @@
                                 &middot; Updated {{ $run->updated_at->diffForHumans() }}
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 ml-4">
+                        <div class="flex items-center gap-2 sm:ml-4">
                             @if ($stuckMeta['action_method'] === 'GET')
                                 <a href="{{ $stuckMeta['action_route'] }}"
-                                   class="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500">
+                                   class="rounded-md bg-amber-600 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-white hover:bg-amber-500 active:bg-amber-700">
                                     {{ $stuckMeta['action'] }}
                                 </a>
                             @else
                                 <form method="POST" action="{{ $stuckMeta['action_route'] }}">
                                     @csrf
                                     <button type="submit"
-                                            class="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500">
+                                            class="rounded-md bg-amber-600 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-white hover:bg-amber-500 active:bg-amber-700">
                                         {{ $stuckMeta['action'] }}
                                     </button>
                                 </form>
@@ -107,7 +107,7 @@
                                 <form method="POST" action="{{ route('stuck.restart', $run) }}">
                                     @csrf
                                     <button type="submit"
-                                            class="rounded-md bg-gray-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-500">
+                                            class="rounded-md bg-gray-600 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-white hover:bg-gray-500 active:bg-gray-700">
                                         Restart
                                     </button>
                                 </form>
