@@ -3,6 +3,7 @@
 use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\OauthController;
+use App\Http\Controllers\PreflightController;
 use App\Http\Controllers\SourceController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,10 @@ Route::get('/issues/queue', [IssueController::class, 'queue'])->name('issues.que
 Route::post('/issues/{issue}/accept', [IssueController::class, 'accept'])->name('issues.accept');
 Route::post('/issues/{issue}/reject', [IssueController::class, 'reject'])->name('issues.reject');
 Route::post('/sources/{source}/toggle-pause', [IssueController::class, 'togglePause'])->name('issues.toggle-pause');
+
+Route::get('/runs/{run}/preflight', [PreflightController::class, 'show'])->name('preflight.show');
+Route::post('/runs/{run}/preflight/answers', [PreflightController::class, 'submitAnswers'])->name('preflight.submit-answers');
+Route::post('/runs/{run}/preflight/skip', [PreflightController::class, 'skipToDoc'])->name('preflight.skip');
 
 Route::get('/oauth/redirect/{provider}', [OauthController::class, 'redirect'])
     ->name('oauth.redirect')

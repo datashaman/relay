@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\StageName;
 use App\Models\Stage;
+use App\Services\PreflightAgent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,6 +22,9 @@ class ExecuteStageJob implements ShouldQueue
 
     public function handle(): void
     {
-        // Stage execution delegated to stage-specific agents (US-017..US-022).
+        match ($this->stage->name) {
+            StageName::Preflight => app(PreflightAgent::class)->execute($this->stage, $this->context),
+            default => null, // Other agents: US-019..US-022
+        };
     }
 }
