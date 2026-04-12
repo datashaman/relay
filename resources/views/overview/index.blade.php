@@ -112,16 +112,36 @@
                         @endif
                     </div>
 
-                    <div class="flex items-center gap-3 bg-surface-container-lowest px-3 py-2 rounded-md">
-                        <span class="font-label text-[10px] text-outline">STAGE:</span>
-                        <span class="font-label text-[10px] text-{{ $stageInfo['color'] }} uppercase tracking-widest">
-                            {{ $stageInfo['label'] }} Phase
-                        </span>
-                        @if ($currentStage)
-                            <span class="font-label text-[10px] text-outline ml-auto">
-                                {{ strtoupper($currentStage->status->value) }}
+                    <div class="bg-surface-container-lowest px-3 py-2 rounded-md space-y-1.5">
+                        <div class="flex items-center gap-3">
+                            <span class="font-label text-[10px] text-outline">STAGE:</span>
+                            <span class="font-label text-[10px] text-{{ $stageInfo['color'] }} uppercase tracking-widest">
+                                {{ $stageInfo['label'] }} Phase
                             </span>
-                        @endif
+                            @if ($currentStage)
+                                <span class="font-label text-[10px] text-outline ml-auto">
+                                    {{ strtoupper($currentStage->status->value) }}
+                                </span>
+                            @endif
+                        </div>
+                        @php
+                            $stageOrder = ['preflight', 'implement', 'verify', 'release'];
+                            $stageIndex = array_search($stageKey, $stageOrder, true);
+                            $stageIndex = $stageIndex === false ? 0 : $stageIndex;
+                        @endphp
+                        <div class="flex gap-1">
+                            @foreach ($stageOrder as $idx => $name)
+                                @php
+                                    $segColor = match (true) {
+                                        $idx < $stageIndex => 'bg-' . $stageMeta[$name]['color'],
+                                        $idx === $stageIndex && $isStuck => 'bg-stage-stuck',
+                                        $idx === $stageIndex => 'bg-' . $stageMeta[$name]['color'] . ' animate-pulse',
+                                        default => 'bg-surface-container-high',
+                                    };
+                                @endphp
+                                <div class="h-1 flex-1 rounded-full {{ $segColor }}"></div>
+                            @endforeach
+                        </div>
                     </div>
 
                     <div class="flex justify-between items-center">

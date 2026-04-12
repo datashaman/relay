@@ -56,10 +56,18 @@
 
         <header class="bg-surface-container-low sticky top-0 z-40">
             <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-                <a href="/" class="flex items-center gap-2">
-                    <span class="inline-block w-2 h-2 rounded-full bg-stage-stuck"></span>
-                    <span class="font-headline text-lg font-bold tracking-tight text-primary">Relay</span>
-                </a>
+                <div class="flex items-center gap-2">
+                    <a href="/" class="flex items-center gap-2">
+                        <span class="inline-block w-2 h-2 rounded-full bg-stage-stuck"></span>
+                        <span class="font-headline text-lg font-bold tracking-tight text-primary">Relay</span>
+                    </a>
+                    @if ($stuckCount > 0)
+                        <a href="/activity" class="inline-flex items-center gap-1 rounded-full bg-stage-stuck/15 text-stage-stuck px-2 py-0.5 font-label text-[10px] uppercase tracking-widest hover:bg-stage-stuck/25">
+                            <span class="w-1.5 h-1.5 rounded-full bg-stage-stuck animate-pulse"></span>
+                            {{ $stuckCount }} Stuck
+                        </a>
+                    @endif
+                </div>
 
                 <div class="hidden md:flex items-center gap-1">
                     @foreach ($tabs as $tab)
