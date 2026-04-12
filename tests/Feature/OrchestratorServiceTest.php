@@ -8,6 +8,7 @@ use App\Enums\IssueStatus;
 use App\Enums\RunStatus;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
+use App\Enums\StuckState;
 use App\Events\StageTransitioned;
 use App\Jobs\ExecuteStageJob;
 use App\Models\AutonomyConfig;
@@ -416,7 +417,7 @@ class OrchestratorServiceTest extends TestCase
 
         $newStage = $run->stages()->where('name', StageName::Implement)->latest('id')->first();
         $receiveEvent = StageEvent::where('stage_id', $newStage->id)
-            ->where('type', 'bounce_received')
+            ->where('type', 'implement.iteration.1')
             ->first();
         $this->assertNotNull($receiveEvent);
         $this->assertEquals($report, $receiveEvent->payload['failure_report']);
@@ -605,6 +606,85 @@ class OrchestratorServiceTest extends TestCase
         $this->assertEquals(StageStatus::AwaitingApproval, $implementStage->status);
     }
 
+    // --- iteration cap ---
+
+    public function test_bounce_triggers_stuck_when_iteration_cap_reached(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+        config(['relay.iteration_cap' => 3]);
+
+        $run = Run::factory()->create(['status' => RunStatus::Running, 'iteration' => 2]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Verify,
+            'status' => StageStatus::Running,
+        ]);
+
+        $this->orchestrator->bounce($stage, ['test failed']);
+
+        $run->refresh();
+        $this->assertEquals(RunStatus::Stuck, $run->status);
+        $this->assertEquals(StuckState::IterationCap, $run->stuck_state);
+        $this->assertEquals(3, $run->iteration);
+
+        $event = StageEvent::where('stage_id', $stage->id)
+            ->where('type', 'iteration_cap_reached')
+            ->first();
+        $this->assertNotNull($event);
+        $this->assertEquals(3, $event->payload['iteration']);
+        $this->assertEquals(3, $event->payload['cap']);
+    }
+
+    public function test_bounce_does_not_create_new_stage_when_capped(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+        config(['relay.iteration_cap' => 2]);
+
+        $run = Run::factory()->create(['status' => RunStatus::Running, 'iteration' => 1]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Verify,
+            'status' => StageStatus::Running,
+        ]);
+
+        $this->orchestrator->bounce($stage, ['test failed']);
+
+        $implementStages = $run->stages()->where('name', StageName::Implement)->count();
+        $this->assertEquals(0, $implementStages);
+        Queue::assertNotPushed(ExecuteStageJob::class);
+    }
+
+    public function test_bounce_below_cap_proceeds_normally(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+        config(['relay.iteration_cap' => 5]);
+
+        $run = Run::factory()->create(['status' => RunStatus::Running, 'iteration' => 1]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Verify,
+            'status' => StageStatus::Running,
+        ]);
+
+        $this->orchestrator->bounce($stage, ['test failed']);
+
+        $run->refresh();
+        $this->assertEquals(RunStatus::Running, $run->status);
+        $this->assertNull($run->stuck_state);
+
+        $newStage = $run->stages()->where('name', StageName::Implement)->latest('id')->first();
+        $this->assertNotNull($newStage);
+        $this->assertEquals(2, $newStage->iteration);
+    }
+
+    public function test_iteration_cap_defaults_to_five(): void
+    {
+        $this->assertEquals(5, config('relay.iteration_cap'));
+    }
+
     // --- stage execution dispatched to queue ---
 
     public function test_stage_execution_dispatched_to_queue(): void
@@ -653,7 +733,7 @@ class OrchestratorServiceTest extends TestCase
         $types = StageEvent::where('stage_id', $newStage->id)
             ->pluck('type')
             ->toArray();
-        $this->assertContains('bounce_received', $types);
+        $this->assertContains('implement.iteration.1', $types);
         $this->assertContains('started', $types);
     }
 }

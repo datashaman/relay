@@ -7,6 +7,7 @@ use App\Enums\IssueStatus;
 use App\Enums\RunStatus;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
+use App\Enums\StuckState;
 use App\Events\StageTransitioned;
 use App\Jobs\ExecuteStageJob;
 use App\Models\Issue;
@@ -92,9 +93,29 @@ class OrchestratorService
         }
 
         $run->increment('iteration');
+        $run->refresh();
+
+        $iterationCap = config('relay.iteration_cap', 5);
+
+        if ($run->iteration >= $iterationCap) {
+            $run->update([
+                'status' => RunStatus::Stuck,
+                'stuck_state' => StuckState::IterationCap,
+            ]);
+
+            $this->recordEvent($stage, 'iteration_cap_reached', 'system', [
+                'iteration' => $run->iteration,
+                'cap' => $iterationCap,
+                'failure_report' => $failureReport,
+            ]);
+
+            $run->issue->update(['status' => IssueStatus::InProgress]);
+
+            return;
+        }
 
         $newStage = $this->createStage($run, $previousName, $run->iteration);
-        $this->recordEvent($newStage, 'bounce_received', 'system', [
+        $this->recordEvent($newStage, "implement.iteration.{$run->iteration}", 'system', [
             'from_stage' => $stage->name->value,
             'failure_report' => $failureReport,
             'iteration' => $run->iteration,
