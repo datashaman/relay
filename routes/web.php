@@ -4,6 +4,7 @@ use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\OauthController;
 use App\Http\Controllers\PreflightController;
+use App\Http\Controllers\RunTimelineController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\StuckRunController;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +60,8 @@ Route::post('/escalation-rules/{escalationRule}/toggle', [EscalationRuleControll
 Route::post('/escalation-rules/{escalationRule}/move-up', [EscalationRuleController::class, 'moveUp'])->name('escalation-rules.move-up');
 Route::post('/escalation-rules/{escalationRule}/move-down', [EscalationRuleController::class, 'moveDown'])->name('escalation-rules.move-down');
 Route::post('/escalation-rules/reorder', [EscalationRuleController::class, 'reorder'])->name('escalation-rules.reorder');
+
+Route::get('/runs/{run}/timeline', [RunTimelineController::class, 'show'])->name('runs.timeline');
 
 Route::get('/stuck', [StuckRunController::class, 'index'])->name('stuck.index');
 Route::get('/stuck/{run}/guidance', [StuckRunController::class, 'showGuidance'])->name('stuck.guidance');

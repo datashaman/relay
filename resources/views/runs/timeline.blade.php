@@ -1,0 +1,142 @@
+@extends('layouts.app')
+
+@section('title', 'Run Timeline')
+
+@section('content')
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Run Timeline</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {{ $run->issue->title }}
+                    @if ($run->issue->external_id)
+                        <span class="text-gray-400">({{ $run->issue->external_id }})</span>
+                    @endif
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                    @switch($run->status->value)
+                        @case('completed') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 @break
+                        @case('running') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 @break
+                        @case('failed') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 @break
+                        @case('stuck') bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 @break
+                        @default bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300
+                    @endswitch
+                ">
+                    {{ ucfirst($run->status->value) }}
+                </span>
+                @if ($run->iteration > 1)
+                    <span class="inline-flex items-center rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 px-2.5 py-0.5 text-xs font-medium">
+                        ↺ {{ $run->iteration }}
+                    </span>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    @if ($prUrl)
+        <div class="mb-6 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4">
+            <div class="flex items-center gap-2">
+                <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                </svg>
+                <a href="{{ $prUrl }}" target="_blank" rel="noopener" class="text-sm font-medium text-green-700 dark:text-green-300 hover:underline">
+                    Pull Request: {{ $prUrl }}
+                </a>
+            </div>
+        </div>
+    @endif
+
+    <div class="space-y-8">
+        @foreach ($iterations as $iterationNum => $stages)
+            <div>
+                <div class="flex items-center gap-3 mb-4">
+                    <h2 class="text-lg font-semibold">Iteration {{ $iterationNum }}</h2>
+                    <div class="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
+                </div>
+
+                @if (empty($stages))
+                    <p class="text-sm text-gray-500 dark:text-gray-400 italic">No stages recorded yet.</p>
+                @else
+                    <div class="space-y-4">
+                        @foreach ($stages as $stage)
+                            <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
+                                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700
+                                    @switch($stage->name->value)
+                                        @case('preflight') bg-purple-50 dark:bg-purple-900/10 @break
+                                        @case('implement') bg-blue-50 dark:bg-blue-900/10 @break
+                                        @case('verify') bg-cyan-50 dark:bg-cyan-900/10 @break
+                                        @case('release') bg-green-50 dark:bg-green-900/10 @break
+                                    @endswitch
+                                ">
+                                    <div class="flex items-center gap-2">
+                                        @switch($stage->name->value)
+                                            @case('preflight')
+                                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                                                @break
+                                            @case('implement')
+                                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                                @break
+                                            @case('verify')
+                                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-500"></span>
+                                                @break
+                                            @case('release')
+                                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                                @break
+                                        @endswitch
+                                        <span class="font-medium text-sm">{{ ucfirst($stage->name->value) }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                                            @switch($stage->status->value)
+                                                @case('completed') bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 @break
+                                                @case('running') bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 @break
+                                                @case('failed') bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 @break
+                                                @case('bounced') bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 @break
+                                                @case('stuck') bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 @break
+                                                @case('awaiting_approval') bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @break
+                                                @default bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300
+                                            @endswitch
+                                        ">
+                                            {{ str_replace('_', ' ', ucfirst($stage->status->value)) }}
+                                        </span>
+                                        @if ($stage->started_at)
+                                            <span class="text-xs text-gray-400">{{ $stage->started_at->format('M j, g:i A') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @if ($stage->events->isNotEmpty())
+                                    <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        @foreach ($stage->events as $event)
+                                            <div class="px-4 py-3">
+                                                <div class="flex items-start justify-between">
+                                                    <div class="flex items-center gap-2">
+                                                        @include('runs._event-actor', ['actor' => $event->actor])
+                                                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                            @include('runs._event-label', ['type' => $event->type])
+                                                        </span>
+                                                    </div>
+                                                    <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
+                                                        {{ $event->created_at->format('g:i:s A') }}
+                                                    </span>
+                                                </div>
+
+                                                @include('runs._event-payload', ['event' => $event])
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 italic">
+                                        No events recorded.
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endforeach
+    </div>
+@endsection
