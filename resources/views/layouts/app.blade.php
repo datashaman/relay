@@ -25,6 +25,12 @@
                     <a href="/sources" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Sources</a>
                     <a href="/escalation-rules" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Escalation</a>
                     @php $stuckCount = \App\Models\Run::where('status', \App\Enums\RunStatus::Stuck)->count(); @endphp
+                    <a href="/activity" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                        Activity
+                        @if ($stuckCount > 0)
+                            <span class="ml-0.5 inline-flex items-center justify-center rounded-full bg-amber-500 text-white text-xs font-bold min-w-[1.25rem] h-5 px-1">{{ $stuckCount }} stuck</span>
+                        @endif
+                    </a>
                     <a href="/stuck" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                         Stuck
                         @if ($stuckCount > 0)

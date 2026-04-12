@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityFeedController;
 use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\OauthController;
@@ -62,6 +63,8 @@ Route::post('/escalation-rules/{escalationRule}/move-down', [EscalationRuleContr
 Route::post('/escalation-rules/reorder', [EscalationRuleController::class, 'reorder'])->name('escalation-rules.reorder');
 
 Route::get('/runs/{run}/timeline', [RunTimelineController::class, 'show'])->name('runs.timeline');
+
+Route::get('/activity', [ActivityFeedController::class, 'index'])->name('activity.index');
 
 Route::get('/stuck', [StuckRunController::class, 'index'])->name('stuck.index');
 Route::get('/stuck/{run}/guidance', [StuckRunController::class, 'showGuidance'])->name('stuck.guidance');
