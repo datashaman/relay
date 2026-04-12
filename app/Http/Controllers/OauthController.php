@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Source;
 use App\Services\OauthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,8 +38,10 @@ class OauthController extends Controller
 
             $tokenData = $this->oauth->exchangeCode($provider, $request->input('code'));
 
-            $source = \App\Models\Source::firstOrCreate(
-                ['type' => $provider, 'external_account' => $tokenData['account_name'] ?? $provider],
+            $accountName = $this->resolveAccountName($provider, $tokenData);
+
+            $source = Source::firstOrCreate(
+                ['type' => $provider, 'external_account' => $accountName],
                 ['name' => ucfirst($provider) . ' Connection', 'is_active' => true],
             );
 
@@ -48,5 +51,50 @@ class OauthController extends Controller
         } catch (\RuntimeException $e) {
             return redirect('/sources')->with('error', $e->getMessage());
         }
+    }
+
+    public function disconnect(string $provider): RedirectResponse
+    {
+        $source = Source::where('type', $provider)->first();
+
+        if (! $source) {
+            return redirect('/sources')->with('error', 'No ' . ucfirst($provider) . ' connection found.');
+        }
+
+        $token = $source->oauthTokens()->where('provider', $provider)->first();
+
+        $revocationError = null;
+
+        if ($token && $provider === 'github') {
+            try {
+                $this->oauth->revokeGitHubToken($token->access_token);
+            } catch (\RuntimeException $e) {
+                $revocationError = $e->getMessage();
+            }
+        }
+
+        $source->oauthTokens()->delete();
+        $source->delete();
+
+        if ($revocationError) {
+            return redirect('/sources')->with('warning', ucfirst($provider) . ' disconnected locally, but remote revocation failed: ' . $revocationError);
+        }
+
+        return redirect('/sources')->with('success', ucfirst($provider) . ' disconnected successfully.');
+    }
+
+    private function resolveAccountName(string $provider, array $tokenData): string
+    {
+        if ($provider === 'github') {
+            try {
+                $user = $this->oauth->fetchGitHubUser($tokenData['access_token']);
+
+                return $user['login'];
+            } catch (\RuntimeException) {
+                return 'GitHub (unknown)';
+            }
+        }
+
+        return $tokenData['account_name'] ?? $provider;
     }
 }

@@ -64,7 +64,7 @@ class OauthService
     {
         $config = $this->providerConfig($provider);
 
-        $response = Http::post($config['token_url'], [
+        $response = Http::accept('application/json')->post($config['token_url'], [
             'client_id' => $config['client_id'],
             'client_secret' => $config['client_secret'],
             'code' => $code,
@@ -77,6 +77,34 @@ class OauthService
         }
 
         return $response->json();
+    }
+
+    public function fetchGitHubUser(string $accessToken): array
+    {
+        $response = Http::withToken($accessToken)
+            ->accept('application/json')
+            ->get('https://api.github.com/user');
+
+        if ($response->failed()) {
+            throw new \RuntimeException('Failed to fetch GitHub user: ' . $response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function revokeGitHubToken(string $accessToken): void
+    {
+        $config = $this->providerConfig('github');
+
+        $response = Http::withBasicAuth($config['client_id'], $config['client_secret'])
+            ->accept('application/json')
+            ->delete('https://api.github.com/applications/' . $config['client_id'] . '/grant', [
+                'access_token' => $accessToken,
+            ]);
+
+        if ($response->failed() && $response->status() !== 404) {
+            throw new \RuntimeException('GitHub token revocation failed: ' . $response->body());
+        }
     }
 
     public function storeToken(Source $source, string $provider, array $tokenData): OauthToken

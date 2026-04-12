@@ -14,3 +14,7 @@ Route::get('/oauth/redirect/{provider}', [OauthController::class, 'redirect'])
 Route::get('/oauth/callback/{provider}', [OauthController::class, 'callback'])
     ->name('oauth.callback')
     ->whereIn('provider', ['github', 'jira']);
+
+Route::delete('/oauth/disconnect/{provider}', [OauthController::class, 'disconnect'])
+    ->name('oauth.disconnect')
+    ->whereIn('provider', ['github', 'jira']);

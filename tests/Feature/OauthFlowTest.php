@@ -108,6 +108,10 @@ class OauthFlowTest extends TestCase
                 'expires_in' => 3600,
                 'scope' => 'repo,read:org,workflow',
             ]),
+            'api.github.com/user' => Http::response([
+                'login' => 'testuser',
+                'id' => 12345,
+            ]),
         ]);
 
         $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
@@ -115,7 +119,7 @@ class OauthFlowTest extends TestCase
         $response->assertRedirect('/sources');
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('sources', ['type' => 'github']);
+        $this->assertDatabaseHas('sources', ['type' => 'github', 'external_account' => 'testuser']);
         $this->assertDatabaseCount('oauth_tokens', 1);
 
         $token = OauthToken::first();
@@ -135,6 +139,9 @@ class OauthFlowTest extends TestCase
             'github.com/login/oauth/access_token' => Http::response([
                 'access_token' => 'gho_token',
                 'expires_in' => 3600,
+            ]),
+            'api.github.com/user' => Http::response([
+                'login' => 'testuser',
             ]),
         ]);
 
@@ -242,5 +249,159 @@ class OauthFlowTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $service->providerConfig('github');
+    }
+
+    public function test_github_callback_fetches_username_as_account_name(): void
+    {
+        $state = 'test-state-username';
+        Cache::put("oauth_state:{$state}", 'github', now()->addMinutes(10));
+
+        Http::fake([
+            'github.com/login/oauth/access_token' => Http::response([
+                'access_token' => 'gho_token',
+                'expires_in' => 3600,
+                'scope' => 'repo,read:org,workflow',
+            ]),
+            'api.github.com/user' => Http::response([
+                'login' => 'octocat',
+                'id' => 1,
+                'name' => 'The Octocat',
+            ]),
+        ]);
+
+        $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('success', 'Github connected successfully.');
+
+        $source = Source::where('type', 'github')->first();
+        $this->assertNotNull($source);
+        $this->assertEquals('octocat', $source->external_account);
+    }
+
+    public function test_github_callback_graceful_degradation_on_user_fetch_failure(): void
+    {
+        $state = 'test-state-userfail';
+        Cache::put("oauth_state:{$state}", 'github', now()->addMinutes(10));
+
+        Http::fake([
+            'github.com/login/oauth/access_token' => Http::response([
+                'access_token' => 'gho_token',
+                'expires_in' => 3600,
+            ]),
+            'api.github.com/user' => Http::response('Internal Server Error', 500),
+        ]);
+
+        $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('success');
+
+        $source = Source::where('type', 'github')->first();
+        $this->assertNotNull($source);
+        $this->assertEquals('GitHub (unknown)', $source->external_account);
+        $this->assertDatabaseCount('oauth_tokens', 1);
+    }
+
+    public function test_github_disconnect_revokes_and_deletes(): void
+    {
+        $source = Source::factory()->create(['type' => 'github', 'external_account' => 'octocat']);
+        $source->oauthTokens()->create([
+            'provider' => 'github',
+            'access_token' => 'gho_revoke_me',
+            'refresh_token' => null,
+            'scopes' => ['repo'],
+        ]);
+
+        Http::fake([
+            'api.github.com/applications/test-github-id/grant' => Http::response(null, 204),
+        ]);
+
+        $response = $this->delete('/oauth/disconnect/github');
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('success', 'Github disconnected successfully.');
+
+        $this->assertDatabaseCount('sources', 0);
+        $this->assertDatabaseCount('oauth_tokens', 0);
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'api.github.com/applications/test-github-id/grant');
+        });
+    }
+
+    public function test_github_disconnect_deletes_locally_on_revocation_failure(): void
+    {
+        $source = Source::factory()->create(['type' => 'github', 'external_account' => 'octocat']);
+        $source->oauthTokens()->create([
+            'provider' => 'github',
+            'access_token' => 'gho_revoke_me',
+            'refresh_token' => null,
+            'scopes' => ['repo'],
+        ]);
+
+        Http::fake([
+            'api.github.com/applications/test-github-id/grant' => Http::response('Server Error', 500),
+        ]);
+
+        $response = $this->delete('/oauth/disconnect/github');
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('warning');
+
+        $this->assertDatabaseCount('sources', 0);
+        $this->assertDatabaseCount('oauth_tokens', 0);
+    }
+
+    public function test_disconnect_nonexistent_connection_returns_error(): void
+    {
+        $response = $this->delete('/oauth/disconnect/github');
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('error', 'No Github connection found.');
+    }
+
+    public function test_disconnect_route_rejects_invalid_provider(): void
+    {
+        $this->delete('/oauth/disconnect/invalid')->assertNotFound();
+    }
+
+    public function test_github_redirect_includes_correct_scopes(): void
+    {
+        $response = $this->get('/oauth/redirect/github');
+
+        $location = $response->headers->get('Location');
+        $this->assertStringContainsString('scope=repo%2Cread%3Aorg%2Cworkflow', $location);
+    }
+
+    public function test_github_credentials_configurable_via_env(): void
+    {
+        config([
+            'services.github.client_id' => 'custom-app-id',
+            'services.github.client_secret' => 'custom-app-secret',
+        ]);
+
+        $service = app(OauthService::class);
+        $config = $service->providerConfig('github');
+
+        $this->assertEquals('custom-app-id', $config['client_id']);
+        $this->assertEquals('custom-app-secret', $config['client_secret']);
+    }
+
+    public function test_callback_network_failure_on_token_exchange_shows_error(): void
+    {
+        $state = 'test-state-netfail';
+        Cache::put("oauth_state:{$state}", 'github', now()->addMinutes(10));
+
+        Http::fake([
+            'github.com/login/oauth/access_token' => Http::response('Connection refused', 500),
+        ]);
+
+        $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+
+        $response->assertRedirect('/sources');
+        $response->assertSessionHas('error');
+        $this->assertDatabaseCount('sources', 0);
+        $this->assertDatabaseCount('oauth_tokens', 0);
     }
 }
