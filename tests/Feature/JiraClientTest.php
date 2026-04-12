@@ -21,6 +21,14 @@ class JiraClientTest extends TestCase
     private const CLOUD_ID = 'test-cloud-123';
     private const BASE = 'api.atlassian.com/ex/jira/test-cloud-123/rest/api/3';
 
+    private function fixture(string $name): array
+    {
+        return json_decode(
+            file_get_contents(base_path("tests/fixtures/jira/{$name}.json")),
+            true
+        );
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -55,15 +63,7 @@ class JiraClientTest extends TestCase
     public function test_search_issues_with_jql(): void
     {
         Http::fake([
-            self::BASE . '/search*' => Http::response([
-                'issues' => [
-                    $this->fakeJiraIssue('10001', 'Bug in login'),
-                    $this->fakeJiraIssue('10002', 'Add dark mode'),
-                ],
-                'total' => 2,
-                'startAt' => 0,
-                'maxResults' => 50,
-            ]),
+            self::BASE . '/search*' => Http::response($this->fixture('search_issues')),
         ]);
 
         $result = $this->client->searchIssues('project = TEST');
@@ -82,9 +82,7 @@ class JiraClientTest extends TestCase
     public function test_get_issue(): void
     {
         Http::fake([
-            self::BASE . '/issue/TEST-1' => Http::response(
-                $this->fakeJiraIssue('10001', 'Bug in login', 'TEST-1'),
-            ),
+            self::BASE . '/issue/TEST-1' => Http::response($this->fixture('get_issue')),
         ]);
 
         $issue = $this->client->getIssue('TEST-1');
@@ -96,10 +94,7 @@ class JiraClientTest extends TestCase
     public function test_list_projects(): void
     {
         Http::fake([
-            self::BASE . '/project' => Http::response([
-                ['id' => '10000', 'key' => 'TEST', 'name' => 'Test Project'],
-                ['id' => '10001', 'key' => 'DEV', 'name' => 'Dev Project'],
-            ]),
+            self::BASE . '/project' => Http::response($this->fixture('list_projects')),
         ]);
 
         $projects = $this->client->listProjects();
@@ -111,13 +106,7 @@ class JiraClientTest extends TestCase
     public function test_list_transitions(): void
     {
         Http::fake([
-            self::BASE . '/issue/TEST-1/transitions' => Http::response([
-                'transitions' => [
-                    ['id' => '11', 'name' => 'To Do'],
-                    ['id' => '21', 'name' => 'In Progress'],
-                    ['id' => '31', 'name' => 'Done'],
-                ],
-            ]),
+            self::BASE . '/issue/TEST-1/transitions' => Http::response($this->fixture('list_transitions')),
         ]);
 
         $transitions = $this->client->listTransitions('TEST-1');
@@ -144,10 +133,7 @@ class JiraClientTest extends TestCase
     public function test_add_comment(): void
     {
         Http::fake([
-            self::BASE . '/issue/TEST-1/comment' => Http::response([
-                'id' => '10100',
-                'body' => ['type' => 'doc', 'version' => 1, 'content' => []],
-            ], 201),
+            self::BASE . '/issue/TEST-1/comment' => Http::response($this->fixture('add_comment'), 201),
         ]);
 
         $result = $this->client->addComment('TEST-1', 'Hello from Relay');

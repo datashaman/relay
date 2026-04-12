@@ -18,6 +18,14 @@ class GitHubClientTest extends TestCase
     private OauthToken $token;
     private GitHubClient $client;
 
+    private function fixture(string $name): array
+    {
+        return json_decode(
+            file_get_contents(base_path("tests/fixtures/github/{$name}.json")),
+            true
+        );
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -47,10 +55,7 @@ class GitHubClientTest extends TestCase
     public function test_list_repos(): void
     {
         Http::fake([
-            'api.github.com/user/repos*' => Http::response([
-                ['id' => 1, 'full_name' => 'user/repo-a'],
-                ['id' => 2, 'full_name' => 'user/repo-b'],
-            ]),
+            'api.github.com/user/repos*' => Http::response($this->fixture('list_repos')),
         ]);
 
         $result = $this->client->listRepos();
@@ -68,10 +73,7 @@ class GitHubClientTest extends TestCase
     public function test_list_issues(): void
     {
         Http::fake([
-            'api.github.com/repos/owner/repo/issues*' => Http::response([
-                ['number' => 1, 'title' => 'Bug report'],
-                ['number' => 2, 'title' => 'Feature request'],
-            ]),
+            'api.github.com/repos/owner/repo/issues*' => Http::response($this->fixture('list_issues')),
         ]);
 
         $result = $this->client->listIssues('owner', 'repo');
@@ -83,12 +85,7 @@ class GitHubClientTest extends TestCase
     public function test_get_issue(): void
     {
         Http::fake([
-            'api.github.com/repos/owner/repo/issues/42' => Http::response([
-                'number' => 42,
-                'title' => 'Fix login',
-                'body' => 'Login is broken',
-                'labels' => [['name' => 'bug']],
-            ]),
+            'api.github.com/repos/owner/repo/issues/42' => Http::response($this->fixture('get_issue')),
         ]);
 
         $issue = $this->client->getIssue('owner', 'repo', 42);
@@ -100,10 +97,7 @@ class GitHubClientTest extends TestCase
     public function test_create_branch(): void
     {
         Http::fake([
-            'api.github.com/repos/owner/repo/git/refs' => Http::response([
-                'ref' => 'refs/heads/feature-branch',
-                'object' => ['sha' => 'abc123'],
-            ], 201),
+            'api.github.com/repos/owner/repo/git/refs' => Http::response($this->fixture('create_branch'), 201),
         ]);
 
         $result = $this->client->createBranch('owner', 'repo', 'feature-branch', 'abc123');
@@ -121,10 +115,7 @@ class GitHubClientTest extends TestCase
     public function test_push_branch(): void
     {
         Http::fake([
-            'api.github.com/repos/owner/repo/git/refs/heads/feature*' => Http::response([
-                'ref' => 'refs/heads/feature',
-                'object' => ['sha' => 'def456'],
-            ]),
+            'api.github.com/repos/owner/repo/git/refs/heads/feature*' => Http::response($this->fixture('push_branch')),
         ]);
 
         $result = $this->client->pushBranch('owner', 'repo', 'feature', 'def456');
@@ -140,11 +131,7 @@ class GitHubClientTest extends TestCase
     public function test_create_pull_request(): void
     {
         Http::fake([
-            'api.github.com/repos/owner/repo/pulls' => Http::response([
-                'number' => 10,
-                'title' => 'Add feature',
-                'html_url' => 'https://github.com/owner/repo/pull/10',
-            ], 201),
+            'api.github.com/repos/owner/repo/pulls' => Http::response($this->fixture('create_pull_request'), 201),
         ]);
 
         $result = $this->client->createPullRequest('owner', 'repo', 'Add feature', 'feature-branch', 'main', 'PR body');
@@ -164,10 +151,7 @@ class GitHubClientTest extends TestCase
     public function test_add_comment(): void
     {
         Http::fake([
-            'api.github.com/repos/owner/repo/issues/5/comments' => Http::response([
-                'id' => 100,
-                'body' => 'Hello from Relay',
-            ], 201),
+            'api.github.com/repos/owner/repo/issues/5/comments' => Http::response($this->fixture('add_comment'), 201),
         ]);
 
         $result = $this->client->addComment('owner', 'repo', 5, 'Hello from Relay');

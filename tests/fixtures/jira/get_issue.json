@@ -1,0 +1,12 @@
+{
+    "id": "10001",
+    "key": "TEST-1",
+    "self": "https://test.atlassian.net/rest/api/3/issue/10001",
+    "fields": {
+        "summary": "Bug in login",
+        "description": null,
+        "assignee": null,
+        "labels": [],
+        "status": {"name": "To Do"}
+    }
+}

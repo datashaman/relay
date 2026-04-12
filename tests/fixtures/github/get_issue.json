@@ -1,0 +1,6 @@
+{
+    "number": 42,
+    "title": "Fix login",
+    "body": "Login is broken",
+    "labels": [{"name": "bug"}]
+}

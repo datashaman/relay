@@ -1,0 +1,31 @@
+{
+    "issues": [
+        {
+            "id": "10001",
+            "key": "TEST-1",
+            "self": "https://test.atlassian.net/rest/api/3/issue/10001",
+            "fields": {
+                "summary": "Bug in login",
+                "description": null,
+                "assignee": null,
+                "labels": [],
+                "status": {"name": "To Do"}
+            }
+        },
+        {
+            "id": "10002",
+            "key": "TEST-2",
+            "self": "https://test.atlassian.net/rest/api/3/issue/10002",
+            "fields": {
+                "summary": "Add dark mode",
+                "description": null,
+                "assignee": null,
+                "labels": [],
+                "status": {"name": "To Do"}
+            }
+        }
+    ],
+    "total": 2,
+    "startAt": 0,
+    "maxResults": 50
+}
