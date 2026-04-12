@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
 class OauthController extends Controller
 {
@@ -57,6 +58,11 @@ class OauthController extends Controller
         } catch (\RuntimeException $e) {
             return redirect('/sources')->with('error', $e->getMessage());
         }
+    }
+
+    public function jiraSiteSelectionForm(): View
+    {
+        return view('jira.select-site');
     }
 
     public function jiraSites(): JsonResponse
