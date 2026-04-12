@@ -1,0 +1,344 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Enums\IssueStatus;
+use App\Enums\SourceType;
+use App\Jobs\SyncSourceIssuesJob;
+use App\Models\Issue;
+use App\Models\Source;
+use App\Services\FilterRuleService;
+use App\Services\OauthService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class IssueQueueTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function createSource(array $overrides = []): Source
+    {
+        return Source::factory()->create(array_merge([
+            'type' => SourceType::GitHub,
+            'is_active' => true,
+            'external_account' => 'testuser',
+        ], $overrides));
+    }
+
+    private function createIssue(Source $source, array $overrides = []): Issue
+    {
+        return Issue::factory()->create(array_merge([
+            'source_id' => $source->id,
+            'status' => IssueStatus::Queued,
+        ], $overrides));
+    }
+
+    public function test_queue_view_shows_queued_issues(): void
+    {
+        $source = $this->createSource();
+        $issue = $this->createIssue($source, ['title' => 'Fix the login bug']);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('Fix the login bug');
+        $response->assertSee('Issue Queue');
+    }
+
+    public function test_queue_view_shows_accepted_issues(): void
+    {
+        $source = $this->createSource();
+        $issue = $this->createIssue($source, [
+            'title' => 'Auto-accepted issue',
+            'status' => IssueStatus::Accepted,
+            'auto_accepted' => true,
+        ]);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('Auto-accepted issue');
+        $response->assertSee('auto');
+    }
+
+    public function test_queue_view_does_not_show_rejected_issues(): void
+    {
+        $source = $this->createSource();
+        $this->createIssue($source, [
+            'title' => 'Rejected issue',
+            'status' => IssueStatus::Rejected,
+        ]);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertDontSee('Rejected issue');
+    }
+
+    public function test_queue_view_groups_by_source(): void
+    {
+        $source1 = $this->createSource(['external_account' => 'org1']);
+        $source2 = $this->createSource(['external_account' => 'org2']);
+        $this->createIssue($source1, ['title' => 'Issue from org1']);
+        $this->createIssue($source2, ['title' => 'Issue from org2']);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('org1');
+        $response->assertSee('org2');
+        $response->assertSee('Issue from org1');
+        $response->assertSee('Issue from org2');
+    }
+
+    public function test_queue_filter_by_source(): void
+    {
+        $source1 = $this->createSource(['external_account' => 'org1']);
+        $source2 = $this->createSource(['external_account' => 'org2']);
+        $this->createIssue($source1, ['title' => 'Issue from org1']);
+        $this->createIssue($source2, ['title' => 'Issue from org2']);
+
+        $response = $this->get('/issues/queue?source=' . $source1->id);
+
+        $response->assertStatus(200);
+        $response->assertSee('Issue from org1');
+        $response->assertDontSee('Issue from org2');
+    }
+
+    public function test_queue_search_by_title(): void
+    {
+        $source = $this->createSource();
+        $this->createIssue($source, ['title' => 'Fix login bug']);
+        $this->createIssue($source, ['title' => 'Add dark mode']);
+
+        $response = $this->get('/issues/queue?search=login');
+
+        $response->assertStatus(200);
+        $response->assertSee('Fix login bug');
+        $response->assertDontSee('Add dark mode');
+    }
+
+    public function test_queue_search_by_external_id(): void
+    {
+        $source = $this->createSource();
+        $this->createIssue($source, ['title' => 'Some issue', 'external_id' => 'org/repo#42']);
+
+        $response = $this->get('/issues/queue?search=repo%2342');
+
+        $response->assertStatus(200);
+        $response->assertSee('Some issue');
+    }
+
+    public function test_accept_queued_issue(): void
+    {
+        $source = $this->createSource();
+        $issue = $this->createIssue($source, ['title' => 'Accept me']);
+
+        $response = $this->post("/issues/{$issue->id}/accept");
+
+        $response->assertRedirect('/issues/queue');
+        $response->assertSessionHas('success');
+        $this->assertEquals(IssueStatus::Accepted, $issue->fresh()->status);
+    }
+
+    public function test_accept_non_queued_issue_fails(): void
+    {
+        $source = $this->createSource();
+        $issue = $this->createIssue($source, ['status' => IssueStatus::Accepted]);
+
+        $response = $this->post("/issues/{$issue->id}/accept");
+
+        $response->assertRedirect('/issues/queue');
+        $response->assertSessionHas('error');
+    }
+
+    public function test_reject_queued_issue(): void
+    {
+        $source = $this->createSource();
+        $issue = $this->createIssue($source, ['title' => 'Reject me']);
+
+        $response = $this->post("/issues/{$issue->id}/reject");
+
+        $response->assertRedirect('/issues/queue');
+        $response->assertSessionHas('success');
+        $this->assertEquals(IssueStatus::Rejected, $issue->fresh()->status);
+    }
+
+    public function test_reject_non_queued_issue_fails(): void
+    {
+        $source = $this->createSource();
+        $issue = $this->createIssue($source, ['status' => IssueStatus::Accepted]);
+
+        $response = $this->post("/issues/{$issue->id}/reject");
+
+        $response->assertRedirect('/issues/queue');
+        $response->assertSessionHas('error');
+    }
+
+    public function test_rejected_issues_hidden_from_queue(): void
+    {
+        $source = $this->createSource();
+        $issue = $this->createIssue($source, ['title' => 'Will be rejected']);
+
+        $this->post("/issues/{$issue->id}/reject");
+
+        $this->assertEquals(IssueStatus::Rejected, $issue->fresh()->status);
+
+        $response = $this->get('/issues/queue');
+        $response->assertDontSee('Queued');
+    }
+
+    public function test_toggle_pause_intake(): void
+    {
+        $source = $this->createSource(['is_intake_paused' => false]);
+
+        $response = $this->post("/sources/{$source->id}/toggle-pause");
+
+        $response->assertRedirect('/issues/queue');
+        $response->assertSessionHas('success');
+        $this->assertTrue($source->fresh()->is_intake_paused);
+    }
+
+    public function test_toggle_resume_intake(): void
+    {
+        $source = $this->createSource(['is_intake_paused' => true]);
+
+        $response = $this->post("/sources/{$source->id}/toggle-pause");
+
+        $response->assertRedirect('/issues/queue');
+        $this->assertFalse($source->fresh()->is_intake_paused);
+    }
+
+    public function test_pause_with_backlog_threshold(): void
+    {
+        $source = $this->createSource(['is_intake_paused' => false]);
+
+        $response = $this->post("/sources/{$source->id}/toggle-pause", [
+            'backlog_threshold' => 10,
+        ]);
+
+        $response->assertRedirect('/issues/queue');
+        $this->assertTrue($source->fresh()->is_intake_paused);
+        $this->assertEquals(10, $source->fresh()->backlog_threshold);
+    }
+
+    public function test_sync_skipped_when_intake_paused(): void
+    {
+        $source = $this->createSource(['is_intake_paused' => true]);
+        $source->oauthTokens()->create([
+            'provider' => 'github',
+            'access_token' => 'test-token',
+            'token_type' => 'bearer',
+        ]);
+
+        $job = new SyncSourceIssuesJob($source);
+        $job->handle(app(OauthService::class), app(FilterRuleService::class));
+
+        $this->assertEquals(0, Issue::count());
+    }
+
+    public function test_sync_skipped_when_backlog_threshold_reached(): void
+    {
+        $source = $this->createSource([
+            'is_intake_paused' => false,
+            'backlog_threshold' => 2,
+        ]);
+        $this->createIssue($source);
+        $this->createIssue($source, ['external_id' => 'ext-2']);
+
+        $source->oauthTokens()->create([
+            'provider' => 'github',
+            'access_token' => 'test-token',
+            'token_type' => 'bearer',
+        ]);
+
+        $job = new SyncSourceIssuesJob($source);
+        $job->handle(app(OauthService::class), app(FilterRuleService::class));
+
+        $this->assertEquals(2, Issue::count());
+    }
+
+    public function test_empty_queue_shows_message(): void
+    {
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('No incoming issues');
+    }
+
+    public function test_auto_accepted_badge_visible(): void
+    {
+        $source = $this->createSource();
+        $this->createIssue($source, [
+            'title' => 'Auto issue',
+            'status' => IssueStatus::Accepted,
+            'auto_accepted' => true,
+        ]);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('Auto issue');
+        $response->assertSee('auto');
+    }
+
+    public function test_queue_nav_link_present(): void
+    {
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('Queue');
+    }
+
+    public function test_pause_status_shown_in_queue(): void
+    {
+        $source = $this->createSource(['is_intake_paused' => true]);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('Paused');
+        $response->assertSee('Resume Intake');
+    }
+
+    public function test_queued_issues_show_accept_reject_buttons(): void
+    {
+        $source = $this->createSource();
+        $this->createIssue($source, ['title' => 'Pending issue']);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('Accept');
+        $response->assertSee('Reject');
+    }
+
+    public function test_accepted_issues_no_action_buttons(): void
+    {
+        $source = $this->createSource();
+        $this->createIssue($source, [
+            'title' => 'Accepted issue',
+            'status' => IssueStatus::Accepted,
+        ]);
+
+        $response = $this->get('/issues/queue');
+
+        $content = $response->getContent();
+        $this->assertStringNotContainsString('issues/' . Issue::first()->id . '/accept', $content);
+    }
+
+    public function test_labels_displayed_on_issues(): void
+    {
+        $source = $this->createSource();
+        $this->createIssue($source, [
+            'title' => 'Labeled issue',
+            'labels' => ['bug', 'urgent'],
+        ]);
+
+        $response = $this->get('/issues/queue');
+
+        $response->assertStatus(200);
+        $response->assertSee('bug');
+        $response->assertSee('urgent');
+    }
+}

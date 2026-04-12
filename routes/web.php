@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\IssueController;
 use App\Http\Controllers\OauthController;
 use App\Http\Controllers\SourceController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,11 @@ Route::get('/', function () {
 Route::get('/sources', [SourceController::class, 'index'])->name('sources.index');
 Route::post('/sources/{source}/test', [SourceController::class, 'testConnection'])->name('sources.test');
 Route::post('/sources/{source}/sync', [SourceController::class, 'syncNow'])->name('sources.sync');
+
+Route::get('/issues/queue', [IssueController::class, 'queue'])->name('issues.queue');
+Route::post('/issues/{issue}/accept', [IssueController::class, 'accept'])->name('issues.accept');
+Route::post('/issues/{issue}/reject', [IssueController::class, 'reject'])->name('issues.reject');
+Route::post('/sources/{source}/toggle-pause', [IssueController::class, 'togglePause'])->name('issues.toggle-pause');
 
 Route::get('/oauth/redirect/{provider}', [OauthController::class, 'redirect'])
     ->name('oauth.redirect')

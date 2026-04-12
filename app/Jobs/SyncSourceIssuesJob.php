@@ -26,6 +26,10 @@ class SyncSourceIssuesJob implements ShouldQueue
 
     public function handle(OauthService $oauth, FilterRuleService $filterService): void
     {
+        if ($this->isIntakePaused()) {
+            return;
+        }
+
         $token = $this->source->oauthTokens()
             ->where('provider', $this->source->type->value)
             ->first();
@@ -129,6 +133,25 @@ class SyncSourceIssuesJob implements ShouldQueue
         if (! empty($changes)) {
             $issue->update($changes);
         }
+    }
+
+    private function isIntakePaused(): bool
+    {
+        if ($this->source->is_intake_paused) {
+            return true;
+        }
+
+        if ($this->source->backlog_threshold) {
+            $queuedCount = $this->source->issues()
+                ->where('status', IssueStatus::Queued)
+                ->count();
+
+            if ($queuedCount >= $this->source->backlog_threshold) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function recordError(string $message): void
