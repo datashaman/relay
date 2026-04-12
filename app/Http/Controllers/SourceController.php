@@ -9,6 +9,7 @@ use App\Services\JiraClient;
 use App\Services\OauthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SourceController extends Controller
@@ -17,12 +18,17 @@ class SourceController extends Controller
         private OauthService $oauth,
     ) {}
 
-    public function syncNow(Source $source): RedirectResponse
+    public function syncNow(Source $source, Request $request): RedirectResponse|JsonResponse
     {
         SyncSourceIssuesJob::dispatch($source);
 
-        return redirect()->route('intake.index')
-            ->with('success', 'Sync started for ' . ($source->external_account ?? $source->name) . '.');
+        $message = 'Sync started for ' . ($source->external_account ?? $source->name) . '.';
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $message]);
+        }
+
+        return redirect()->route('intake.index')->with('success', $message);
     }
 
     public function testConnection(Source $source): JsonResponse

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Source;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -37,7 +38,7 @@ class IssueController extends Controller
             ->with('success', "Issue \"{$issue->title}\" rejected.");
     }
 
-    public function togglePause(Source $source, Request $request): RedirectResponse
+    public function togglePause(Source $source, Request $request): RedirectResponse|JsonResponse
     {
         $paused = ! $source->is_intake_paused;
 
@@ -51,8 +52,16 @@ class IssueController extends Controller
         $source->update($data);
 
         $status = $paused ? 'paused' : 'resumed';
+        $message = "Intake {$status} for {$source->external_account}.";
 
-        return redirect()->route('intake.index')
-            ->with('success', "Intake {$status} for {$source->external_account}.");
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'is_intake_paused' => $paused,
+            ]);
+        }
+
+        return redirect()->route('intake.index')->with('success', $message);
     }
 }

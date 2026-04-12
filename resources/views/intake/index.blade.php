@@ -57,10 +57,10 @@
                         ? 'bg-surface-container-high text-on-surface'
                         : 'bg-primary-container/30 text-primary';
                 @endphp
-                <div class="bg-surface-container-low rounded-xl p-4">
+                <div class="bg-surface-container-low rounded-xl p-4" data-source-card="{{ $source->id }}">
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                            <div class="flex items-center gap-1.5 flex-wrap mb-1" data-source-pills>
                                 <span class="inline-flex items-center rounded px-1.5 py-0.5 {{ $typePillClass }} font-label text-[10px] uppercase tracking-wider">
                                     {{ $source->type->value }}
                                 </span>
@@ -73,11 +73,9 @@
                                         Disconnected
                                     </span>
                                 @endif
-                                @if ($isPaused)
-                                    <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
-                                        Paused
-                                    </span>
-                                @endif
+                                <span data-paused-pill class="{{ $isPaused ? 'inline-flex' : 'hidden' }} items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
+                                    Paused
+                                </span>
                             </div>
                             <h3 class="flex items-center gap-2 text-sm font-semibold text-on-surface leading-tight">
                                 <span class="text-on-surface-variant">
@@ -95,13 +93,10 @@
                         </div>
 
                         @if ($isConnected)
-                            <form method="POST" action="{{ route('issues.toggle-pause', $source) }}">
-                                @csrf
-                                <button type="submit"
-                                        class="rounded-md px-3 py-1.5 font-label text-[10px] uppercase tracking-wider {{ $isPaused ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest' }}">
-                                    {{ $isPaused ? 'Resume' : 'Pause' }}
-                                </button>
-                            </form>
+                            <button type="button" data-toggle-pause data-source-id="{{ $source->id }}" data-paused="{{ $isPaused ? '1' : '0' }}"
+                                    class="rounded-md px-3 py-1.5 font-label text-[10px] uppercase tracking-wider {{ $isPaused ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest' }}">
+                                {{ $isPaused ? 'Resume' : 'Pause' }}
+                            </button>
                         @endif
                     </div>
 
@@ -158,12 +153,9 @@
                     {{-- Source actions --}}
                     <div class="flex items-center gap-3 mt-3 pt-2 border-t border-outline-variant/20 leading-none">
                         @if ($isConnected)
-                            <form method="POST" action="{{ route('sources.sync', $source) }}" class="contents">
-                                @csrf
-                                <button type="submit" class="font-label text-[10px] uppercase tracking-widest leading-none text-secondary hover:underline">
-                                    Sync Now
-                                </button>
-                            </form>
+                            <button type="button" data-sync-source data-source-id="{{ $source->id }}" class="font-label text-[10px] uppercase tracking-widest leading-none text-secondary hover:underline">
+                                Sync Now
+                            </button>
                             <button type="button" data-test-source data-source-id="{{ $source->id }}" class="font-label text-[10px] uppercase tracking-widest leading-none text-primary hover:underline">
                                 Test
                             </button>
@@ -267,39 +259,81 @@
 </div>
 
 <script>
-    document.addEventListener('click', async function (e) {
-        const btn = e.target.closest('[data-test-source]');
-        if (!btn) return;
-        e.preventDefault();
-        const id = btn.dataset.sourceId;
+    const csrfToken = () => document.querySelector('meta[name=csrf-token]').content;
+
+    async function postJson(url) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+        return res.json().catch(() => ({ success: false }));
+    }
+
+    function flashButton(btn, ok, label) {
         const original = btn.textContent;
-        btn.textContent = 'Testing…';
-        btn.disabled = true;
-        try {
-            const res = await fetch(`/sources/${id}/test`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                    'Accept': 'application/json',
-                },
-            });
-            const data = await res.json();
-            btn.textContent = data.success ? 'OK ✓' : 'Failed ✗';
-            btn.classList.toggle('text-secondary', !!data.success);
-            btn.classList.toggle('text-error', !data.success);
-            btn.classList.remove('text-primary');
-        } catch (_) {
-            btn.textContent = 'Error';
-            btn.classList.add('text-error');
-            btn.classList.remove('text-primary');
-        } finally {
-            setTimeout(() => {
-                btn.textContent = original;
-                btn.disabled = false;
-                btn.classList.remove('text-secondary', 'text-error');
-                btn.classList.add('text-primary');
-            }, 2500);
+        const originalColor = btn.classList.contains('text-primary') ? 'text-primary' : 'text-secondary';
+        btn.textContent = label;
+        btn.classList.remove('text-primary', 'text-secondary');
+        btn.classList.add(ok ? 'text-secondary' : 'text-error');
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.classList.remove('text-secondary', 'text-error');
+            btn.classList.add(originalColor);
+            btn.disabled = false;
+        }, 2500);
+    }
+
+    document.addEventListener('click', async function (e) {
+        const testBtn = e.target.closest('[data-test-source]');
+        if (testBtn) {
+            e.preventDefault();
+            testBtn.textContent = 'Testing…';
+            testBtn.disabled = true;
+            const data = await postJson(`/sources/${testBtn.dataset.sourceId}/test`);
+            flashButton(testBtn, !!data.success, data.success ? 'OK ✓' : 'Failed ✗');
+            return;
+        }
+
+        const syncBtn = e.target.closest('[data-sync-source]');
+        if (syncBtn) {
+            e.preventDefault();
+            syncBtn.textContent = 'Syncing…';
+            syncBtn.disabled = true;
+            const data = await postJson(`/sources/${syncBtn.dataset.sourceId}/sync`);
+            flashButton(syncBtn, !!data.success, data.success ? 'Queued ✓' : 'Failed ✗');
+            return;
+        }
+
+        const pauseBtn = e.target.closest('[data-toggle-pause]');
+        if (pauseBtn) {
+            e.preventDefault();
+            const id = pauseBtn.dataset.sourceId;
+            pauseBtn.disabled = true;
+            const data = await postJson(`/sources/${id}/toggle-pause`);
+            pauseBtn.disabled = false;
+            if (!data.success) return;
+
+            const paused = !!data.is_intake_paused;
+            pauseBtn.dataset.paused = paused ? '1' : '0';
+            pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+            pauseBtn.classList.toggle('bg-primary', paused);
+            pauseBtn.classList.toggle('text-on-primary', paused);
+            pauseBtn.classList.toggle('hover:bg-primary/90', paused);
+            pauseBtn.classList.toggle('bg-surface-container-high', !paused);
+            pauseBtn.classList.toggle('text-on-surface', !paused);
+            pauseBtn.classList.toggle('hover:bg-surface-container-highest', !paused);
+
+            const card = document.querySelector(`[data-source-card="${id}"]`);
+            const pill = card?.querySelector('[data-paused-pill]');
+            if (pill) {
+                pill.classList.toggle('hidden', !paused);
+                pill.classList.toggle('inline-flex', paused);
+            }
         }
     });
 </script>
