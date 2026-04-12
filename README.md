@@ -1,58 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Relay
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+An agentic issue pipeline that moves issues through four stages — **Preflight → Implement → Verify → Release** — each handled by a focused agent with a bounded tool set. Human-in-the-loop is configurable at workspace, stage, and issue scopes.
 
-## About Laravel
+Relay ships as a local-first native app built on Laravel 13 / PHP 8.4 with NativePHP for desktop (macOS, Windows, Linux) and mobile (iOS, Android). No cloud backend required.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.4+
+- Composer 2
+- Node.js 18+ and npm
+- SQLite
+- At least one AI provider API key (Anthropic, OpenAI, Gemini) or Claude Code CLI installed
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Install
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone <repo-url> relay && cd relay
+composer setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`composer setup` runs: `composer install`, copies `.env.example` → `.env`, generates an app key, runs migrations, installs npm dependencies, and builds frontend assets.
 
-## Contributing
+## Configure
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Copy `.env.example` to `.env` and set your provider credentials:
 
-## Code of Conduct
+```env
+# AI provider (anthropic, openai, gemini, claude_code_cli)
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-...
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# GitHub OAuth (for issue sync and PR creation)
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
 
-## Security Vulnerabilities
+# Jira OAuth (optional)
+JIRA_CLIENT_ID=
+JIRA_CLIENT_SECRET=
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Provider selection can also be configured per-workspace and per-stage through the UI.
 
-## License
+## Run (development)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer dev
+```
+
+This starts four processes concurrently:
+- Laravel dev server (`php artisan serve`)
+- Queue worker (`php artisan queue:listen`)
+- Log tail (`php artisan pail`)
+- Vite dev server (`npm run dev`)
+
+## Run (desktop app)
+
+```bash
+composer native:dev
+```
+
+Launches the NativePHP Electron desktop window with Vite hot-reload.
+
+## Build (desktop)
+
+```bash
+php artisan native:build
+```
+
+Produces installable packages for macOS, Windows, and Linux.
+
+## Build (mobile)
+
+```bash
+php artisan native:build:ios
+php artisan native:build:android
+```
+
+Requires the NativePHP mobile package (vendored in `packages/nativephp-mobile/`).
+
+## Test
+
+```bash
+composer test
+```
+
+Runs `php artisan config:clear` then `php artisan test`. Tests use in-memory SQLite and a sync queue driver.
+
+## Project Structure
+
+```
+app/
+├── Contracts/       # Interfaces (AiProvider, etc.)
+├── Enums/           # Backed string enums (StageName, AutonomyLevel, etc.)
+├── Events/          # Broadcast events (StageTransitioned, RunStuck, etc.)
+├── Http/Controllers/# Route controllers
+├── Jobs/            # Queue jobs (ExecuteStageJob, SyncSourceIssuesJob)
+├── Models/          # Eloquent models
+├── Providers/       # Service providers
+└── Services/        # Business logic, agents, AI providers
+config/
+├── ai.php           # AI provider configuration
+├── relay.php        # App-level settings (iteration cap, deploy hook)
+├── nativephp.php    # NativePHP build and updater config
+└── services.php     # OAuth credentials (GitHub, Jira)
+database/
+├── factories/       # Model factories for testing
+├── migrations/      # Schema migrations
+└── seeders/         # Default data (global autonomy config)
+packages/            # Vendored NativePHP packages with L13 patches
+tests/
+├── Feature/         # Feature and integration tests
+├── Unit/            # Unit tests
+└── fixtures/        # Recorded API response fixtures
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed design documentation.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and extension guides.
+See [docs/agents/](docs/agents/) for each agent's tool surface.
