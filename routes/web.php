@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\OauthController;
 use App\Http\Controllers\SourceController;
@@ -38,3 +39,14 @@ Route::get('/jira/select-site', [OauthController::class, 'jiraSiteSelectionForm'
 
 Route::post('/jira/select-site', [OauthController::class, 'jiraSelectSite'])
     ->name('jira.select-site');
+
+Route::get('/escalation-rules', [EscalationRuleController::class, 'index'])->name('escalation-rules.index');
+Route::get('/escalation-rules/create', [EscalationRuleController::class, 'create'])->name('escalation-rules.create');
+Route::post('/escalation-rules', [EscalationRuleController::class, 'store'])->name('escalation-rules.store');
+Route::get('/escalation-rules/{escalationRule}/edit', [EscalationRuleController::class, 'edit'])->name('escalation-rules.edit');
+Route::put('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'update'])->name('escalation-rules.update');
+Route::delete('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'destroy'])->name('escalation-rules.destroy');
+Route::post('/escalation-rules/{escalationRule}/toggle', [EscalationRuleController::class, 'toggleEnabled'])->name('escalation-rules.toggle');
+Route::post('/escalation-rules/{escalationRule}/move-up', [EscalationRuleController::class, 'moveUp'])->name('escalation-rules.move-up');
+Route::post('/escalation-rules/{escalationRule}/move-down', [EscalationRuleController::class, 'moveDown'])->name('escalation-rules.move-down');
+Route::post('/escalation-rules/reorder', [EscalationRuleController::class, 'reorder'])->name('escalation-rules.reorder');

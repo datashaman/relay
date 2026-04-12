@@ -23,6 +23,7 @@
                 <div class="flex items-center gap-4">
                     <a href="/issues/queue" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Queue</a>
                     <a href="/sources" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Sources</a>
+                    <a href="/escalation-rules" class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Escalation</a>
                 </div>
             </div>
         </nav>
