@@ -9,6 +9,7 @@ use App\Enums\RunStatus;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
 use App\Enums\StuckState;
+use App\Events\RunStuck;
 use App\Events\StageTransitioned;
 use App\Jobs\ExecuteStageJob;
 use App\Models\AutonomyConfig;
@@ -629,9 +630,10 @@ class OrchestratorServiceTest extends TestCase
         $this->assertEquals(3, $run->iteration);
 
         $event = StageEvent::where('stage_id', $stage->id)
-            ->where('type', 'iteration_cap_reached')
+            ->where('type', 'stuck')
             ->first();
         $this->assertNotNull($event);
+        $this->assertEquals('iteration_cap', $event->payload['stuck_state']);
         $this->assertEquals(3, $event->payload['iteration']);
         $this->assertEquals(3, $event->payload['cap']);
     }
@@ -735,5 +737,195 @@ class OrchestratorServiceTest extends TestCase
             ->toArray();
         $this->assertContains('implement.iteration.1', $types);
         $this->assertContains('started', $types);
+    }
+
+    // --- markStuck ---
+
+    public function test_mark_stuck_sets_run_and_stage_and_issue_to_stuck(): void
+    {
+        Queue::fake();
+        Event::fake([RunStuck::class, StageTransitioned::class]);
+
+        $run = Run::factory()->create(['status' => RunStatus::Running]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Running,
+        ]);
+
+        $this->orchestrator->markStuck($stage, StuckState::Timeout, ['reason' => 'no progress']);
+
+        $run->refresh();
+        $stage->refresh();
+
+        $this->assertEquals(RunStatus::Stuck, $run->status);
+        $this->assertEquals(StuckState::Timeout, $run->stuck_state);
+        $this->assertTrue($run->stuck_unread);
+        $this->assertEquals(StageStatus::Stuck, $stage->status);
+        $this->assertNotNull($stage->completed_at);
+        $this->assertEquals(IssueStatus::Stuck, $run->issue->fresh()->status);
+    }
+
+    public function test_mark_stuck_records_event_and_broadcasts(): void
+    {
+        Queue::fake();
+        Event::fake([RunStuck::class, StageTransitioned::class]);
+
+        $run = Run::factory()->create(['status' => RunStatus::Running]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Running,
+        ]);
+
+        $this->orchestrator->markStuck($stage, StuckState::AgentUncertain, ['confidence' => 0.2]);
+
+        $event = StageEvent::where('stage_id', $stage->id)->where('type', 'stuck')->first();
+        $this->assertNotNull($event);
+        $this->assertEquals('agent_uncertain', $event->payload['stuck_state']);
+        $this->assertEquals(0.2, $event->payload['confidence']);
+
+        Event::assertDispatched(RunStuck::class);
+        Event::assertDispatched(StageTransitioned::class);
+    }
+
+    public function test_mark_stuck_with_external_blocker(): void
+    {
+        Queue::fake();
+        Event::fake([RunStuck::class, StageTransitioned::class]);
+
+        $run = Run::factory()->create(['status' => RunStatus::Running]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Running,
+        ]);
+
+        $this->orchestrator->markStuck($stage, StuckState::ExternalBlocker, ['missing' => 'git credentials']);
+
+        $run->refresh();
+        $this->assertEquals(StuckState::ExternalBlocker, $run->stuck_state);
+    }
+
+    // --- giveGuidance ---
+
+    public function test_give_guidance_resumes_stuck_run(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $run = Run::factory()->create([
+            'status' => RunStatus::Stuck,
+            'stuck_state' => StuckState::IterationCap,
+            'stuck_unread' => true,
+        ]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Stuck,
+        ]);
+
+        $this->orchestrator->giveGuidance($run, 'Try a different approach to the database query.');
+
+        $run->refresh();
+        $this->assertEquals(RunStatus::Running, $run->status);
+        $this->assertNull($run->stuck_state);
+        $this->assertFalse($run->stuck_unread);
+        $this->assertEquals('Try a different approach to the database query.', $run->guidance);
+        $this->assertEquals(IssueStatus::InProgress, $run->issue->fresh()->status);
+    }
+
+    public function test_give_guidance_creates_new_stage_and_dispatches(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $run = Run::factory()->create([
+            'status' => RunStatus::Stuck,
+            'stuck_state' => StuckState::IterationCap,
+        ]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Stuck,
+            'iteration' => 3,
+        ]);
+
+        $this->orchestrator->giveGuidance($run, 'Fix the null check.');
+
+        $newStage = $run->stages()->where('id', '!=', $stage->id)->latest('id')->first();
+        $this->assertNotNull($newStage);
+        $this->assertEquals(StageName::Implement, $newStage->name);
+
+        $guidanceEvent = StageEvent::where('stage_id', $newStage->id)
+            ->where('type', 'guidance_received')
+            ->first();
+        $this->assertNotNull($guidanceEvent);
+        $this->assertEquals('Fix the null check.', $guidanceEvent->payload['guidance']);
+
+        Queue::assertPushed(ExecuteStageJob::class, function ($job) {
+            return ($job->context['guidance'] ?? null) === 'Fix the null check.';
+        });
+    }
+
+    public function test_give_guidance_preserves_preflight_doc(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $run = Run::factory()->create([
+            'status' => RunStatus::Stuck,
+            'stuck_state' => StuckState::AgentUncertain,
+            'preflight_doc' => '# Original Doc',
+        ]);
+        Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Stuck,
+        ]);
+
+        $this->orchestrator->giveGuidance($run, 'Clarification here.');
+
+        $run->refresh();
+        $this->assertEquals('# Original Doc', $run->preflight_doc);
+    }
+
+    // --- restart ---
+
+    public function test_restart_clears_stuck_state_and_retries(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $run = Run::factory()->create([
+            'status' => RunStatus::Stuck,
+            'stuck_state' => StuckState::Timeout,
+            'stuck_unread' => true,
+        ]);
+        $stage = Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Verify,
+            'status' => StageStatus::Stuck,
+        ]);
+
+        $this->orchestrator->restart($run);
+
+        $run->refresh();
+        $this->assertEquals(RunStatus::Running, $run->status);
+        $this->assertNull($run->stuck_state);
+        $this->assertFalse($run->stuck_unread);
+        $this->assertEquals(IssueStatus::InProgress, $run->issue->fresh()->status);
+
+        $newStage = $run->stages()->where('id', '!=', $stage->id)->latest('id')->first();
+        $this->assertNotNull($newStage);
+        $this->assertEquals(StageName::Verify, $newStage->name);
+
+        $restartEvent = StageEvent::where('stage_id', $newStage->id)
+            ->where('type', 'restarted')
+            ->first();
+        $this->assertNotNull($restartEvent);
+        $this->assertEquals('user', $restartEvent->actor);
+
+        Queue::assertPushed(ExecuteStageJob::class);
     }
 }

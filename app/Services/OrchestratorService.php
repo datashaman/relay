@@ -8,6 +8,7 @@ use App\Enums\RunStatus;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
 use App\Enums\StuckState;
+use App\Events\RunStuck;
 use App\Events\StageTransitioned;
 use App\Jobs\ExecuteStageJob;
 use App\Models\Issue;
@@ -98,18 +99,11 @@ class OrchestratorService
         $iterationCap = config('relay.iteration_cap', 5);
 
         if ($run->iteration >= $iterationCap) {
-            $run->update([
-                'status' => RunStatus::Stuck,
-                'stuck_state' => StuckState::IterationCap,
-            ]);
-
-            $this->recordEvent($stage, 'iteration_cap_reached', 'system', [
+            $this->markStuck($stage, StuckState::IterationCap, [
                 'iteration' => $run->iteration,
                 'cap' => $iterationCap,
                 'failure_report' => $failureReport,
             ]);
-
-            $run->issue->update(['status' => IssueStatus::InProgress]);
 
             return;
         }
@@ -150,6 +144,70 @@ class OrchestratorService
     public function fail(Stage $stage, ?string $reason = null): void
     {
         $this->failStage($stage, $reason);
+    }
+
+    public function markStuck(Stage $stage, StuckState $stuckState, array $context = []): void
+    {
+        $stage->update([
+            'status' => StageStatus::Stuck,
+            'completed_at' => now(),
+        ]);
+
+        $run = $stage->run;
+        $run->update([
+            'status' => RunStatus::Stuck,
+            'stuck_state' => $stuckState,
+            'stuck_unread' => true,
+        ]);
+
+        $run->issue->update(['status' => IssueStatus::Stuck]);
+
+        $this->recordEvent($stage, 'stuck', 'system', array_merge(
+            ['stuck_state' => $stuckState->value],
+            $context,
+        ));
+        $this->broadcastTransition($stage);
+
+        RunStuck::dispatch($run->fresh());
+    }
+
+    public function giveGuidance(Run $run, string $guidance): void
+    {
+        $run->update([
+            'guidance' => $guidance,
+            'status' => RunStatus::Running,
+            'stuck_state' => null,
+            'stuck_unread' => false,
+        ]);
+
+        $run->issue->update(['status' => IssueStatus::InProgress]);
+
+        $latestStage = $run->stages()->latest('id')->first();
+        $newStage = $this->createStage($run, $latestStage->name, $latestStage->iteration);
+
+        $this->recordEvent($newStage, 'guidance_received', 'user', [
+            'guidance' => $guidance,
+        ]);
+
+        $this->transitionStage($newStage, ['guidance' => $guidance]);
+    }
+
+    public function restart(Run $run): void
+    {
+        $run->update([
+            'status' => RunStatus::Running,
+            'stuck_state' => null,
+            'stuck_unread' => false,
+        ]);
+
+        $run->issue->update(['status' => IssueStatus::InProgress]);
+
+        $latestStage = $run->stages()->latest('id')->first();
+        $newStage = $this->createStage($run, $latestStage->name, $latestStage->iteration);
+
+        $this->recordEvent($newStage, 'restarted', 'user');
+
+        $this->transitionStage($newStage);
     }
 
     private function transitionStage(Stage $stage, array $context = []): void
