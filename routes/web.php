@@ -19,7 +19,7 @@ Route::post('/issues/stages/{stage}/approve', [IssueViewController::class, 'appr
 Route::post('/issues/stages/{stage}/reject', [IssueViewController::class, 'reject'])->name('issues.reject-stage');
 Route::post('/issues/runs/{run}/guidance', [IssueViewController::class, 'guidance'])->name('issues.guidance');
 
-Route::get('/issues/{issue}', [IssueViewController::class, 'show'])->name('issues.show');
+Route::livewire('/issues/{issue}', 'pages::issue')->name('issues.show');
 Route::post('/issues/{issue}/accept', [IssueController::class, 'accept'])->name('issues.accept');
 Route::post('/issues/{issue}/reject', [IssueController::class, 'reject'])->name('issues.reject');
 Route::post('/sources/{source}/toggle-pause', [IssueController::class, 'togglePause'])->name('issues.toggle-pause');
