@@ -215,7 +215,7 @@ PROMPT;
         ]);
 
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
-            $response = $provider->chat($messages, self::TOOLS);
+            $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
 
             if (empty($response['tool_calls'])) {
                 $this->recordEvent($stage, 'release_no_tool_call', 'release_agent', [
