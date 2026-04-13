@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Edit Intake Rules')
-
-@section('content')
+<x-layouts.app title="Edit Intake Rules">
 <div class="space-y-6 max-w-2xl">
     <div>
         <a href="{{ route('intake.index') }}" class="font-label text-[10px] text-primary uppercase tracking-widest hover:underline">
@@ -68,4 +64,4 @@
         </div>
     </form>
 </div>
-@endsection
+</x-layouts.app>

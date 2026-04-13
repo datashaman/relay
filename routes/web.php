@@ -4,7 +4,6 @@ use App\Http\Controllers\ActivityFeedController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\FilterRuleController;
-use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueViewController;
 use App\Http\Controllers\OauthController;
@@ -16,7 +15,7 @@ use App\Http\Controllers\SourceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [OverviewController::class, 'index'])->name('overview');
-Route::get('/intake', [IntakeController::class, 'index'])->name('intake.index');
+Route::livewire('/intake', 'pages::intake')->name('intake.index');
 Route::get('/intake/sources/{source}/rules', [FilterRuleController::class, 'edit'])->name('intake.rules.edit');
 Route::put('/intake/sources/{source}/rules', [FilterRuleController::class, 'update'])->name('intake.rules.update');
 

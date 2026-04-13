@@ -1,9 +1,4 @@
-@extends('layouts.app')
-
-@section('title', $activeIssue ? $activeIssue->title : 'Issues')
-@section('container_class', 'max-w-7xl')
-
-@section('content')
+<x-layouts.app :title="$activeIssue ? $activeIssue->title : 'Issues'" container-class="max-w-7xl">
     @if ($issues->isEmpty())
         <div class="text-center text-on-surface-variant py-16">
             <p class="text-lg">No pipeline issues yet.</p>
@@ -746,4 +741,4 @@
             });
         </script>
     @endif
-@endsection
+</x-layouts.app>

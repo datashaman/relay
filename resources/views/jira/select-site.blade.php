@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Select Jira Site')
-
-@section('content')
+<x-layouts.app title="Select Jira Site">
     <div class="max-w-lg mx-auto">
         <h1 class="text-2xl font-headline font-bold mb-6">Select a Jira Site</h1>
         <p class="text-sm text-on-surface-variant mb-6">Multiple Jira sites were found. Choose the one you want to connect.</p>
@@ -47,4 +43,4 @@
             }
         })();
     </script>
-@endsection
+</x-layouts.app>

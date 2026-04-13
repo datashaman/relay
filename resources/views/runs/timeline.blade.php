@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Run Timeline')
-
-@section('content')
+<x-layouts.app title="Run Timeline">
     <div class="mb-6">
         <div class="flex items-center justify-between">
             <div>
@@ -149,4 +145,4 @@
             </details>
         @endforeach
     </div>
-@endsection
+</x-layouts.app>

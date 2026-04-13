@@ -7,7 +7,7 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="mobile-web-app-capable" content="yes">
 
-        <title>{{ config('app.name', 'Relay') }} - @yield('title')</title>
+        <title>{{ config('app.name', 'Relay') }}{{ isset($title) ? ' - '.$title : '' }}</title>
 
         <script>
             (function () {
@@ -107,8 +107,8 @@
             </div>
         </header>
 
-        <main class="@yield('container_class', 'max-w-5xl') mx-auto px-4 py-6 pb-28 md:pb-10">
-            @yield('content')
+        <main class="{{ $containerClass ?? 'max-w-5xl' }} mx-auto px-4 py-6 pb-28 md:pb-10">
+            {{ $slot }}
         </main>
 
         {{-- Bottom tab bar (mobile only) --}}

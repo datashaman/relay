@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Preflight Doc')
-
-@section('content')
+<x-layouts.app title="Preflight Doc">
     <div class="mb-6">
         <h1 class="text-2xl font-headline font-bold">Preflight Doc</h1>
         <p class="text-sm text-on-surface-variant mt-1">
@@ -42,4 +38,4 @@
             </div>
         </div>
     @endif
-@endsection
+</x-layouts.app>

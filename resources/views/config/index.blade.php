@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Autonomy Engine')
-
-@section('content')
+<x-layouts.app title="Autonomy Engine">
 @php
     $hierarchy = [
         ['num' => '01', 'key' => 'Escalation', 'desc' => 'Override rules triggered by sensitive files, labels, or patterns. Always tighten — cannot be bypassed.'],
@@ -633,4 +629,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-layouts.app>

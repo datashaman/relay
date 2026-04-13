@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Overview')
-
-@section('content')
+<x-layouts.app title="Overview">
 @php
     $intakeActive = $intakePausedCount === 0;
     $stageMeta = [
@@ -155,4 +151,4 @@
         @endif
     </section>
 </div>
-@endsection
+</x-layouts.app>

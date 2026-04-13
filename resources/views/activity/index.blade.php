@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Activity Feed')
-
-@section('content')
+<x-layouts.app title="Activity Feed">
     <div class="space-y-6">
         {{-- Pipeline Health strip --}}
         <section class="bg-surface-container-low rounded-xl p-4">
@@ -330,4 +326,4 @@
             </div>
         @endif
     </div>
-@endsection
+</x-layouts.app>

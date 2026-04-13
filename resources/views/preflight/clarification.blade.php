@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Preflight Clarification')
-
-@section('content')
+<x-layouts.app title="Preflight Clarification">
     <div class="mb-6">
         <h1 class="text-2xl font-headline font-bold">Preflight Clarification</h1>
         <p class="text-sm text-on-surface-variant mt-1">
@@ -76,4 +72,4 @@
     @else
         <p class="text-on-surface-variant">No clarifying questions needed.</p>
     @endif
-@endsection
+</x-layouts.app>
