@@ -135,6 +135,10 @@ class SyncSourceIssuesJob implements ShouldQueue
             }
         }
 
+        if ($issue->repository_id === null && ! empty($issueData['repository_id'])) {
+            $changes['repository_id'] = $issueData['repository_id'];
+        }
+
         if (! empty($changes)) {
             $issue->update($changes);
         }
