@@ -168,7 +168,8 @@ class extends Component {
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-1.5 flex-wrap mb-1">
-                                <span class="inline-flex items-center rounded px-1.5 py-0.5 {{ $typePillClass }} font-label text-[10px] uppercase tracking-wider">
+                                <span class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 {{ $typePillClass }} font-label text-[10px] uppercase tracking-wider">
+                                    <x-source-icon :type="$source->type->value" class="w-3 h-3" />
                                     {{ $source->type->value }}
                                 </span>
                                 @if ($isConnected)
@@ -191,19 +192,14 @@ class extends Component {
                                     </span>
                                 @endif
                             </div>
-                            <h3 class="flex items-center gap-2 text-sm font-semibold text-on-surface leading-tight">
-                                <span class="text-on-surface-variant">
-                                    <x-source-icon :type="$source->type->value" />
-                                </span>
-                                {{ $source->name }}
+                            <h3 class="text-sm font-semibold text-on-surface leading-tight">
+                                {{ $source->external_account }}
                             </h3>
-                            <p class="font-label text-[10px] text-outline mt-0.5">
-                                <span class="whitespace-nowrap">{{ $source->external_account }}</span>
-                                @if ($source->last_synced_at)
-                                    <span class="text-outline-variant">·</span>
-                                    <span class="whitespace-nowrap">synced {{ $source->last_synced_at->diffForHumans(null, true) }} ago</span>
-                                @endif
-                            </p>
+                            @if ($source->last_synced_at)
+                                <p class="font-label text-[10px] text-outline mt-0.5 whitespace-nowrap">
+                                    synced {{ $source->last_synced_at->diffForHumans(null, true) }} ago
+                                </p>
+                            @endif
                             @if ($source->sync_error)
                                 <div class="mt-2 rounded-md bg-error-container/20 border-l-2 border-error px-2 py-1.5">
                                     <p class="text-xs text-error leading-snug">{{ $source->sync_error }}</p>
