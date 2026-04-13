@@ -64,6 +64,11 @@ class OauthController extends Controller
 
             $this->oauth->storeToken($source, $provider, $tokenData);
 
+            if ($provider === 'github' && empty($source->config['repositories'] ?? [])) {
+                return redirect()->route('github.select-repos', $source)
+                    ->with('success', 'GitHub connected. Pick the repositories Relay should sync.');
+            }
+
             return redirect()->route('intake.index')->with('success', ucfirst($provider) . ' connected successfully.');
         } catch (\RuntimeException $e) {
             return redirect()->route('intake.index')->with('error', $e->getMessage());

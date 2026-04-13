@@ -116,7 +116,8 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/intake');
+        $source = \App\Models\Source::where('type', 'github')->first();
+        $response->assertRedirect(route('github.select-repos', $source));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('sources', ['type' => 'github', 'external_account' => 'testuser']);
@@ -271,10 +272,10 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/intake');
-        $response->assertSessionHas('success', 'Github connected successfully.');
-
         $source = Source::where('type', 'github')->first();
+        $response->assertRedirect(route('github.select-repos', $source));
+        $response->assertSessionHas('success');
+
         $this->assertNotNull($source);
         $this->assertEquals('octocat', $source->external_account);
     }
@@ -294,10 +295,10 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/intake');
+        $source = Source::where('type', 'github')->first();
+        $response->assertRedirect(route('github.select-repos', $source));
         $response->assertSessionHas('success');
 
-        $source = Source::where('type', 'github')->first();
         $this->assertNotNull($source);
         $this->assertEquals('GitHub (unknown)', $source->external_account);
         $this->assertDatabaseCount('oauth_tokens', 1);

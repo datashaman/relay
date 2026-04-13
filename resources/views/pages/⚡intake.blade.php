@@ -224,6 +224,32 @@ class extends Component {
                         @endif
                     </div>
 
+                    {{-- Repositories (GitHub only) --}}
+                    @if ($source->type->value === 'github')
+                        @php $repos = $source->config['repositories'] ?? []; @endphp
+                        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Repositories</span>
+                                <a href="{{ route('github.select-repos', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
+                                    {{ empty($repos) ? 'Choose' : 'Edit' }} →
+                                </a>
+                            </div>
+                            @if (empty($repos))
+                                <p class="font-label text-[10px] text-stage-stuck uppercase tracking-wider">
+                                    None selected · sync will fail until you pick repos
+                                </p>
+                            @else
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    @foreach ($repos as $repoName)
+                                        <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[10px] tracking-wider font-mono">
+                                            {{ $repoName }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     {{-- Filter rules summary --}}
                     @php $rule = $source->filterRule; @endphp
                     <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">

@@ -43,6 +43,9 @@ Route::delete('/oauth/{provider}/disconnect', [OauthController::class, 'disconne
 Route::livewire('/jira/select-site', 'pages::jira-select-site')
     ->name('jira.select-site.form');
 
+Route::livewire('/sources/{source}/repositories', 'pages::github-select-repos')
+    ->name('github.select-repos');
+
 Route::livewire('/config', 'pages::config')->name('config.index');
 Route::post('/escalation-rules', [EscalationRuleController::class, 'store'])->name('escalation-rules.store');
 Route::put('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'update'])->name('escalation-rules.update');
