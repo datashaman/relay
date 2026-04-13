@@ -92,7 +92,7 @@ class OauthController extends Controller
                 if ($provider === 'github') {
                     $this->oauth->revokeGitHubToken($token->access_token);
                 } elseif ($provider === 'jira') {
-                    $this->oauth->revokeJiraToken($token->access_token);
+                    $this->oauth->revokeJiraToken($token);
                 }
             } catch (\RuntimeException $e) {
                 $revocationError = $e->getMessage();

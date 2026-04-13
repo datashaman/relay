@@ -192,17 +192,51 @@ class OauthServiceTest extends TestCase
         });
     }
 
-    public function test_revoke_jira_token(): void
+    public function test_revoke_jira_token_prefers_refresh_token(): void
     {
         Http::fake([
             'auth.atlassian.com/oauth/revoke' => Http::response(null, 200),
         ]);
 
-        $this->service->revokeJiraToken('test-token');
+        $source = Source::factory()->create(['type' => 'jira']);
+        $token = $source->oauthTokens()->create([
+            'provider' => 'jira',
+            'access_token' => 'jira-access',
+            'refresh_token' => 'jira-refresh',
+            'scopes' => ['read:jira-work'],
+        ]);
+
+        $this->service->revokeJiraToken($token);
 
         Http::assertSent(function ($request) {
             return $request->method() === 'POST'
-                && $request['token'] === 'test-token';
+                && $request['token'] === 'jira-refresh'
+                && $request['token_type_hint'] === 'refresh_token'
+                && $request['client_id'] === 'jira-id'
+                && $request['client_secret'] === 'jira-secret'
+                && ! $request->hasHeader('Authorization');
+        });
+    }
+
+    public function test_revoke_jira_token_falls_back_to_access_token(): void
+    {
+        Http::fake([
+            'auth.atlassian.com/oauth/revoke' => Http::response(null, 200),
+        ]);
+
+        $source = Source::factory()->create(['type' => 'jira']);
+        $token = $source->oauthTokens()->create([
+            'provider' => 'jira',
+            'access_token' => 'jira-access',
+            'refresh_token' => null,
+            'scopes' => ['read:jira-work'],
+        ]);
+
+        $this->service->revokeJiraToken($token);
+
+        Http::assertSent(function ($request) {
+            return $request['token'] === 'jira-access'
+                && $request['token_type_hint'] === 'access_token';
         });
     }
 

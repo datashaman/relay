@@ -105,13 +105,19 @@ class OauthService
         return $response->json();
     }
 
-    public function revokeJiraToken(string $accessToken): void
+    public function revokeJiraToken(OauthToken $token): void
     {
-        $response = Http::withToken($accessToken)
-            ->accept('application/json')
+        $config = $this->providerConfig('jira');
+        $tokenToRevoke = $token->refresh_token ?: $token->access_token;
+        $hint = $token->refresh_token ? 'refresh_token' : 'access_token';
+
+        $response = Http::acceptJson()
+            ->asJson()
             ->post('https://auth.atlassian.com/oauth/revoke', [
-                'client_id' => $this->providerConfig('jira')['client_id'],
-                'token' => $accessToken,
+                'client_id' => $config['client_id'],
+                'client_secret' => $config['client_secret'],
+                'token' => $tokenToRevoke,
+                'token_type_hint' => $hint,
             ]);
 
         if ($response->failed() && $response->status() !== 400) {
