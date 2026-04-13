@@ -166,19 +166,24 @@ class extends Component {
         <div class="bg-surface-container-low rounded-xl divide-y divide-outline-variant/20 overflow-hidden">
             @foreach ($repos as $repo)
                 @php $isSelected = in_array($repo['full_name'], $selected, true); @endphp
-                <button type="button" wire:click="toggle('{{ $repo['full_name'] }}')"
-                        wire:key="repo-{{ $repo['full_name'] }}"
-                        class="flex items-start gap-3 w-full px-4 py-3 text-left hover:bg-surface-container transition-colors {{ $isSelected ? 'bg-secondary-container/20' : '' }}">
-                    <span class="mt-0.5 flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center {{ $isSelected ? 'bg-secondary border-secondary' : 'border-outline-variant' }}">
+                <div wire:key="repo-{{ $repo['full_name'] }}"
+                     class="flex items-start gap-3 px-4 py-3 transition-colors {{ $isSelected ? 'bg-secondary-container/20' : 'hover:bg-surface-container' }}">
+                    <button type="button" wire:click="toggle('{{ $repo['full_name'] }}')"
+                            aria-pressed="{{ $isSelected ? 'true' : 'false' }}"
+                            aria-label="{{ $isSelected ? 'Deselect' : 'Select' }} {{ $repo['full_name'] }}"
+                            class="mt-0.5 flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center {{ $isSelected ? 'bg-secondary border-secondary' : 'border-outline-variant hover:border-primary' }}">
                         @if ($isSelected)
                             <svg class="w-3 h-3 text-on-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                         @endif
-                    </span>
+                    </button>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold text-on-surface">{{ $repo['full_name'] }}</span>
+                            <a href="https://github.com/{{ $repo['full_name'] }}" target="_blank" rel="noopener"
+                               class="text-sm font-semibold text-on-surface hover:text-primary hover:underline">
+                                {{ $repo['full_name'] }}
+                            </a>
                             @if ($repo['private'])
                                 <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider">Private</span>
                             @endif
@@ -187,7 +192,7 @@ class extends Component {
                             <p class="text-xs text-on-surface-variant mt-0.5 line-clamp-1">{{ $repo['description'] }}</p>
                         @endif
                     </div>
-                </button>
+                </div>
             @endforeach
         </div>
 
