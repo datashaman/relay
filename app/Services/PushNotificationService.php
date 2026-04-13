@@ -11,6 +11,10 @@ class PushNotificationService
 {
     public function notifyStuck(Run $run): void
     {
+        if (! $this->nativeRuntime()) {
+            return;
+        }
+
         $issue = $run->issue;
         $stuckState = $run->stuck_state?->value ?? 'unknown';
 
@@ -23,6 +27,10 @@ class PushNotificationService
 
     public function notifyApprovalNeeded(Stage $stage): void
     {
+        if (! $this->nativeRuntime()) {
+            return;
+        }
+
         $run = $stage->run;
         $issue = $run->issue;
         $stageName = ucfirst($stage->name->value);
@@ -32,6 +40,11 @@ class PushNotificationService
             ->message("{$stageName}: {$issue->title}")
             ->event('stage.approval.'.$stage->id)
             ->show();
+    }
+
+    private function nativeRuntime(): bool
+    {
+        return (bool) config('nativephp-internal.running', false);
     }
 
     public function shouldNotify(Stage $stage, AutonomyLevel $level): bool

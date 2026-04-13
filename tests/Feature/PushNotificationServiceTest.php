@@ -54,6 +54,7 @@ class PushNotificationServiceTest extends TestCase
 
     public function test_notify_stuck_sends_notification_with_correct_data(): void
     {
+        config(['nativephp-internal.running' => true]);
         Http::fake([
             '*notification*' => Http::response(['reference' => 'ref-1']),
             '*' => Http::response([]),
@@ -73,6 +74,7 @@ class PushNotificationServiceTest extends TestCase
 
     public function test_notify_approval_needed_sends_notification(): void
     {
+        config(['nativephp-internal.running' => true]);
         Http::fake([
             '*notification*' => Http::response(['reference' => 'ref-2']),
             '*' => Http::response([]),
@@ -88,5 +90,19 @@ class PushNotificationServiceTest extends TestCase
                 && str_contains($request['body'], 'Preflight')
                 && $request['event'] === 'stage.approval.' . $stage->id;
         });
+    }
+
+    public function test_notify_is_noop_when_not_running_inside_nativephp(): void
+    {
+        config(['nativephp-internal.running' => false]);
+        Http::fake();
+
+        $run = Run::factory()->create(['stuck_state' => StuckState::IterationCap]);
+        $stage = Stage::factory()->create(['name' => StageName::Preflight]);
+
+        $this->service->notifyStuck($run);
+        $this->service->notifyApprovalNeeded($stage);
+
+        Http::assertNothingSent();
     }
 }
