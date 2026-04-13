@@ -111,20 +111,24 @@ class ClaudeCodeCliProvider implements AiProvider
             $parts[] = $msg['content'];
         }
 
-        // Claude Code CLI can't register custom tools, so we fall back to
-        // asking the model to respond with JSON matching the tool schema.
-        // The response is parsed back into a synthetic tool_calls entry.
-        if (! empty($tools)) {
-            $tool = $tools[0];
-            $schema = json_encode($tool['parameters'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $terminal = $this->pickTerminalTool($tools);
+        if ($terminal !== null) {
+            $schema = json_encode($terminal['parameters'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             $parts[] = <<<PROMPT
 # Response Format
 
-You must call the `{$tool['name']}` tool by responding with **ONLY** a JSON
-object matching this schema. No prose before or after, no markdown fences,
-no explanation — just the raw JSON object.
+Use your built-in tools (Read, Write, Edit, Bash, Grep, Glob) to
+accomplish the task. All file operations are already scoped to the
+worktree via the working directory.
 
-Schema for `{$tool['name']}`:
+When — and only when — the task is fully complete, respond with
+**ONLY** a single JSON object matching the schema below. No prose,
+no markdown fences, no explanation outside the JSON.
+
+The JSON you emit will be delivered to the orchestrator as a
+`{$terminal['name']}` tool call.
+
+Schema for `{$terminal['name']}`:
 
 {$schema}
 PROMPT;
@@ -187,8 +191,9 @@ PROMPT;
             }
         }
 
-        if (! empty($tools) && $text !== '') {
-            $synthetic = $this->synthesizeToolCall($text, $tools[0]);
+        $terminal = $this->pickTerminalTool($tools);
+        if ($terminal !== null && $text !== '') {
+            $synthetic = $this->synthesizeToolCall($text, $terminal);
             if ($synthetic !== null) {
                 $toolCalls[] = $synthetic;
             }
@@ -200,6 +205,35 @@ PROMPT;
             'usage' => $usage,
             'raw' => $raw,
         ];
+    }
+
+    /**
+     * Pick the tool the CLI should target with its JSON response.
+     *
+     * For single-tool flows (preflight) that's the one tool. For multi-tool
+     * flows (implement/verify/release) the iterative tool surface is meant
+     * for OpenAI-style function calling which Claude Code doesn't do —
+     * instead we locate the terminal "done" tool by the `_complete` suffix
+     * and map the model's final JSON back to that one. Claude Code uses
+     * its own built-in Read/Write/Bash etc. to do the actual work.
+     */
+    private function pickTerminalTool(array $tools): ?array
+    {
+        if (empty($tools)) {
+            return null;
+        }
+
+        if (count($tools) === 1) {
+            return $tools[0];
+        }
+
+        foreach ($tools as $tool) {
+            if (str_ends_with($tool['name'] ?? '', '_complete')) {
+                return $tool;
+            }
+        }
+
+        return null;
     }
 
     private function synthesizeToolCall(string $text, array $tool): ?array
