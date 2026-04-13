@@ -49,6 +49,7 @@
                 </p>
             </div>
         @else
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             @foreach ($sources as $source)
                 @php
                     $isConnected = $source->is_active;
@@ -170,6 +171,7 @@
                     </div>
                 </div>
             @endforeach
+            </div>
         @endif
     </section>
 

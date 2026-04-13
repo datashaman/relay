@@ -66,7 +66,6 @@ class ActivityFeedController extends Controller
         $stuckRuns = Run::with('issue.source')
             ->where('status', RunStatus::Stuck)
             ->orderByDesc('updated_at')
-            ->limit(3)
             ->get();
 
         return view('activity.index', compact('events', 'sources', 'health', 'stuckCount', 'stuckRuns'));

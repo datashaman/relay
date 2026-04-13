@@ -13,7 +13,6 @@ use App\Http\Controllers\PreflightController;
 use App\Http\Controllers\RunProgressController;
 use App\Http\Controllers\RunTimelineController;
 use App\Http\Controllers\SourceController;
-use App\Http\Controllers\StuckRunController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [OverviewController::class, 'index'])->name('overview');
@@ -79,8 +78,3 @@ Route::get('/runs/{run}/progress', [RunProgressController::class, 'show'])->name
 Route::get('/runs/{run}/timeline', [RunTimelineController::class, 'show'])->name('runs.timeline');
 
 Route::get('/activity', [ActivityFeedController::class, 'index'])->name('activity.index');
-
-Route::get('/stuck', [StuckRunController::class, 'index'])->name('stuck.index');
-Route::get('/stuck/{run}/guidance', [StuckRunController::class, 'showGuidance'])->name('stuck.guidance');
-Route::post('/stuck/{run}/guidance', [StuckRunController::class, 'submitGuidance'])->name('stuck.submit-guidance');
-Route::post('/stuck/{run}/restart', [StuckRunController::class, 'restart'])->name('stuck.restart');

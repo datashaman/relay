@@ -44,9 +44,9 @@
                         <span class="w-2 h-2 rounded-full bg-stage-stuck animate-pulse"></span>
                         <span class="font-label text-[10px] text-stage-stuck uppercase tracking-widest">System / Stuck Issues</span>
                     </div>
-                    <a href="{{ route('stuck.index') }}" class="font-label text-[10px] text-primary uppercase tracking-widest hover:underline">
-                        View All ({{ $stuckCount }}) →
-                    </a>
+                    <span class="font-label text-[10px] text-stage-stuck uppercase tracking-widest">
+                        {{ $stuckCount }} {{ \Illuminate\Support\Str::plural('issue', $stuckCount) }}
+                    </span>
                 </div>
                 <div class="divide-y divide-outline-variant/20">
                     @foreach ($stuckRuns as $run)
@@ -219,7 +219,7 @@
                                         </p>
                                     @endif
                                     <div class="flex items-center gap-2 pt-1">
-                                        <a href="{{ route('stuck.guidance', $run) }}" class="rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
+                                        <a href="{{ route('issues.show', $run->issue) }}" class="rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
                                             Give Guidance
                                         </a>
                                         <a href="{{ route('runs.timeline', $run) }}" class="rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
@@ -275,10 +275,47 @@
                                     @else
                                         @include('runs._event-payload', ['event' => $event])
                                     @endif
+
+                                    @php
+                                        $needsApproval = $event->type === 'approval_requested'
+                                            && $stage?->status === \App\Enums\StageStatus::AwaitingApproval;
+                                        $needsClarification = $event->type === 'clarification_requested'
+                                            && $stage?->status === \App\Enums\StageStatus::AwaitingApproval;
+                                    @endphp
+
+                                    @if ($needsApproval)
+                                        <div class="flex items-center gap-2 pt-2">
+                                            <form method="POST" action="{{ route('issues.approve', $stage) }}" class="contents">
+                                                @csrf
+                                                <button type="submit" class="rounded-md bg-secondary text-on-secondary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-secondary/90">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('issues.reject-stage', $stage) }}" class="contents"
+                                                  onsubmit="return confirm('Reject this stage?')">
+                                                @csrf
+                                                <button type="submit" class="rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
+                                                    Reject
+                                                </button>
+                                            </form>
+                                            <a href="{{ route('issues.show', $issue) }}" class="font-label text-[10px] text-primary uppercase tracking-widest hover:underline ml-auto">
+                                                Open Issue →
+                                            </a>
+                                        </div>
+                                    @elseif ($needsClarification)
+                                        <div class="flex items-center gap-2 pt-2">
+                                            <a href="{{ route('preflight.show', $run) }}" class="rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
+                                                Answer Questions
+                                            </a>
+                                            <a href="{{ route('issues.show', $issue) }}" class="font-label text-[10px] text-primary uppercase tracking-widest hover:underline ml-auto">
+                                                Open Issue →
+                                            </a>
+                                        </div>
+                                    @endif
                                 @endif
                             </div>
 
-                            @if ($run && $event->type !== 'stuck')
+                            @if ($run && $event->type !== 'stuck' && ! ($needsApproval ?? false) && ! ($needsClarification ?? false))
                                 <a href="{{ route('runs.timeline', $run) }}" class="shrink-0 font-label text-[10px] text-primary uppercase tracking-widest hover:underline pt-1" title="View run timeline">
                                     View →
                                 </a>

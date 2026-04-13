@@ -60,7 +60,7 @@
     {{-- Active pipeline list --}}
     <section class="space-y-3">
         <div class="flex items-center justify-between px-1">
-            <h2 class="font-headline text-xl text-on-surface">Active Pipeline</h2>
+            <h2 class="font-headline text-xl text-on-surface">Active Issues</h2>
             <span class="font-label text-[10px] text-outline uppercase tracking-widest">
                 {{ $totals['active'] }} {{ Str::plural('issue', $totals['active']) }}
             </span>
