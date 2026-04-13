@@ -53,7 +53,9 @@ class WorktreeService
 
             $cloneUrl = 'git@github.com:' . $repository->name . '.git';
 
-            Process::run(['git', 'clone', '--quiet', $cloneUrl, $target])->throw();
+            Process::env($this->sshEnv())
+                ->run(['git', 'clone', '--quiet', $cloneUrl, $target])
+                ->throw();
         }
 
         $defaultBranch = $repository->default_branch ?: $this->resolveDefaultBranch($target);
@@ -69,6 +71,20 @@ class WorktreeService
         $result = Process::path($path)->run(['git', 'symbolic-ref', '--short', 'HEAD']);
 
         return trim($result->output()) ?: 'main';
+    }
+
+    /**
+     * Env vars needed for SSH-auth git operations inside the queue worker:
+     * the agent socket (so private-repo clones work) and HOME so
+     * ~/.ssh/config and known_hosts resolve.
+     */
+    private function sshEnv(): array
+    {
+        return array_filter([
+            'SSH_AUTH_SOCK' => getenv('SSH_AUTH_SOCK') ?: null,
+            'HOME' => getenv('HOME') ?: null,
+            'PATH' => getenv('PATH') ?: null,
+        ]);
     }
 
     public function removeWorktree(Run $run, Repository $repository): void
