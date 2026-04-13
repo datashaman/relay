@@ -23,6 +23,7 @@
 /storage/*.key
 /storage/framework/views
 /storage/pail
+/storage/relay-repos
 /var
 /vendor
 _ide_helper.php

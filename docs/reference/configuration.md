@@ -26,7 +26,7 @@ Environment variables and config files for Relay.
 | `GEMINI_API_KEY` | — | Required for Gemini provider. |
 | `GEMINI_MODEL` | `gemini-2.5-flash` | Model ID. |
 | `GEMINI_BASE_URL` | `https://generativelanguage.googleapis.com` | API endpoint. |
-| `CLAUDE_CODE_COMMAND` | `claude --dangerously-skip-permissions --print --output-format stream-json` | Base command line for Claude Code invocations. Additional args (`--model`, `--allowedTools`, prompt) are appended by the provider. |
+| `CLAUDE_CODE_COMMAND` | `claude --dangerously-skip-permissions --print --output-format stream-json --verbose` | Base command line for Claude Code invocations. Additional args (`--model`, `--allowedTools`, prompt) are appended by the provider. |
 | `CLAUDE_CODE_WORKING_DIR` | — | Optional working directory override. |
 | `CLAUDE_CODE_TIMEOUT` | `300` | Timeout in seconds. |
 

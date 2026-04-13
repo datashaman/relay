@@ -8,7 +8,7 @@ use Symfony\Component\Process\Process;
 class ClaudeCodeCliProvider implements AiProvider
 {
     public function __construct(
-        private string $command = 'claude --dangerously-skip-permissions --print --output-format stream-json',
+        private string $command = 'claude --dangerously-skip-permissions --print --output-format stream-json --verbose',
         private ?string $workingDirectory = null,
         private int $timeout = 300,
     ) {}
