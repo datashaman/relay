@@ -15,7 +15,7 @@ class ClaudeCodeCliProvider implements AiProvider
 
     public function chat(array $messages, array $tools = [], array $options = []): array
     {
-        $args = $this->buildArgs($messages, $options);
+        $args = $this->buildArgs($messages, $options, $tools);
         $process = $this->spawn($args, $options['cwd'] ?? null);
         $process->run();
 
@@ -25,12 +25,12 @@ class ClaudeCodeCliProvider implements AiProvider
             );
         }
 
-        return $this->parseStreamJsonOutput($process->getOutput());
+        return $this->parseStreamJsonOutput($process->getOutput(), $tools);
     }
 
     public function stream(array $messages, array $tools = [], array $options = []): \Generator
     {
-        $args = $this->buildArgs($messages, $options);
+        $args = $this->buildArgs($messages, $options, $tools);
         $process = $this->spawn($args, $options['cwd'] ?? null);
         $process->start();
 
@@ -66,7 +66,7 @@ class ClaudeCodeCliProvider implements AiProvider
         }
     }
 
-    private function buildArgs(array $messages, array $options): array
+    private function buildArgs(array $messages, array $options, array $tools = []): array
     {
         $args = $this->splitCommand($this->command);
 
@@ -81,7 +81,7 @@ class ClaudeCodeCliProvider implements AiProvider
         }
 
         $args[] = '--';
-        $args[] = $this->buildPrompt($messages);
+        $args[] = $this->buildPrompt($messages, $tools);
 
         return $args;
     }
@@ -104,11 +104,30 @@ class ClaudeCodeCliProvider implements AiProvider
         return preg_split('/\s+/', trim($command)) ?: ['claude'];
     }
 
-    private function buildPrompt(array $messages): string
+    private function buildPrompt(array $messages, array $tools = []): string
     {
         $parts = [];
         foreach ($messages as $msg) {
             $parts[] = $msg['content'];
+        }
+
+        // Claude Code CLI can't register custom tools, so we fall back to
+        // asking the model to respond with JSON matching the tool schema.
+        // The response is parsed back into a synthetic tool_calls entry.
+        if (! empty($tools)) {
+            $tool = $tools[0];
+            $schema = json_encode($tool['parameters'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            $parts[] = <<<PROMPT
+# Response Format
+
+You must call the `{$tool['name']}` tool by responding with **ONLY** a JSON
+object matching this schema. No prose before or after, no markdown fences,
+no explanation — just the raw JSON object.
+
+Schema for `{$tool['name']}`:
+
+{$schema}
+PROMPT;
         }
 
         return implode("\n\n", $parts);
@@ -117,9 +136,13 @@ class ClaudeCodeCliProvider implements AiProvider
     /**
      * Accumulate the NDJSON stream into a single response matching the
      * AiProvider::chat() contract. Final assistant text lands in content;
-     * tool_use content blocks land in tool_calls.
+     * built-in tool_use blocks (Read/Write/Bash/etc.) land in tool_calls.
+     *
+     * When agent tools are passed, the model is prompted to respond with
+     * raw JSON matching one tool's schema — parse that text and synthesize
+     * a matching tool_calls entry so PreflightAgent et al. can consume it.
      */
-    private function parseStreamJsonOutput(string $output): array
+    private function parseStreamJsonOutput(string $output, array $tools = []): array
     {
         $text = '';
         $toolCalls = [];
@@ -164,12 +187,59 @@ class ClaudeCodeCliProvider implements AiProvider
             }
         }
 
+        if (! empty($tools) && $text !== '') {
+            $synthetic = $this->synthesizeToolCall($text, $tools[0]);
+            if ($synthetic !== null) {
+                $toolCalls[] = $synthetic;
+            }
+        }
+
         return [
             'content' => $text,
             'tool_calls' => $toolCalls,
             'usage' => $usage,
             'raw' => $raw,
         ];
+    }
+
+    private function synthesizeToolCall(string $text, array $tool): ?array
+    {
+        $json = $this->extractJson($text);
+        if ($json === null) {
+            return null;
+        }
+
+        return [
+            'id' => 'synth-'.uniqid(),
+            'name' => $tool['name'] ?? '',
+            'arguments' => $json,
+        ];
+    }
+
+    /**
+     * Pull a JSON object out of arbitrary text. Handles the common shapes:
+     * bare JSON, fenced ```json blocks, or a JSON object embedded in prose.
+     */
+    private function extractJson(string $text): ?array
+    {
+        $text = trim($text);
+
+        // Strip fenced code block if present.
+        if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/s', $text, $m)) {
+            $text = $m[1];
+        }
+
+        // Find first { and matching }.
+        $first = strpos($text, '{');
+        $last = strrpos($text, '}');
+        if ($first === false || $last === false || $last <= $first) {
+            return null;
+        }
+
+        $candidate = substr($text, $first, $last - $first + 1);
+        $decoded = json_decode($candidate, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function normalizeEvent(array $event): array
