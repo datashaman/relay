@@ -7,14 +7,13 @@ use App\Http\Controllers\FilterRuleController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueViewController;
 use App\Http\Controllers\OauthController;
-use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\PreflightController;
 use App\Http\Controllers\RunProgressController;
 use App\Http\Controllers\RunTimelineController;
 use App\Http\Controllers\SourceController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [OverviewController::class, 'index'])->name('overview');
+Route::livewire('/', 'pages::overview')->name('overview');
 Route::livewire('/intake', 'pages::intake')->name('intake.index');
 Route::get('/intake/sources/{source}/rules', [FilterRuleController::class, 'edit'])->name('intake.rules.edit');
 Route::put('/intake/sources/{source}/rules', [FilterRuleController::class, 'update'])->name('intake.rules.update');
