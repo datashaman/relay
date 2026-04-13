@@ -114,6 +114,13 @@ tests/
 └── fixtures/        # Recorded API response fixtures
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed design documentation.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and extension guides.
-See [docs/agents/](docs/agents/) for each agent's tool surface.
+## Documentation
+
+Documentation lives in [docs/](docs/) and is organised by the [Diataxis](https://diataxis.fr/) framework:
+
+- **Tutorials** — [Running your first issue through the pipeline](docs/tutorials/first-run.md)
+- **How-to guides** — [connect GitHub](docs/how-to/connect-github.md), [connect Jira](docs/how-to/connect-jira.md), [configure autonomy](docs/how-to/configure-autonomy.md), [add an AI provider](docs/how-to/add-ai-provider.md), [add a stage](docs/how-to/add-stage.md)
+- **Explanation** — [Architecture](docs/explanation/architecture.md)
+- **Reference** — [agents](docs/reference/agents/), [configuration](docs/reference/configuration.md), [stuck states](docs/reference/stuck-states.md)
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and conventions.
