@@ -374,8 +374,9 @@ class IssueSyncTest extends TestCase
         SyncSourceIssuesJob::dispatchSync($source);
 
         $issue = Issue::first();
-        $this->assertEquals(IssueStatus::Accepted, $issue->status);
+        $this->assertEquals(IssueStatus::InProgress, $issue->status);
         $this->assertTrue($issue->auto_accepted);
+        $this->assertNotNull($issue->runs()->first());
     }
 
     public function test_sync_now_dispatches_job(): void

@@ -85,10 +85,16 @@ class FilterRuleService
             return null;
         }
 
-        return Issue::firstOrCreate(
+        $issue = Issue::firstOrCreate(
             ['source_id' => $source->id, 'external_id' => $issueData['external_id']],
             $attributes,
         );
+
+        if ($issue->wasRecentlyCreated && ($attributes['auto_accepted'] ?? false)) {
+            app(OrchestratorService::class)->startRun($issue);
+        }
+
+        return $issue;
     }
 
     private function buildIssueAttributes(array $issueData, Source $source, bool $autoAccepted): array

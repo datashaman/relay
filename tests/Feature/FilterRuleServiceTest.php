@@ -294,8 +294,9 @@ class FilterRuleServiceTest extends TestCase
         );
 
         $this->assertNotNull($issue);
-        $this->assertEquals(IssueStatus::Accepted, $issue->status);
+        $this->assertEquals(IssueStatus::InProgress, $issue->fresh()->status);
         $this->assertTrue($issue->auto_accepted);
+        $this->assertNotNull($issue->fresh()->runs()->first());
     }
 
     public function test_empty_include_labels_passes_all(): void
