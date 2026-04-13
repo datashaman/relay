@@ -255,7 +255,7 @@ class extends Component {
             @else
                 <div class="space-y-2">
                     @foreach ($rules as $rule)
-                        @include('escalation-rules._card', ['rule' => $rule, 'order' => $loop->iteration])
+                        <x-escalation-rule-card :rule="$rule" :order="$loop->iteration" />
                     @endforeach
                 </div>
             @endif

@@ -1,3 +1,5 @@
+@props(['actor'])
+
 @php
     $actorMeta = match ($actor) {
         'user' => ['label' => 'Human Action', 'bg' => 'bg-secondary-container/30', 'fg' => 'text-secondary', 'icon' => 'user'],

@@ -156,7 +156,7 @@ class extends Component {
 
                     @if ($latestRun)
                         <div class="px-4 py-3 border-b border-outline-variant/40" id="stage-pipeline">
-                            @include('issues._stage-pipeline', ['run' => $latestRun])
+                            <x-stage-pipeline :run="$latestRun" />
                         </div>
                     @endif
 

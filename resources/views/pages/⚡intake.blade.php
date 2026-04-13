@@ -193,7 +193,7 @@ class extends Component {
                             </div>
                             <h3 class="flex items-center gap-2 text-sm font-semibold text-on-surface leading-tight">
                                 <span class="text-on-surface-variant">
-                                    @include('partials._source-icon', ['type' => $source->type->value])
+                                    <x-source-icon :type="$source->type->value" />
                                 </span>
                                 {{ $source->name }}
                             </h3>
@@ -330,7 +330,7 @@ class extends Component {
                         <div class="flex-1 min-w-0 space-y-2">
                             <div class="flex items-center gap-2 flex-wrap font-label text-[10px] uppercase tracking-widest">
                                 <span class="flex items-center gap-1 text-outline">
-                                    @include('partials._source-icon', ['type' => $issue->source->type->value, 'class' => 'w-3 h-3'])
+                                    <x-source-icon :type="$issue->source->type->value" class="w-3 h-3" />
                                     {{ $issue->source->type->value }}
                                 </span>
                                 <span class="text-outline-variant">·</span>

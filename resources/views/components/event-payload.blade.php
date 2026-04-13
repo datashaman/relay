@@ -1,3 +1,5 @@
+@props(['event'])
+
 @if (! empty($event->payload))
     <div class="mt-2">
         {{-- Failure report (from bounces and stuck states) --}}

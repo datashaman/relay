@@ -1,3 +1,5 @@
+@props(['run'])
+
 @php
     $stageOrder = ['preflight', 'implement', 'verify', 'release'];
     $stageColors = [
@@ -30,7 +32,6 @@
         @endif
 
         <div class="flex items-center gap-1.5 {{ $isCurrent ? 'font-semibold' : '' }}" data-stage="{{ $name }}">
-            {{-- Stage dot --}}
             @if ($isCompleted)
                 <span class="flex-shrink-0 w-5 h-5 rounded-full {{ $colors['bg'] }} flex items-center justify-center">
                     <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -47,7 +48,6 @@
                 <span class="flex-shrink-0 w-5 h-5 rounded-full bg-surface-container-high border-2 border-outline-variant"></span>
             @endif
 
-            {{-- Stage label --}}
             <span class="text-xs {{ $isCurrent ? $colors['text'] : 'text-on-surface-variant' }}">
                 {{ ucfirst($name) }}
             </span>

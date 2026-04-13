@@ -1,3 +1,5 @@
+@props(['type'])
+
 @switch($type)
     @case('started')
         Stage started

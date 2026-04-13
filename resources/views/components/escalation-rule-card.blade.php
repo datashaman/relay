@@ -1,10 +1,11 @@
+@props(['rule', 'order' => 1])
+
 @php
     $targetClass = match ($rule->target_level) {
         \App\Enums\AutonomyLevel::Manual => 'bg-error-container/30 text-error',
         \App\Enums\AutonomyLevel::Supervised => 'bg-stage-stuck/20 text-stage-stuck',
         default => 'bg-primary-container/30 text-primary',
     };
-    $order = $order ?? 1;
 @endphp
 <div class="bg-surface-container-lowest rounded-lg p-3 {{ $rule->is_enabled ? '' : 'opacity-50' }}"
      data-rule-card

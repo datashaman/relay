@@ -277,7 +277,7 @@ class extends Component {
                 @endphp
                 <div class="rounded-xl {{ $cardClass }} px-4 py-3" wire:key="event-{{ $event->id }}">
                     <div class="flex items-start gap-3">
-                        @include('runs._event-actor', ['actor' => $isAlert ? 'system' : $event->actor])
+                        <x-event-actor :actor="$isAlert ? 'system' : $event->actor" />
 
                         <div class="flex-1 min-w-0 space-y-2">
                             <div class="flex items-center gap-2 flex-wrap font-label text-[10px] uppercase tracking-widest">
@@ -312,7 +312,7 @@ class extends Component {
                                 </div>
                             @else
                                 <h3 class="text-sm font-semibold text-on-surface leading-snug">
-                                    @include('runs._event-label', ['type' => $event->type])
+                                    <x-event-label :type="$event->type" />
                                     @if ($issueRef)
                                         <span class="text-on-surface-variant">for</span>
                                         <span class="font-label text-xs text-primary">{{ $issueRef }}</span>
@@ -357,7 +357,7 @@ class extends Component {
                                         @endif
                                     </div>
                                 @else
-                                    @include('runs._event-payload', ['event' => $event])
+                                    <x-event-payload :event="$event" />
                                 @endif
 
                                 @php

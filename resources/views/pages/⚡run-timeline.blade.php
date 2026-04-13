@@ -180,9 +180,9 @@ class extends Component {
                                         <div class="px-4 py-3" wire:key="event-{{ $event->id }}">
                                             <div class="flex items-start justify-between">
                                                 <div class="flex items-center gap-2">
-                                                    @include('runs._event-actor', ['actor' => $event->actor])
+                                                    <x-event-actor :actor="$event->actor" />
                                                     <span class="text-sm font-medium text-on-surface">
-                                                        @include('runs._event-label', ['type' => $event->type])
+                                                        <x-event-label :type="$event->type" />
                                                     </span>
                                                 </div>
                                                 <span class="text-xs text-outline whitespace-nowrap ml-2">
@@ -190,7 +190,7 @@ class extends Component {
                                                 </span>
                                             </div>
 
-                                            @include('runs._event-payload', ['event' => $event])
+                                            <x-event-payload :event="$event" />
                                         </div>
                                     @endforeach
                                 </div>
