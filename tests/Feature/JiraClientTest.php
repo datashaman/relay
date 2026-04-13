@@ -173,6 +173,22 @@ class JiraClientTest extends TestCase
         });
     }
 
+    public function test_all_issues_throws_when_page_token_does_not_advance(): void
+    {
+        Http::fake([
+            self::BASE . '/search/jql*' => Http::response([
+                'issues' => [$this->fakeJiraIssue('10001', 'First')],
+                'nextPageToken' => 'stuck',
+                'isLast' => false,
+            ]),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Jira pagination did not advance');
+
+        $this->client->allIssues('project = TEST');
+    }
+
     public function test_all_issues_fetches_all_pages(): void
     {
         Http::fake([

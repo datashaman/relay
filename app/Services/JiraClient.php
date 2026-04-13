@@ -56,12 +56,25 @@ class JiraClient
     {
         $all = [];
         $pageToken = null;
+        $seenTokens = [];
 
-        do {
+        while (true) {
             $result = $this->searchIssues($jql, $pageToken);
             $all = array_merge($all, $result['issues']);
-            $pageToken = $result['nextPageToken'];
-        } while ($pageToken !== null && ! $result['isLast']);
+
+            if ($result['isLast'] || empty($result['nextPageToken'])) {
+                break;
+            }
+
+            $next = $result['nextPageToken'];
+
+            if (isset($seenTokens[$next])) {
+                throw new \RuntimeException('Jira pagination did not advance (nextPageToken repeated).');
+            }
+            $seenTokens[$next] = true;
+
+            $pageToken = $next;
+        }
 
         return $all;
     }
