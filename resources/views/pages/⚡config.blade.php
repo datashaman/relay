@@ -13,7 +13,7 @@ use Livewire\Component;
 
 new
 #[Title('Autonomy Engine')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     public int $iterationCap = 5;
 

@@ -7,7 +7,7 @@ use Livewire\Component;
 
 new
 #[Title('Edit Intake Rules')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     public Source $source;
 

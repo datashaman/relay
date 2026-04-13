@@ -9,7 +9,7 @@ use Livewire\Component;
 
 new
 #[Title('Preflight Clarification')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     public Run $run;
 

@@ -7,7 +7,7 @@ use Livewire\Component;
 
 new
 #[Title('Edit Preflight Doc')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     public Run $run;
 

@@ -14,7 +14,7 @@ use Livewire\WithPagination;
 
 new
 #[Title('Activity Feed')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     use WithPagination;
 

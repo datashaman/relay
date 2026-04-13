@@ -9,7 +9,7 @@ use Livewire\Component;
 
 new
 #[Title('Select Jira Site')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     public function selectSite(string $cloudId, OauthService $oauth)
     {

@@ -7,7 +7,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new
-#[Layout('components.layouts.app', ['containerClass' => 'max-w-7xl'])]
+#[Layout('layouts::app', ['containerClass' => 'max-w-7xl'])]
 class extends Component {
     public Issue $issue;
 

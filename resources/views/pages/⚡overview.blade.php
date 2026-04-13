@@ -14,7 +14,7 @@ use Livewire\Component;
 
 new
 #[Title('Overview')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     public function with(): array
     {

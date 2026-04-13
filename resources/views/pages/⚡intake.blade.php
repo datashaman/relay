@@ -13,7 +13,7 @@ use Livewire\Component;
 
 new
 #[Title('Intake Control')]
-#[Layout('components.layouts.app')]
+#[Layout('layouts::app')]
 class extends Component {
     /** source id → flash message for the last test-connection call */
     public array $testResults = [];
