@@ -39,21 +39,6 @@ class IssueViewTest extends TestCase
         ], $overrides));
     }
 
-    public function test_index_redirects_to_first_issue(): void
-    {
-        $this->markTestSkipped('/issues index route removed — pipeline entry is now Overview.');
-    }
-
-    public function test_index_shows_empty_state_when_no_pipeline_issues(): void
-    {
-        $this->markTestSkipped('/issues index route removed — pipeline entry is now Overview.');
-    }
-
-    public function test_index_excludes_queued_and_rejected_issues(): void
-    {
-        $this->markTestSkipped('/issues index route removed — pipeline entry is now Overview.');
-    }
-
     public function test_show_displays_three_panels(): void
     {
         $issue = $this->createPipelineIssue(['title' => 'Three panel test']);
@@ -284,11 +269,6 @@ class IssueViewTest extends TestCase
         $content = $response->getContent();
         $this->assertStringContainsString('grid-cols-1', $content);
         $this->assertStringContainsString('lg:grid-cols-12', $content);
-    }
-
-    public function test_issues_nav_link_present(): void
-    {
-        $this->markTestSkipped('/issues index removed — nav links are Overview, Activity, Intake, Config.');
     }
 
     public function test_completed_issue_shows_completed_badge(): void

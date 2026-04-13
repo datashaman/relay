@@ -45,11 +45,6 @@ class IssueQueueTest extends TestCase
         $response->assertSee('Intake Control');
     }
 
-    public function test_queue_view_shows_accepted_issues(): void
-    {
-        $this->markTestSkipped('Intake only shows queued issues; accepted issues live in Overview/Activity now.');
-    }
-
     public function test_queue_view_does_not_show_rejected_issues(): void
     {
         $source = $this->createSource();
@@ -213,11 +208,6 @@ class IssueQueueTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('No incoming issues');
-    }
-
-    public function test_auto_accepted_badge_visible(): void
-    {
-        $this->markTestSkipped('Intake only shows queued issues; auto-accept badge visible in Overview/Activity.');
     }
 
     public function test_queue_nav_link_present(): void
