@@ -40,14 +40,8 @@ Route::delete('/oauth/disconnect/{provider}', [OauthController::class, 'disconne
     ->name('oauth.disconnect')
     ->whereIn('provider', ['github', 'jira']);
 
-Route::get('/jira/sites', [OauthController::class, 'jiraSites'])
-    ->name('jira.sites');
-
-Route::get('/jira/select-site', [OauthController::class, 'jiraSiteSelectionForm'])
+Route::livewire('/jira/select-site', 'pages::jira-select-site')
     ->name('jira.select-site.form');
-
-Route::post('/jira/select-site', [OauthController::class, 'jiraSelectSite'])
-    ->name('jira.select-site');
 
 Route::livewire('/config', 'pages::config')->name('config.index');
 Route::post('/escalation-rules', [EscalationRuleController::class, 'store'])->name('escalation-rules.store');

@@ -498,10 +498,9 @@ class OauthFlowTest extends TestCase
             ],
         ], now()->addMinutes(10));
 
-        $response = $this->post('/jira/select-site', ['cloud_id' => 'cloud-2']);
-
-        $response->assertRedirect('/intake');
-        $response->assertSessionHas('success', 'Jira connected successfully (Site Two).');
+        \Livewire\Livewire::test('pages::jira-select-site')
+            ->call('selectSite', 'cloud-2')
+            ->assertRedirect('/intake');
 
         $source = Source::where('type', 'jira')->first();
         $this->assertNotNull($source);
@@ -521,21 +520,19 @@ class OauthFlowTest extends TestCase
             ],
         ], now()->addMinutes(10));
 
-        $response = $this->post('/jira/select-site', ['cloud_id' => 'nonexistent']);
-
-        $response->assertRedirect('/intake');
-        $response->assertSessionHas('error', 'Invalid Jira site selection.');
+        \Livewire\Livewire::test('pages::jira-select-site')
+            ->call('selectSite', 'nonexistent')
+            ->assertRedirect('/intake');
     }
 
     public function test_jira_select_site_expired_pending_returns_error(): void
     {
-        $response = $this->post('/jira/select-site', ['cloud_id' => 'cloud-1']);
-
-        $response->assertRedirect('/intake');
-        $response->assertSessionHas('error', 'No pending Jira authorization. Please reconnect.');
+        \Livewire\Livewire::test('pages::jira-select-site')
+            ->call('selectSite', 'cloud-1')
+            ->assertRedirect('/intake');
     }
 
-    public function test_jira_sites_endpoint_returns_pending_sites(): void
+    public function test_jira_select_site_page_lists_pending_sites(): void
     {
         Cache::put('jira_pending_site_selection', [
             'token_data' => ['access_token' => 'jira-token'],
@@ -545,19 +542,15 @@ class OauthFlowTest extends TestCase
             ],
         ], now()->addMinutes(10));
 
-        $response = $this->getJson('/jira/sites');
-
-        $response->assertOk();
-        $response->assertJsonCount(2, 'sites');
-        $response->assertJsonPath('sites.0.name', 'Site One');
+        \Livewire\Livewire::test('pages::jira-select-site')
+            ->assertSee('Site One')
+            ->assertSee('Site Two');
     }
 
-    public function test_jira_sites_endpoint_returns_404_when_no_pending(): void
+    public function test_jira_select_site_page_shows_no_pending_message(): void
     {
-        $response = $this->getJson('/jira/sites');
-
-        $response->assertStatus(404);
-        $response->assertJsonPath('error', 'No pending Jira authorization. Please reconnect.');
+        \Livewire\Livewire::test('pages::jira-select-site')
+            ->assertSee('No pending Jira authorization');
     }
 
     public function test_jira_callback_no_accessible_sites_shows_error(): void

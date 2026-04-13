@@ -70,59 +70,6 @@ class OauthController extends Controller
         }
     }
 
-    public function jiraSiteSelectionForm(): View
-    {
-        return view('jira.select-site');
-    }
-
-    public function jiraSites(): JsonResponse
-    {
-        $pendingKey = $this->getJiraPendingCacheKey();
-        $pending = Cache::get($pendingKey);
-
-        if (! $pending) {
-            return response()->json(['error' => 'No pending Jira authorization. Please reconnect.'], 404);
-        }
-
-        return response()->json(['sites' => $pending['sites']]);
-    }
-
-    public function jiraSelectSite(Request $request): RedirectResponse
-    {
-        $request->validate(['cloud_id' => 'required|string']);
-
-        $pendingKey = $this->getJiraPendingCacheKey();
-        $pending = Cache::pull($pendingKey);
-
-        if (! $pending) {
-            return redirect()->route('intake.index')->with('error', 'No pending Jira authorization. Please reconnect.');
-        }
-
-        $cloudId = $request->input('cloud_id');
-        $site = collect($pending['sites'])->firstWhere('id', $cloudId);
-
-        if (! $site) {
-            return redirect()->route('intake.index')->with('error', 'Invalid Jira site selection.');
-        }
-
-        $source = Source::firstOrCreate(
-            ['type' => 'jira', 'external_account' => $site['name']],
-            [
-                'name' => 'Jira: ' . $site['name'],
-                'is_active' => true,
-                'config' => ['cloud_id' => $cloudId, 'site_url' => $site['url'] ?? null],
-            ],
-        );
-
-        if ($source->wasRecentlyCreated === false) {
-            $source->update(['config' => ['cloud_id' => $cloudId, 'site_url' => $site['url'] ?? null]]);
-        }
-
-        $this->oauth->storeToken($source, 'jira', $pending['token_data']);
-
-        return redirect()->route('intake.index')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
-    }
-
     public function disconnect(string $provider): RedirectResponse
     {
         $source = Source::where('type', $provider)->first();
