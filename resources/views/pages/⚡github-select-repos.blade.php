@@ -87,9 +87,9 @@ class extends Component {
 
             if ($this->search !== '') {
                 $query = 'user:'.$this->source->external_account.' '.$this->search.' in:name,description';
-                $result = $client->searchRepos($query, $this->page);
+                $result = $client->searchRepos($query, $this->page, 10);
             } else {
-                $result = $client->listRepos($this->page);
+                $result = $client->listRepos($this->page, 10);
             }
 
             $repos = collect($result['data'])
