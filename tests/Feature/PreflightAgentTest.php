@@ -459,13 +459,11 @@ class PreflightAgentTest extends TestCase
             ],
         ]);
 
-        $response = $this->post(route('preflight.submit-answers', $run), [
-            'answer_q1' => 'Admin',
-            'answer_q2' => 'Must use React',
-        ]);
-
-        $response->assertRedirect(route('intake.index'));
-        $response->assertSessionHas('success');
+        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->set('answers.q1', 'Admin')
+            ->set('answers.q2', 'Must use React')
+            ->call('submitAnswers')
+            ->assertRedirect(route('intake.index'));
 
         $run->refresh();
         $this->assertEquals('Admin', $run->clarification_answers['q1']);
@@ -490,10 +488,10 @@ class PreflightAgentTest extends TestCase
             ],
         ]);
 
-        $response = $this->post(route('preflight.submit-answers', $run), [
-            'answer_q1' => 'My answer',
-            'answer_q2' => '',
-        ]);
+        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->set('answers.q1', 'My answer')
+            ->set('answers.q2', '')
+            ->call('submitAnswers');
 
         $run->refresh();
         $this->assertArrayHasKey('q1', $run->clarification_answers);
@@ -504,10 +502,8 @@ class PreflightAgentTest extends TestCase
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $response = $this->post(route('preflight.submit-answers', $run), []);
-
-        $response->assertRedirect(route('intake.index'));
-        $response->assertSessionHas('error');
+        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->assertRedirect(route('intake.index'));
     }
 
     public function test_skip_to_doc_resumes_with_skip_context(): void
@@ -522,10 +518,9 @@ class PreflightAgentTest extends TestCase
             ],
         ]);
 
-        $response = $this->post(route('preflight.skip', $run));
-
-        $response->assertRedirect(route('intake.index'));
-        $response->assertSessionHas('success');
+        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->call('skipToDoc')
+            ->assertRedirect(route('intake.index'));
 
         $stage->refresh();
         $this->assertEquals(StageStatus::Running, $stage->status);
@@ -539,10 +534,8 @@ class PreflightAgentTest extends TestCase
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $response = $this->post(route('preflight.skip', $run));
-
-        $response->assertRedirect(route('intake.index'));
-        $response->assertSessionHas('error');
+        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->assertRedirect(route('intake.index'));
     }
 
     public function test_known_facts_panel_rendered_before_questions(): void

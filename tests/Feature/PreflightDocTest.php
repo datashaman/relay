@@ -600,12 +600,10 @@ class PreflightDocTest extends TestCase
         [$issue, $run, $stage] = $this->setupRunWithStage();
         $run->update(['preflight_doc' => '## Original doc']);
 
-        $response = $this->put(route('preflight.doc.update', $run), [
-            'preflight_doc' => '## Edited doc with changes',
-        ]);
-
-        $response->assertRedirect(route('preflight.doc', $run));
-        $response->assertSessionHas('success');
+        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+            ->set('preflightDoc', '## Edited doc with changes')
+            ->call('save')
+            ->assertRedirect(route('preflight.doc', $run));
 
         $run->refresh();
         $this->assertEquals('## Edited doc with changes', $run->preflight_doc);
@@ -619,23 +617,18 @@ class PreflightDocTest extends TestCase
         [$issue, $run, $stage] = $this->setupRunWithStage();
         $run->update(['preflight_doc' => '## Doc']);
 
-        $response = $this->put(route('preflight.doc.update', $run), [
-            'preflight_doc' => '',
-        ]);
-
-        $response->assertSessionHasErrors('preflight_doc');
+        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+            ->set('preflightDoc', '')
+            ->call('save')
+            ->assertHasErrors('preflightDoc');
     }
 
     public function test_update_doc_redirects_when_no_doc(): void
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $response = $this->put(route('preflight.doc.update', $run), [
-            'preflight_doc' => 'Something',
-        ]);
-
-        $response->assertRedirect(route('intake.index'));
-        $response->assertSessionHas('error');
+        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+            ->assertRedirect(route('intake.index'));
     }
 
     public function test_update_doc_appends_to_existing_history(): void
@@ -648,9 +641,9 @@ class PreflightDocTest extends TestCase
             ],
         ]);
 
-        $this->put(route('preflight.doc.update', $run), [
-            'preflight_doc' => '## V3 doc',
-        ]);
+        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+            ->set('preflightDoc', '## V3 doc')
+            ->call('save');
 
         $run->refresh();
         $this->assertEquals('## V3 doc', $run->preflight_doc);
