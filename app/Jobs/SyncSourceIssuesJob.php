@@ -74,6 +74,10 @@ class SyncSourceIssuesJob implements ShouldQueue
 
         foreach ($repos as $repoFullName) {
             [$owner, $repo] = explode('/', $repoFullName, 2);
+            $repository = \App\Models\Repository::firstOrCreate(
+                ['name' => $repoFullName],
+            );
+
             $issues = $client->allIssues($owner, $repo);
 
             foreach ($issues as $ghIssue) {
@@ -82,6 +86,7 @@ class SyncSourceIssuesJob implements ShouldQueue
                 }
                 $attrs = GitHubClient::mapToIssueAttributes($ghIssue);
                 $attrs['external_id'] = $repoFullName . '#' . $attrs['external_id'];
+                $attrs['repository_id'] = $repository->id;
                 $mapped[] = $attrs;
             }
         }

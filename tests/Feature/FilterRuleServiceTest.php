@@ -34,6 +34,7 @@ class FilterRuleServiceTest extends TestCase
             'external_url' => 'https://github.com/org/repo/issues/123',
             'assignee' => null,
             'labels' => [],
+            'repository_id' => \App\Models\Repository::factory()->create()->id,
         ], $overrides);
     }
 

@@ -109,6 +109,7 @@ class FilterRuleService
             'labels' => $issueData['labels'] ?? [],
             'status' => $autoAccepted ? IssueStatus::Accepted : IssueStatus::Queued,
             'auto_accepted' => $autoAccepted,
+            'repository_id' => $issueData['repository_id'] ?? null,
         ];
     }
 }

@@ -27,6 +27,7 @@ class OrchestratorService
 
     public function __construct(
         private EscalationRuleService $escalationRuleService,
+        private WorktreeService $worktreeService,
     ) {}
 
     public function startRun(Issue $issue, array $context = []): Run
@@ -40,11 +41,35 @@ class OrchestratorService
 
         $issue->update(['status' => IssueStatus::InProgress]);
 
+        if (! $issue->repository) {
+            $this->failRunImmediately($run, $issue, 'Issue is not linked to a repository. The sync should attach one; check your source config.');
+
+            return $run;
+        }
+
+        try {
+            $this->worktreeService->createWorktree($run, $issue->repository);
+        } catch (\Throwable $e) {
+            $this->failRunImmediately($run, $issue, 'Worktree setup failed: '.$e->getMessage());
+
+            return $run;
+        }
+
         $firstStage = $this->createStage($run, StageName::Preflight);
 
         $this->transitionStage($firstStage, $context);
 
         return $run;
+    }
+
+    private function failRunImmediately(Run $run, Issue $issue, string $reason): void
+    {
+        $stage = $this->createStage($run, StageName::Preflight);
+        $stage->update(['status' => StageStatus::Failed, 'completed_at' => now()]);
+        $this->recordEvent($stage, 'failed', 'system', ['reason' => $reason]);
+
+        $run->update(['status' => RunStatus::Failed, 'completed_at' => now()]);
+        $issue->update(['status' => IssueStatus::Failed]);
     }
 
     public function startStage(Stage $stage, array $context = []): void

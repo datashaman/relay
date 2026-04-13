@@ -159,7 +159,9 @@ PROMPT;
         $provider = $this->providerManager->resolve(null, StageName::Preflight);
 
         $messages = $this->buildMessages($issue, $context);
-        $response = $provider->chat($messages, [self::ASSESS_TOOL]);
+        $response = $provider->chat($messages, [self::ASSESS_TOOL], array_filter([
+            'cwd' => $run->worktree_path,
+        ]));
 
         $assessment = $this->parseAssessment($response);
 
@@ -198,7 +200,9 @@ PROMPT;
         $provider = $this->providerManager->resolve(null, StageName::Preflight);
 
         $messages = $this->buildDocMessages($run, $issue);
-        $response = $provider->chat($messages, [self::DOC_TOOL]);
+        $response = $provider->chat($messages, [self::DOC_TOOL], array_filter([
+            'cwd' => $run->worktree_path,
+        ]));
 
         $docData = $this->parseDocResponse($response);
         $doc = $this->formatDoc($docData, $issue);

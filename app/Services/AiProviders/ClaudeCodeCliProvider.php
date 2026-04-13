@@ -16,7 +16,7 @@ class ClaudeCodeCliProvider implements AiProvider
     public function chat(array $messages, array $tools = [], array $options = []): array
     {
         $args = $this->buildArgs($messages, $options);
-        $process = $this->spawn($args);
+        $process = $this->spawn($args, $options['cwd'] ?? null);
         $process->run();
 
         if (! $process->isSuccessful()) {
@@ -31,7 +31,7 @@ class ClaudeCodeCliProvider implements AiProvider
     public function stream(array $messages, array $tools = [], array $options = []): \Generator
     {
         $args = $this->buildArgs($messages, $options);
-        $process = $this->spawn($args);
+        $process = $this->spawn($args, $options['cwd'] ?? null);
         $process->start();
 
         $buffer = '';
@@ -86,13 +86,14 @@ class ClaudeCodeCliProvider implements AiProvider
         return $args;
     }
 
-    private function spawn(array $args): Process
+    private function spawn(array $args, ?string $cwd = null): Process
     {
         $process = new Process($args);
         $process->setTimeout($this->timeout);
 
-        if ($this->workingDirectory) {
-            $process->setWorkingDirectory($this->workingDirectory);
+        $dir = $cwd ?? $this->workingDirectory;
+        if ($dir) {
+            $process->setWorkingDirectory($dir);
         }
 
         return $process;
