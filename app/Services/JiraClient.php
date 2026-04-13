@@ -126,7 +126,7 @@ class JiraClient
         $fields = $jiraIssue['fields'] ?? [];
 
         return [
-            'external_id' => (string) $jiraIssue['id'],
+            'external_id' => (string) ($jiraIssue['key'] ?? $jiraIssue['id']),
             'title' => $fields['summary'] ?? '',
             'body' => self::extractDescription($fields['description'] ?? null),
             'external_url' => $jiraIssue['self'] ?? '',

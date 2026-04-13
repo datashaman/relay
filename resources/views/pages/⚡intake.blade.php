@@ -278,10 +278,10 @@ class extends Component {
                             @if ($onlyMine || $onlyActiveSprint)
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     @if ($onlyMine)
-                                        <span class="inline-flex items-center rounded bg-secondary-container/30 text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">My issues</span>
+                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">My issues</span>
                                     @endif
                                     @if ($onlyActiveSprint)
-                                        <span class="inline-flex items-center rounded bg-secondary-container/30 text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">Active sprint</span>
+                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">Active sprint</span>
                                     @endif
                                 </div>
                             @endif

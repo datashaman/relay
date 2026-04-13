@@ -284,7 +284,7 @@ class JiraClientTest extends TestCase
 
         $attrs = JiraClient::mapToIssueAttributes($jiraIssue);
 
-        $this->assertEquals('10001', $attrs['external_id']);
+        $this->assertEquals('TEST-1', $attrs['external_id']);
         $this->assertEquals('Bug report', $attrs['title']);
         $this->assertEquals('Login page crashes on submit', $attrs['body']);
         $this->assertEquals('Jane Doe', $attrs['assignee']);

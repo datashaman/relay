@@ -83,6 +83,7 @@ class IssueSyncTest extends TestCase
             $issues = [
                 [
                     'id' => '10001',
+                    'key' => 'TEST-1',
                     'self' => 'https://jira.example.com/issue/10001',
                     'fields' => [
                         'summary' => 'Jira bug',
@@ -244,7 +245,7 @@ class IssueSyncTest extends TestCase
         $this->assertDatabaseCount('issues', 1);
         $this->assertDatabaseHas('issues', [
             'source_id' => $source->id,
-            'external_id' => '10001',
+            'external_id' => 'TEST-1',
             'title' => 'Jira bug',
             'assignee' => 'Jane',
         ]);
