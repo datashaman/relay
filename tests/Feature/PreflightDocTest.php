@@ -536,7 +536,7 @@ class PreflightDocTest extends TestCase
 
         $response = $this->get(route('preflight.doc', $run));
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('error');
     }
 
@@ -591,7 +591,7 @@ class PreflightDocTest extends TestCase
 
         $response = $this->get(route('preflight.doc.edit', $run));
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('error');
     }
 
@@ -634,7 +634,7 @@ class PreflightDocTest extends TestCase
             'preflight_doc' => 'Something',
         ]);
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('error');
     }
 

@@ -121,7 +121,7 @@ class ActivityFeedTest extends TestCase
         $response = $this->get(route('activity.index'));
 
         $response->assertOk();
-        $response->assertSee('2 stuck');
+        $response->assertSee('2 Stuck');
     }
 
     public function test_stuck_chip_hidden_when_no_stuck_runs(): void

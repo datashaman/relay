@@ -41,31 +41,17 @@ class IssueViewTest extends TestCase
 
     public function test_index_redirects_to_first_issue(): void
     {
-        $issue = $this->createPipelineIssue(['title' => 'First issue']);
-
-        $response = $this->get('/issues');
-
-        $response->assertRedirect(route('issues.show', $issue));
+        $this->markTestSkipped('/issues index route removed — pipeline entry is now Overview.');
     }
 
     public function test_index_shows_empty_state_when_no_pipeline_issues(): void
     {
-        $response = $this->get('/issues');
-
-        $response->assertStatus(200);
-        $response->assertSee('No pipeline issues yet');
+        $this->markTestSkipped('/issues index route removed — pipeline entry is now Overview.');
     }
 
     public function test_index_excludes_queued_and_rejected_issues(): void
     {
-        $source = $this->createSource();
-        Issue::factory()->create(['source_id' => $source->id, 'status' => IssueStatus::Queued]);
-        Issue::factory()->create(['source_id' => $source->id, 'status' => IssueStatus::Rejected]);
-
-        $response = $this->get('/issues');
-
-        $response->assertStatus(200);
-        $response->assertSee('No pipeline issues yet');
+        $this->markTestSkipped('/issues index route removed — pipeline entry is now Overview.');
     }
 
     public function test_show_displays_three_panels(): void
@@ -302,10 +288,7 @@ class IssueViewTest extends TestCase
 
     public function test_issues_nav_link_present(): void
     {
-        $response = $this->get('/issues');
-
-        $response->assertStatus(200);
-        $response->assertSee('Issues');
+        $this->markTestSkipped('/issues index removed — nav links are Overview, Activity, Intake, Config.');
     }
 
     public function test_completed_issue_shows_completed_badge(): void

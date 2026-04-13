@@ -442,7 +442,7 @@ class PreflightAgentTest extends TestCase
 
         $response = $this->get(route('preflight.show', $run));
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('error');
     }
 
@@ -464,7 +464,7 @@ class PreflightAgentTest extends TestCase
             'answer_q2' => 'Must use React',
         ]);
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('success');
 
         $run->refresh();
@@ -506,7 +506,7 @@ class PreflightAgentTest extends TestCase
 
         $response = $this->post(route('preflight.submit-answers', $run), []);
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('error');
     }
 
@@ -524,7 +524,7 @@ class PreflightAgentTest extends TestCase
 
         $response = $this->post(route('preflight.skip', $run));
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('success');
 
         $stage->refresh();
@@ -541,7 +541,7 @@ class PreflightAgentTest extends TestCase
 
         $response = $this->post(route('preflight.skip', $run));
 
-        $response->assertRedirect(route('issues.queue'));
+        $response->assertRedirect(route('intake.index'));
         $response->assertSessionHas('error');
     }
 

@@ -38,27 +38,16 @@ class IssueQueueTest extends TestCase
         $source = $this->createSource();
         $issue = $this->createIssue($source, ['title' => 'Fix the login bug']);
 
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
         $response->assertSee('Fix the login bug');
-        $response->assertSee('Issue Queue');
+        $response->assertSee('Intake Control');
     }
 
     public function test_queue_view_shows_accepted_issues(): void
     {
-        $source = $this->createSource();
-        $issue = $this->createIssue($source, [
-            'title' => 'Auto-accepted issue',
-            'status' => IssueStatus::Accepted,
-            'auto_accepted' => true,
-        ]);
-
-        $response = $this->get('/issues/queue');
-
-        $response->assertStatus(200);
-        $response->assertSee('Auto-accepted issue');
-        $response->assertSee('auto');
+        $this->markTestSkipped('Intake only shows queued issues; accepted issues live in Overview/Activity now.');
     }
 
     public function test_queue_view_does_not_show_rejected_issues(): void
@@ -69,7 +58,7 @@ class IssueQueueTest extends TestCase
             'status' => IssueStatus::Rejected,
         ]);
 
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
         $response->assertDontSee('Rejected issue');
@@ -82,7 +71,7 @@ class IssueQueueTest extends TestCase
         $this->createIssue($source1, ['title' => 'Issue from org1']);
         $this->createIssue($source2, ['title' => 'Issue from org2']);
 
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
         $response->assertSee('org1');
@@ -93,40 +82,17 @@ class IssueQueueTest extends TestCase
 
     public function test_queue_filter_by_source(): void
     {
-        $source1 = $this->createSource(['external_account' => 'org1']);
-        $source2 = $this->createSource(['external_account' => 'org2']);
-        $this->createIssue($source1, ['title' => 'Issue from org1']);
-        $this->createIssue($source2, ['title' => 'Issue from org2']);
-
-        $response = $this->get('/issues/queue?source=' . $source1->id);
-
-        $response->assertStatus(200);
-        $response->assertSee('Issue from org1');
-        $response->assertDontSee('Issue from org2');
+        $this->markTestSkipped('Cross-source filter removed — intake shows per-source cards.');
     }
 
     public function test_queue_search_by_title(): void
     {
-        $source = $this->createSource();
-        $this->createIssue($source, ['title' => 'Fix login bug']);
-        $this->createIssue($source, ['title' => 'Add dark mode']);
-
-        $response = $this->get('/issues/queue?search=login');
-
-        $response->assertStatus(200);
-        $response->assertSee('Fix login bug');
-        $response->assertDontSee('Add dark mode');
+        $this->markTestSkipped('Search removed from intake — consider porting to Overview if needed.');
     }
 
     public function test_queue_search_by_external_id(): void
     {
-        $source = $this->createSource();
-        $this->createIssue($source, ['title' => 'Some issue', 'external_id' => 'org/repo#42']);
-
-        $response = $this->get('/issues/queue?search=repo%2342');
-
-        $response->assertStatus(200);
-        $response->assertSee('Some issue');
+        $this->markTestSkipped('Search removed from intake — consider porting to Overview if needed.');
     }
 
     public function test_accept_queued_issue(): void
@@ -136,7 +102,7 @@ class IssueQueueTest extends TestCase
 
         $response = $this->post("/issues/{$issue->id}/accept");
 
-        $response->assertRedirect('/issues/queue');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
         $this->assertEquals(IssueStatus::Accepted, $issue->fresh()->status);
     }
@@ -148,7 +114,7 @@ class IssueQueueTest extends TestCase
 
         $response = $this->post("/issues/{$issue->id}/accept");
 
-        $response->assertRedirect('/issues/queue');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
     }
 
@@ -159,7 +125,7 @@ class IssueQueueTest extends TestCase
 
         $response = $this->post("/issues/{$issue->id}/reject");
 
-        $response->assertRedirect('/issues/queue');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
         $this->assertEquals(IssueStatus::Rejected, $issue->fresh()->status);
     }
@@ -171,21 +137,19 @@ class IssueQueueTest extends TestCase
 
         $response = $this->post("/issues/{$issue->id}/reject");
 
-        $response->assertRedirect('/issues/queue');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
     }
 
     public function test_rejected_issues_hidden_from_queue(): void
     {
         $source = $this->createSource();
-        $issue = $this->createIssue($source, ['title' => 'Will be rejected']);
+        $issue = $this->createIssue($source, ['title' => 'Unique title for hiding test']);
+        $issue->update(['status' => IssueStatus::Rejected]);
 
-        $this->post("/issues/{$issue->id}/reject");
+        $response = $this->get('/intake');
 
-        $this->assertEquals(IssueStatus::Rejected, $issue->fresh()->status);
-
-        $response = $this->get('/issues/queue');
-        $response->assertDontSee('Queued');
+        $response->assertDontSee('Unique title for hiding test');
     }
 
     public function test_toggle_pause_intake(): void
@@ -194,7 +158,7 @@ class IssueQueueTest extends TestCase
 
         $response = $this->post("/sources/{$source->id}/toggle-pause");
 
-        $response->assertRedirect('/issues/queue');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
         $this->assertTrue($source->fresh()->is_intake_paused);
     }
@@ -205,7 +169,7 @@ class IssueQueueTest extends TestCase
 
         $response = $this->post("/sources/{$source->id}/toggle-pause");
 
-        $response->assertRedirect('/issues/queue');
+        $response->assertRedirect('/intake');
         $this->assertFalse($source->fresh()->is_intake_paused);
     }
 
@@ -217,7 +181,7 @@ class IssueQueueTest extends TestCase
             'backlog_threshold' => 10,
         ]);
 
-        $response->assertRedirect('/issues/queue');
+        $response->assertRedirect('/intake');
         $this->assertTrue($source->fresh()->is_intake_paused);
         $this->assertEquals(10, $source->fresh()->backlog_threshold);
     }
@@ -260,7 +224,7 @@ class IssueQueueTest extends TestCase
 
     public function test_empty_queue_shows_message(): void
     {
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
         $response->assertSee('No incoming issues');
@@ -268,37 +232,26 @@ class IssueQueueTest extends TestCase
 
     public function test_auto_accepted_badge_visible(): void
     {
-        $source = $this->createSource();
-        $this->createIssue($source, [
-            'title' => 'Auto issue',
-            'status' => IssueStatus::Accepted,
-            'auto_accepted' => true,
-        ]);
-
-        $response = $this->get('/issues/queue');
-
-        $response->assertStatus(200);
-        $response->assertSee('Auto issue');
-        $response->assertSee('auto');
+        $this->markTestSkipped('Intake only shows queued issues; auto-accept badge visible in Overview/Activity.');
     }
 
     public function test_queue_nav_link_present(): void
     {
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
-        $response->assertSee('Queue');
+        $response->assertSee('Intake');
     }
 
     public function test_pause_status_shown_in_queue(): void
     {
         $source = $this->createSource(['is_intake_paused' => true]);
 
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
         $response->assertSee('Paused');
-        $response->assertSee('Resume Intake');
+        $response->assertSee('Resume');
     }
 
     public function test_queued_issues_show_accept_reject_buttons(): void
@@ -306,7 +259,7 @@ class IssueQueueTest extends TestCase
         $source = $this->createSource();
         $this->createIssue($source, ['title' => 'Pending issue']);
 
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
         $response->assertSee('Accept');
@@ -321,7 +274,7 @@ class IssueQueueTest extends TestCase
             'status' => IssueStatus::Accepted,
         ]);
 
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $content = $response->getContent();
         $this->assertStringNotContainsString('issues/' . Issue::first()->id . '/accept', $content);
@@ -335,7 +288,7 @@ class IssueQueueTest extends TestCase
             'labels' => ['bug', 'urgent'],
         ]);
 
-        $response = $this->get('/issues/queue');
+        $response = $this->get('/intake');
 
         $response->assertStatus(200);
         $response->assertSee('bug');

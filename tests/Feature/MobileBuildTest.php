@@ -206,7 +206,7 @@ class MobileBuildTest extends TestCase
         $response = $this->get('/activity');
 
         $response->assertStatus(200);
-        $response->assertSee('id="mobile-nav"', false);
+        $response->assertSee('md:hidden fixed bottom-0', false);
     }
 
     public function test_event_listeners_registered(): void

@@ -463,7 +463,7 @@ class EscalationRuleEngineTest extends TestCase
             'order' => 0,
         ]);
 
-        $response = $this->get(route('escalation-rules.index'));
+        $response = $this->get(route('config.index'));
         $response->assertOk();
         $response->assertSee('Security check');
         $response->assertSee('label match');
@@ -473,16 +473,9 @@ class EscalationRuleEngineTest extends TestCase
 
     public function test_index_shows_empty_state(): void
     {
-        $response = $this->get(route('escalation-rules.index'));
+        $response = $this->get(route('config.index'));
         $response->assertOk();
         $response->assertSee('No escalation rules configured');
-    }
-
-    public function test_create_form_renders(): void
-    {
-        $response = $this->get(route('escalation-rules.create'));
-        $response->assertOk();
-        $response->assertSee('Add Escalation Rule');
     }
 
     public function test_store_creates_rule(): void
@@ -494,14 +487,14 @@ class EscalationRuleEngineTest extends TestCase
             'target_level' => 'manual',
         ]);
 
-        $response->assertRedirect(route('escalation-rules.index'));
+        $response->assertRedirect(route('config.index'));
         $this->assertDatabaseHas('escalation_rules', [
             'name' => 'New rule',
             'target_level' => 'manual',
         ]);
 
         $rule = EscalationRule::first();
-        $this->assertEquals(['type' => 'label_match', 'value' => 'security'], $rule->condition);
+        $this->assertEquals(['type' => 'label_match', 'operator' => '~', 'value' => 'security'], $rule->condition);
     }
 
     public function test_store_validates_required_fields(): void
@@ -532,21 +525,6 @@ class EscalationRuleEngineTest extends TestCase
         $response->assertSessionHasErrors('target_level');
     }
 
-    public function test_edit_form_renders_with_existing_data(): void
-    {
-        $rule = EscalationRule::factory()->create([
-            'name' => 'Existing rule',
-            'condition' => ['type' => 'diff_size', 'value' => '500'],
-            'target_level' => AutonomyLevel::Supervised,
-        ]);
-
-        $response = $this->get(route('escalation-rules.edit', $rule));
-        $response->assertOk();
-        $response->assertSee('Edit Escalation Rule');
-        $response->assertSee('Existing rule');
-        $response->assertSee('500');
-    }
-
     public function test_update_modifies_rule(): void
     {
         $rule = EscalationRule::factory()->create([
@@ -562,10 +540,10 @@ class EscalationRuleEngineTest extends TestCase
             'target_level' => 'manual',
         ]);
 
-        $response->assertRedirect(route('escalation-rules.index'));
+        $response->assertRedirect(route('config.index'));
         $rule->refresh();
         $this->assertEquals('New name', $rule->name);
-        $this->assertEquals(['type' => 'diff_size', 'value' => '1000'], $rule->condition);
+        $this->assertEquals(['type' => 'diff_size', 'operator' => '>=', 'value' => '1000'], $rule->condition);
         $this->assertEquals(AutonomyLevel::Manual, $rule->target_level);
     }
 
@@ -574,7 +552,7 @@ class EscalationRuleEngineTest extends TestCase
         $rule = EscalationRule::factory()->create();
 
         $response = $this->delete(route('escalation-rules.destroy', $rule));
-        $response->assertRedirect(route('escalation-rules.index'));
+        $response->assertRedirect(route('config.index'));
         $this->assertDatabaseMissing('escalation_rules', ['id' => $rule->id]);
     }
 
@@ -634,7 +612,7 @@ class EscalationRuleEngineTest extends TestCase
 
     public function test_nav_link_to_escalation_rules(): void
     {
-        $response = $this->get(route('escalation-rules.index'));
+        $response = $this->get(route('config.index'));
         $response->assertSee('Escalation');
     }
 
@@ -642,7 +620,7 @@ class EscalationRuleEngineTest extends TestCase
     {
         EscalationRule::factory()->create(['is_enabled' => false, 'name' => 'Disabled rule']);
 
-        $response = $this->get(route('escalation-rules.index'));
+        $response = $this->get(route('config.index'));
         $response->assertSee('Disabled rule');
         $response->assertSee('Disabled');
     }
@@ -651,7 +629,7 @@ class EscalationRuleEngineTest extends TestCase
     {
         EscalationRule::factory()->create();
 
-        $response = $this->get(route('escalation-rules.index'));
+        $response = $this->get(route('config.index'));
         $response->assertSee("confirm('Delete this rule?')", false);
     }
 }
