@@ -28,6 +28,8 @@
         @else
             <script src="https://cdn.tailwindcss.com"></script>
         @endif
+
+        @livewireStyles
     </head>
     <body class="bg-background text-on-background min-h-screen font-body selection:bg-primary/30">
         @php
@@ -184,5 +186,7 @@
             document.getElementById('theme-toggle-mobile')?.addEventListener('click', toggleTheme);
             syncThemeIcons();
         </script>
+
+        @livewireScripts
     </body>
 </html>
