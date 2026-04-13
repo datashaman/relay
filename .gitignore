@@ -5,6 +5,8 @@
 .env.production
 .phpactor.json
 .phpunit.result.cache
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
 /.fleet
 /.idea
 /.nova
