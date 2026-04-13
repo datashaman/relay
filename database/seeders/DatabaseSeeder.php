@@ -18,6 +18,5 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(DefaultAutonomyConfigSeeder::class);
-        $this->call(DemoDataSeeder::class);
     }
 }
