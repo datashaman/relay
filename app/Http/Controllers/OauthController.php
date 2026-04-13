@@ -25,7 +25,7 @@ class OauthController extends Controller
         if ($this->mobileOauth->isMobileOauth()) {
             $this->mobileOauth->openAuthUrl($authUrl);
 
-            return redirect('/sources')->with('success', 'Opening browser for authentication...');
+            return redirect()->route('intake.index')->with('success', 'Opening browser for authentication...');
         }
 
         return redirect()->away($authUrl);
@@ -34,7 +34,7 @@ class OauthController extends Controller
     public function callback(Request $request, string $provider): RedirectResponse
     {
         if ($request->has('error')) {
-            return redirect('/sources')->with('error', 'OAuth authorization was denied.');
+            return redirect()->route('intake.index')->with('error', 'OAuth authorization was denied.');
         }
 
         $request->validate([
@@ -46,7 +46,7 @@ class OauthController extends Controller
             $validatedProvider = $this->oauth->validateState($request->input('state'));
 
             if ($validatedProvider !== $provider) {
-                return redirect('/sources')->with('error', 'OAuth state mismatch.');
+                return redirect()->route('intake.index')->with('error', 'OAuth state mismatch.');
             }
 
             $tokenData = $this->oauth->exchangeCode($provider, $request->input('code'));
@@ -64,9 +64,9 @@ class OauthController extends Controller
 
             $this->oauth->storeToken($source, $provider, $tokenData);
 
-            return redirect('/sources')->with('success', ucfirst($provider) . ' connected successfully.');
+            return redirect()->route('intake.index')->with('success', ucfirst($provider) . ' connected successfully.');
         } catch (\RuntimeException $e) {
-            return redirect('/sources')->with('error', $e->getMessage());
+            return redirect()->route('intake.index')->with('error', $e->getMessage());
         }
     }
 
@@ -95,14 +95,14 @@ class OauthController extends Controller
         $pending = Cache::pull($pendingKey);
 
         if (! $pending) {
-            return redirect('/sources')->with('error', 'No pending Jira authorization. Please reconnect.');
+            return redirect()->route('intake.index')->with('error', 'No pending Jira authorization. Please reconnect.');
         }
 
         $cloudId = $request->input('cloud_id');
         $site = collect($pending['sites'])->firstWhere('id', $cloudId);
 
         if (! $site) {
-            return redirect('/sources')->with('error', 'Invalid Jira site selection.');
+            return redirect()->route('intake.index')->with('error', 'Invalid Jira site selection.');
         }
 
         $source = Source::firstOrCreate(
@@ -120,7 +120,7 @@ class OauthController extends Controller
 
         $this->oauth->storeToken($source, 'jira', $pending['token_data']);
 
-        return redirect('/sources')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
+        return redirect()->route('intake.index')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
     }
 
     public function disconnect(string $provider): RedirectResponse
@@ -128,7 +128,7 @@ class OauthController extends Controller
         $source = Source::where('type', $provider)->first();
 
         if (! $source) {
-            return redirect('/sources')->with('error', 'No ' . ucfirst($provider) . ' connection found.');
+            return redirect()->route('intake.index')->with('error', 'No ' . ucfirst($provider) . ' connection found.');
         }
 
         $token = $source->oauthTokens()->where('provider', $provider)->first();
@@ -151,10 +151,10 @@ class OauthController extends Controller
         $source->delete();
 
         if ($revocationError) {
-            return redirect('/sources')->with('warning', ucfirst($provider) . ' disconnected locally, but remote revocation failed: ' . $revocationError);
+            return redirect()->route('intake.index')->with('warning', ucfirst($provider) . ' disconnected locally, but remote revocation failed: ' . $revocationError);
         }
 
-        return redirect('/sources')->with('success', ucfirst($provider) . ' disconnected successfully.');
+        return redirect()->route('intake.index')->with('success', ucfirst($provider) . ' disconnected successfully.');
     }
 
     private function handleJiraCallback(array $tokenData): RedirectResponse
@@ -162,11 +162,11 @@ class OauthController extends Controller
         try {
             $sites = $this->oauth->fetchJiraAccessibleResources($tokenData['access_token']);
         } catch (\RuntimeException $e) {
-            return redirect('/sources')->with('error', 'Failed to fetch Jira sites: ' . $e->getMessage());
+            return redirect()->route('intake.index')->with('error', 'Failed to fetch Jira sites: ' . $e->getMessage());
         }
 
         if (empty($sites)) {
-            return redirect('/sources')->with('error', 'No accessible Jira sites found for this account.');
+            return redirect()->route('intake.index')->with('error', 'No accessible Jira sites found for this account.');
         }
 
         if (count($sites) === 1) {
@@ -187,7 +187,7 @@ class OauthController extends Controller
 
             $this->oauth->storeToken($source, 'jira', $tokenData);
 
-            return redirect('/sources')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
+            return redirect()->route('intake.index')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
         }
 
         $pendingKey = $this->getJiraPendingCacheKey();

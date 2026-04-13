@@ -73,11 +73,6 @@ class SourceManagementTest extends TestCase
         $response->assertSee('Jira');
     }
 
-    public function test_sources_index_shows_inactive_status(): void
-    {
-        $this->markTestSkipped('Intake page no longer distinguishes Inactive sources explicitly.');
-    }
-
     public function test_sources_index_shows_last_synced_time(): void
     {
         Source::factory()->create([
@@ -177,7 +172,12 @@ class SourceManagementTest extends TestCase
 
     public function test_disconnect_requires_confirmation_gate(): void
     {
-        $this->markTestSkipped('Disconnect confirmation moved out of sources listing — now inline per connection card.');
+        Source::factory()->create(['type' => 'github']);
+
+        $response = $this->get('/intake');
+
+        $response->assertStatus(200);
+        $response->assertSee('Disconnect this source', false);
     }
 
     public function test_sources_index_displays_session_messages(): void

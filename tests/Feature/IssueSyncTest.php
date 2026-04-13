@@ -404,7 +404,17 @@ class IssueSyncTest extends TestCase
 
     public function test_sync_error_displayed_on_sources_page(): void
     {
-        $this->markTestSkipped('Sync error UI not surfaced on intake page — errors surface via toast on next action.');
+        $source = $this->createGitHubSource();
+        $source->update([
+            'sync_error' => 'Connection timed out',
+            'next_retry_at' => now()->addMinutes(5),
+        ]);
+        $this->createToken($source);
+
+        $response = $this->get(route('intake.index'));
+
+        $response->assertSee('Connection timed out');
+        $response->assertSee('Sync Error');
     }
 
     public function test_github_map_to_issue_attributes(): void

@@ -80,21 +80,6 @@ class IssueQueueTest extends TestCase
         $response->assertSee('Issue from org2');
     }
 
-    public function test_queue_filter_by_source(): void
-    {
-        $this->markTestSkipped('Cross-source filter removed — intake shows per-source cards.');
-    }
-
-    public function test_queue_search_by_title(): void
-    {
-        $this->markTestSkipped('Search removed from intake — consider porting to Overview if needed.');
-    }
-
-    public function test_queue_search_by_external_id(): void
-    {
-        $this->markTestSkipped('Search removed from intake — consider porting to Overview if needed.');
-    }
-
     public function test_accept_queued_issue(): void
     {
         $source = $this->createSource();

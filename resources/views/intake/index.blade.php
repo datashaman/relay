@@ -77,6 +77,11 @@
                                 <span data-paused-pill class="{{ $isPaused ? 'inline-flex' : 'hidden' }} items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
                                     Paused
                                 </span>
+                                @if ($source->sync_error)
+                                    <span class="inline-flex items-center rounded bg-error-container/30 text-error px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
+                                        Sync Error
+                                    </span>
+                                @endif
                             </div>
                             <h3 class="flex items-center gap-2 text-sm font-semibold text-on-surface leading-tight">
                                 <span class="text-on-surface-variant">
@@ -91,6 +96,16 @@
                                     <span class="whitespace-nowrap">synced {{ $source->last_synced_at->diffForHumans(null, true) }} ago</span>
                                 @endif
                             </p>
+                            @if ($source->sync_error)
+                                <div class="mt-2 rounded-md bg-error-container/20 border-l-2 border-error px-2 py-1.5">
+                                    <p class="text-xs text-error leading-snug">{{ $source->sync_error }}</p>
+                                    @if ($source->next_retry_at)
+                                        <p class="font-label text-[10px] text-outline uppercase tracking-wider mt-1">
+                                            Retry {{ $source->next_retry_at->diffForHumans() }}
+                                        </p>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
 
                         @if ($isConnected)

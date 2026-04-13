@@ -73,7 +73,7 @@ class OauthFlowTest extends TestCase
     {
         $response = $this->get('/oauth/callback/github?code=test-code&state=invalid-state');
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
     }
 
@@ -81,7 +81,7 @@ class OauthFlowTest extends TestCase
     {
         $response = $this->get('/oauth/callback/github?error=access_denied');
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'OAuth authorization was denied.');
     }
 
@@ -92,7 +92,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/github?code=test-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'OAuth state mismatch.');
     }
 
@@ -116,7 +116,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('sources', ['type' => 'github', 'external_account' => 'testuser']);
@@ -271,7 +271,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Github connected successfully.');
 
         $source = Source::where('type', 'github')->first();
@@ -294,7 +294,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
 
         $source = Source::where('type', 'github')->first();
@@ -319,7 +319,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->delete('/oauth/disconnect/github');
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Github disconnected successfully.');
 
         $this->assertDatabaseCount('sources', 0);
@@ -346,7 +346,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->delete('/oauth/disconnect/github');
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('warning');
 
         $this->assertDatabaseCount('sources', 0);
@@ -357,7 +357,7 @@ class OauthFlowTest extends TestCase
     {
         $response = $this->delete('/oauth/disconnect/github');
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'No Github connection found.');
     }
 
@@ -399,7 +399,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
         $this->assertDatabaseCount('sources', 0);
         $this->assertDatabaseCount('oauth_tokens', 0);
@@ -437,7 +437,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Jira connected successfully (My Jira Site).');
 
         $source = Source::where('type', 'jira')->first();
@@ -500,7 +500,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->post('/jira/select-site', ['cloud_id' => 'cloud-2']);
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Jira connected successfully (Site Two).');
 
         $source = Source::where('type', 'jira')->first();
@@ -523,7 +523,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->post('/jira/select-site', ['cloud_id' => 'nonexistent']);
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'Invalid Jira site selection.');
     }
 
@@ -531,7 +531,7 @@ class OauthFlowTest extends TestCase
     {
         $response = $this->post('/jira/select-site', ['cloud_id' => 'cloud-1']);
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'No pending Jira authorization. Please reconnect.');
     }
 
@@ -576,7 +576,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'No accessible Jira sites found for this account.');
     }
 
@@ -596,7 +596,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
         $this->assertStringContainsString('Failed to fetch Jira sites', session('error'));
     }
@@ -647,7 +647,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->delete('/oauth/disconnect/jira');
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Jira disconnected successfully.');
 
         $this->assertDatabaseCount('sources', 0);
@@ -678,7 +678,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->delete('/oauth/disconnect/jira');
 
-        $response->assertRedirect('/sources');
+        $response->assertRedirect('/intake');
         $response->assertSessionHas('warning');
 
         $this->assertDatabaseCount('sources', 0);
