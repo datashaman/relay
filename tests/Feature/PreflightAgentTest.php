@@ -58,7 +58,7 @@ class PreflightAgentTest extends TestCase
         ];
     }
 
-    private function mockAmbiguousResponse(array $knownFacts = ['The issue mentions a dashboard'], array $questions = null): array
+    private function mockAmbiguousResponse(array $knownFacts = ['The issue mentions a dashboard'], ?array $questions = null): array
     {
         $questions ??= [
             [
