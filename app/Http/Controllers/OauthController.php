@@ -196,7 +196,7 @@ class OauthController extends Controller
             'sites' => $sites,
         ], now()->addMinutes(10));
 
-        return redirect('/jira/select-site')->with('sites', $sites);
+        return redirect()->route('jira.select-site.form')->with('sites', $sites);
     }
 
     private function resolveAccountName(string $provider, array $tokenData): string

@@ -106,21 +106,6 @@ class ConfigController extends Controller
         return redirect()->route('config.index')->with('success', 'Iteration cap updated.');
     }
 
-    public function preview(Request $request)
-    {
-        $results = [];
-        foreach (StageName::cases() as $stage) {
-            $globalDefault = $this->resolver->getGlobalDefault();
-            $stageConfig = AutonomyConfig::where('scope', AutonomyScope::Stage)
-                ->whereNull('scope_id')
-                ->where('stage', $stage)
-                ->first();
-            $results[$stage->value] = $stageConfig?->level?->value ?? $globalDefault->value;
-        }
-
-        return response()->json($results);
-    }
-
     private function setEnvValue(string $key, string $value): void
     {
         $envPath = base_path('.env');

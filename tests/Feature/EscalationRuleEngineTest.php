@@ -617,24 +617,6 @@ class EscalationRuleEngineTest extends TestCase
         $this->assertEquals(0, $rule2->order);
     }
 
-    public function test_reorder_bulk_updates(): void
-    {
-        $rule1 = EscalationRule::factory()->create(['order' => 0]);
-        $rule2 = EscalationRule::factory()->create(['order' => 1]);
-        $rule3 = EscalationRule::factory()->create(['order' => 2]);
-
-        $this->post(route('escalation-rules.reorder'), [
-            'ids' => [$rule3->id, $rule1->id, $rule2->id],
-        ]);
-
-        $rule1->refresh();
-        $rule2->refresh();
-        $rule3->refresh();
-        $this->assertEquals(1, $rule1->order);
-        $this->assertEquals(2, $rule2->order);
-        $this->assertEquals(0, $rule3->order);
-    }
-
     public function test_store_auto_assigns_order(): void
     {
         EscalationRule::factory()->create(['order' => 5]);

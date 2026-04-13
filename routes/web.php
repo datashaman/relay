@@ -64,15 +64,12 @@ Route::get('/config', [ConfigController::class, 'index'])->name('config.index');
 Route::post('/config/global', [ConfigController::class, 'updateGlobal'])->name('config.update-global');
 Route::post('/config/stage/{stage}', [ConfigController::class, 'updateStage'])->name('config.update-stage');
 Route::post('/config/iteration-cap', [ConfigController::class, 'updateIterationCap'])->name('config.update-iteration-cap');
-Route::get('/config/preview', [ConfigController::class, 'preview'])->name('config.preview');
-
 Route::post('/escalation-rules', [EscalationRuleController::class, 'store'])->name('escalation-rules.store');
 Route::put('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'update'])->name('escalation-rules.update');
 Route::delete('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'destroy'])->name('escalation-rules.destroy');
 Route::post('/escalation-rules/{escalationRule}/toggle', [EscalationRuleController::class, 'toggleEnabled'])->name('escalation-rules.toggle');
 Route::post('/escalation-rules/{escalationRule}/move-up', [EscalationRuleController::class, 'moveUp'])->name('escalation-rules.move-up');
 Route::post('/escalation-rules/{escalationRule}/move-down', [EscalationRuleController::class, 'moveDown'])->name('escalation-rules.move-down');
-Route::post('/escalation-rules/reorder', [EscalationRuleController::class, 'reorder'])->name('escalation-rules.reorder');
 
 Route::get('/runs/{run}/progress', [RunProgressController::class, 'show'])->name('runs.progress');
 Route::get('/runs/{run}/timeline', [RunTimelineController::class, 'show'])->name('runs.timeline');

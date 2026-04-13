@@ -83,21 +83,6 @@ class EscalationRuleController extends Controller
             ->with('success', "Rule \"{$escalationRule->name}\" {$status}.");
     }
 
-    public function reorder(Request $request)
-    {
-        $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'integer|exists:escalation_rules,id',
-        ]);
-
-        foreach ($request->ids as $index => $id) {
-            EscalationRule::where('id', $id)->update(['order' => $index]);
-        }
-
-        return redirect()->route('config.index')
-            ->with('success', 'Rules reordered.');
-    }
-
     public function moveUp(Request $request, EscalationRule $escalationRule)
     {
         $swapWith = EscalationRule::where('order', '<', $escalationRule->order)
