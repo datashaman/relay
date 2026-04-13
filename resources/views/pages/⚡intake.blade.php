@@ -7,6 +7,7 @@ use App\Models\Source;
 use App\Services\GitHubClient;
 use App\Services\JiraClient;
 use App\Services\OauthService;
+use App\Services\OrchestratorService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -60,7 +61,7 @@ class extends Component {
         }
     }
 
-    public function acceptIssue(int $issueId): void
+    public function acceptIssue(int $issueId, OrchestratorService $orchestrator): void
     {
         $issue = Issue::findOrFail($issueId);
 
@@ -70,8 +71,9 @@ class extends Component {
             return;
         }
 
-        $issue->update(['status' => IssueStatus::Accepted]);
-        session()->flash('success', "Issue \"{$issue->title}\" accepted into preflight.");
+        $orchestrator->startRun($issue);
+
+        session()->flash('success', "Issue \"{$issue->title}\" accepted. Preflight starting.");
     }
 
     public function rejectIssue(int $issueId): void

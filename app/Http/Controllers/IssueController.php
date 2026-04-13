@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Source;
+use App\Services\OrchestratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class IssueController extends Controller
 {
+    public function __construct(
+        private OrchestratorService $orchestrator,
+    ) {}
+
     public function accept(Issue $issue): RedirectResponse
     {
         if ($issue->status !== IssueStatus::Queued) {
@@ -19,10 +23,10 @@ class IssueController extends Controller
                 ->with('error', 'Only queued issues can be accepted.');
         }
 
-        $issue->update(['status' => IssueStatus::Accepted]);
+        $this->orchestrator->startRun($issue);
 
         return redirect()->route('intake.index')
-            ->with('success', "Issue \"{$issue->title}\" accepted into preflight.");
+            ->with('success', "Issue \"{$issue->title}\" accepted. Preflight starting.");
     }
 
     public function reject(Issue $issue): RedirectResponse

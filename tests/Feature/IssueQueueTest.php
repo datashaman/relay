@@ -84,7 +84,8 @@ class IssueQueueTest extends TestCase
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
-        $this->assertEquals(IssueStatus::Accepted, $issue->fresh()->status);
+        $this->assertEquals(IssueStatus::InProgress, $issue->fresh()->status);
+        $this->assertNotNull($issue->fresh()->runs()->first());
     }
 
     public function test_accept_non_queued_issue_fails(): void
