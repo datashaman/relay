@@ -16,7 +16,7 @@ class MobileOauthService
         $host = config('relay.mobile.oauth_callback_host', '127.0.0.1');
         $port = config('relay.mobile.oauth_callback_port', 8100);
 
-        return "http://{$host}:{$port}/oauth/callback/{$provider}";
+        return "http://{$host}:{$port}/oauth/{$provider}/callback";
     }
 
     public function isMobileOauth(): bool

@@ -185,7 +185,7 @@ class MobileBuildTest extends TestCase
         $service = new MobileOauthService;
 
         $this->assertEquals(
-            'http://127.0.0.1:8100/oauth/callback/github',
+            'http://127.0.0.1:8100/oauth/github/callback',
             $service->getCallbackUrl('github')
         );
     }

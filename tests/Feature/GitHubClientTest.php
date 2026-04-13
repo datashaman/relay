@@ -34,7 +34,7 @@ class GitHubClientTest extends TestCase
             'services.github' => [
                 'client_id' => 'test-github-id',
                 'client_secret' => 'test-github-secret',
-                'redirect_uri' => 'http://localhost:8000/oauth/callback/github',
+                'redirect_uri' => 'http://localhost:8000/oauth/github/callback',
                 'authorize_url' => 'https://github.com/login/oauth/authorize',
                 'token_url' => 'https://github.com/login/oauth/access_token',
                 'scopes' => ['repo', 'read:org', 'workflow'],

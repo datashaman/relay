@@ -37,7 +37,7 @@ class JiraClientTest extends TestCase
             'services.jira' => [
                 'client_id' => 'test-jira-id',
                 'client_secret' => 'test-jira-secret',
-                'redirect_uri' => 'http://localhost:8000/oauth/callback/jira',
+                'redirect_uri' => 'http://localhost:8000/oauth/jira/callback',
                 'authorize_url' => 'https://auth.atlassian.com/authorize',
                 'token_url' => 'https://auth.atlassian.com/oauth/token',
                 'scopes' => ['read:jira-work', 'write:jira-work', 'read:jira-user', 'offline_access'],

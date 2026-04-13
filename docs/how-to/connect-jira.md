@@ -30,7 +30,7 @@ These match the scopes requested in `config/services.php` — they must be enabl
 
 On the app's **Authorization** page, under **OAuth 2.0 (3LO)**:
 
-- **Callback URL** — `http://localhost:8000/oauth/callback/jira`
+- **Callback URL** — `http://localhost:8000/oauth/jira/callback`
 
 Save.
 
@@ -43,7 +43,7 @@ On the **Settings** page, copy the **Client ID** and **Secret**.
 ```env
 JIRA_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxx
 JIRA_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-JIRA_REDIRECT_URI=http://localhost:8000/oauth/callback/jira
+JIRA_REDIRECT_URI=http://localhost:8000/oauth/jira/callback
 ```
 
 Restart `composer dev` after editing `.env`.

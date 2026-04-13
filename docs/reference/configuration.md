@@ -59,10 +59,10 @@ Provider selection is resolved via a scope cascade: workspace+stage → workspac
 | --- | --- | --- |
 | `GITHUB_CLIENT_ID` | — | GitHub OAuth app client ID. |
 | `GITHUB_CLIENT_SECRET` | — | GitHub OAuth app client secret. |
-| `GITHUB_REDIRECT_URI` | `http://localhost:8000/oauth/callback/github` | OAuth callback URL. Must match the GitHub app configuration. |
+| `GITHUB_REDIRECT_URI` | `http://localhost:8000/oauth/github/callback` | OAuth callback URL. Must match the GitHub app configuration. |
 | `JIRA_CLIENT_ID` | — | Jira OAuth app client ID. |
 | `JIRA_CLIENT_SECRET` | — | Jira OAuth app client secret. |
-| `JIRA_REDIRECT_URI` | `http://localhost:8000/oauth/callback/jira` | OAuth callback URL. |
+| `JIRA_REDIRECT_URI` | `http://localhost:8000/oauth/jira/callback` | OAuth callback URL. |
 
 GitHub OAuth scopes: `repo`, `read:org`, `workflow`. Jira OAuth scopes: `read:jira-work`, `write:jira-work`, `read:jira-user`, `offline_access`.
 

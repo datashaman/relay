@@ -24,7 +24,7 @@ class MobileOauthServiceTest extends TestCase
 
         $url = $this->service->getCallbackUrl('github');
 
-        $this->assertEquals('http://127.0.0.1:8100/oauth/callback/github', $url);
+        $this->assertEquals('http://127.0.0.1:8100/oauth/github/callback', $url);
     }
 
     public function test_get_callback_url_uses_custom_host_and_port(): void
@@ -36,7 +36,7 @@ class MobileOauthServiceTest extends TestCase
 
         $url = $this->service->getCallbackUrl('jira');
 
-        $this->assertEquals('http://192.168.1.1:9090/oauth/callback/jira', $url);
+        $this->assertEquals('http://192.168.1.1:9090/oauth/jira/callback', $url);
     }
 
     public function test_is_mobile_oauth_returns_true_when_platform_set(): void

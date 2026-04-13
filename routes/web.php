@@ -28,15 +28,15 @@ Route::livewire('/runs/{run}/preflight', 'pages::preflight-clarification')->name
 Route::livewire('/runs/{run}/preflight/doc', 'pages::preflight-doc')->name('preflight.doc');
 Route::livewire('/runs/{run}/preflight/doc/edit', 'pages::preflight-edit-doc')->name('preflight.doc.edit');
 
-Route::get('/oauth/redirect/{provider}', [OauthController::class, 'redirect'])
+Route::get('/oauth/{provider}/redirect', [OauthController::class, 'redirect'])
     ->name('oauth.redirect')
     ->whereIn('provider', ['github', 'jira']);
 
-Route::get('/oauth/callback/{provider}', [OauthController::class, 'callback'])
+Route::get('/oauth/{provider}/callback', [OauthController::class, 'callback'])
     ->name('oauth.callback')
     ->whereIn('provider', ['github', 'jira']);
 
-Route::delete('/oauth/disconnect/{provider}', [OauthController::class, 'disconnect'])
+Route::delete('/oauth/{provider}/disconnect', [OauthController::class, 'disconnect'])
     ->name('oauth.disconnect')
     ->whereIn('provider', ['github', 'jira']);
 

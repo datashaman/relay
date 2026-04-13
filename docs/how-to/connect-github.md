@@ -13,7 +13,7 @@ This guide shows you how to register a GitHub OAuth app and connect it to Relay 
 2. Fill in:
    - **Application name** — e.g., `Relay (local)`
    - **Homepage URL** — `http://localhost:8000`
-   - **Authorization callback URL** — `http://localhost:8000/oauth/callback/github`
+   - **Authorization callback URL** — `http://localhost:8000/oauth/github/callback`
 3. Click **Register application**.
 4. On the next page, click **Generate a new client secret** and copy both the **Client ID** and **Client secret**.
 
@@ -34,7 +34,7 @@ You do not configure scopes on the GitHub app page — they are requested at aut
 ```env
 GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxxxxxx
 GITHUB_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-GITHUB_REDIRECT_URI=http://localhost:8000/oauth/callback/github
+GITHUB_REDIRECT_URI=http://localhost:8000/oauth/github/callback
 ```
 
 Restart `composer dev` (or at least `php artisan serve`) after editing `.env`.

@@ -22,7 +22,7 @@ class OauthFlowTest extends TestCase
             'services.github' => [
                 'client_id' => 'test-github-id',
                 'client_secret' => 'test-github-secret',
-                'redirect_uri' => 'http://localhost:8000/oauth/callback/github',
+                'redirect_uri' => 'http://localhost:8000/oauth/github/callback',
                 'authorize_url' => 'https://github.com/login/oauth/authorize',
                 'token_url' => 'https://github.com/login/oauth/access_token',
                 'scopes' => ['repo', 'read:org', 'workflow'],
@@ -30,7 +30,7 @@ class OauthFlowTest extends TestCase
             'services.jira' => [
                 'client_id' => 'test-jira-id',
                 'client_secret' => 'test-jira-secret',
-                'redirect_uri' => 'http://localhost:8000/oauth/callback/jira',
+                'redirect_uri' => 'http://localhost:8000/oauth/jira/callback',
                 'authorize_url' => 'https://auth.atlassian.com/authorize',
                 'token_url' => 'https://auth.atlassian.com/oauth/token',
                 'scopes' => ['read:jira-work', 'write:jira-work', 'read:jira-user', 'offline_access'],
@@ -40,7 +40,7 @@ class OauthFlowTest extends TestCase
 
     public function test_oauth_redirect_route_redirects_to_provider(): void
     {
-        $response = $this->get('/oauth/redirect/github');
+        $response = $this->get('/oauth/github/redirect');
 
         $response->assertRedirect();
         $location = $response->headers->get('Location');
@@ -51,7 +51,7 @@ class OauthFlowTest extends TestCase
 
     public function test_oauth_redirect_sets_state_in_cache(): void
     {
-        $response = $this->get('/oauth/redirect/github');
+        $response = $this->get('/oauth/github/redirect');
 
         $location = $response->headers->get('Location');
         parse_str(parse_url($location, PHP_URL_QUERY), $params);
@@ -62,7 +62,7 @@ class OauthFlowTest extends TestCase
 
     public function test_jira_redirect_includes_audience_and_prompt(): void
     {
-        $response = $this->get('/oauth/redirect/jira');
+        $response = $this->get('/oauth/jira/redirect');
 
         $location = $response->headers->get('Location');
         $this->assertStringContainsString('audience=api.atlassian.com', $location);
@@ -71,7 +71,7 @@ class OauthFlowTest extends TestCase
 
     public function test_callback_with_invalid_state_redirects_with_error(): void
     {
-        $response = $this->get('/oauth/callback/github?code=test-code&state=invalid-state');
+        $response = $this->get('/oauth/github/callback?code=test-code&state=invalid-state');
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
@@ -79,7 +79,7 @@ class OauthFlowTest extends TestCase
 
     public function test_callback_with_denied_consent_redirects_with_error(): void
     {
-        $response = $this->get('/oauth/callback/github?error=access_denied');
+        $response = $this->get('/oauth/github/callback?error=access_denied');
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'OAuth authorization was denied.');
@@ -90,7 +90,7 @@ class OauthFlowTest extends TestCase
         $state = 'test-state-123';
         Cache::put("oauth_state:{$state}", 'jira', now()->addMinutes(10));
 
-        $response = $this->get("/oauth/callback/github?code=test-code&state={$state}");
+        $response = $this->get("/oauth/github/callback?code=test-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'OAuth state mismatch.');
@@ -114,7 +114,7 @@ class OauthFlowTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
@@ -145,7 +145,7 @@ class OauthFlowTest extends TestCase
             ]),
         ]);
 
-        $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+        $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
         $this->assertNull(Cache::get("oauth_state:{$state}"));
     }
@@ -237,8 +237,8 @@ class OauthFlowTest extends TestCase
 
     public function test_invalid_provider_route_returns_404(): void
     {
-        $this->get('/oauth/redirect/invalid')->assertNotFound();
-        $this->get('/oauth/callback/invalid?code=x&state=y')->assertNotFound();
+        $this->get('/oauth/invalid/redirect')->assertNotFound();
+        $this->get('/oauth/invalid/callback?code=x&state=y')->assertNotFound();
     }
 
     public function test_provider_config_throws_for_unconfigured_provider(): void
@@ -269,7 +269,7 @@ class OauthFlowTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Github connected successfully.');
@@ -292,7 +292,7 @@ class OauthFlowTest extends TestCase
             'api.github.com/user' => Http::response('Internal Server Error', 500),
         ]);
 
-        $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('success');
@@ -317,7 +317,7 @@ class OauthFlowTest extends TestCase
             'api.github.com/applications/test-github-id/grant' => Http::response(null, 204),
         ]);
 
-        $response = $this->delete('/oauth/disconnect/github');
+        $response = $this->delete('/oauth/github/disconnect');
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Github disconnected successfully.');
@@ -344,7 +344,7 @@ class OauthFlowTest extends TestCase
             'api.github.com/applications/test-github-id/grant' => Http::response('Server Error', 500),
         ]);
 
-        $response = $this->delete('/oauth/disconnect/github');
+        $response = $this->delete('/oauth/github/disconnect');
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('warning');
@@ -355,7 +355,7 @@ class OauthFlowTest extends TestCase
 
     public function test_disconnect_nonexistent_connection_returns_error(): void
     {
-        $response = $this->delete('/oauth/disconnect/github');
+        $response = $this->delete('/oauth/github/disconnect');
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'No Github connection found.');
@@ -363,12 +363,12 @@ class OauthFlowTest extends TestCase
 
     public function test_disconnect_route_rejects_invalid_provider(): void
     {
-        $this->delete('/oauth/disconnect/invalid')->assertNotFound();
+        $this->delete('/oauth/invalid/disconnect')->assertNotFound();
     }
 
     public function test_github_redirect_includes_correct_scopes(): void
     {
-        $response = $this->get('/oauth/redirect/github');
+        $response = $this->get('/oauth/github/redirect');
 
         $location = $response->headers->get('Location');
         $this->assertStringContainsString('scope=repo%2Cread%3Aorg%2Cworkflow', $location);
@@ -397,7 +397,7 @@ class OauthFlowTest extends TestCase
             'github.com/login/oauth/access_token' => Http::response('Connection refused', 500),
         ]);
 
-        $response = $this->get("/oauth/callback/github?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
@@ -407,7 +407,7 @@ class OauthFlowTest extends TestCase
 
     public function test_jira_redirect_includes_correct_scopes(): void
     {
-        $response = $this->get('/oauth/redirect/jira');
+        $response = $this->get('/oauth/jira/redirect');
 
         $location = $response->headers->get('Location');
         $this->assertStringContainsString('scope=read%3Ajira-work+write%3Ajira-work+read%3Ajira-user+offline_access', $location);
@@ -435,7 +435,7 @@ class OauthFlowTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/jira/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Jira connected successfully (My Jira Site).');
@@ -471,7 +471,7 @@ class OauthFlowTest extends TestCase
             ]),
         ]);
 
-        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/jira/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/jira/select-site');
         $this->assertDatabaseCount('sources', 0);
@@ -567,7 +567,7 @@ class OauthFlowTest extends TestCase
             'api.atlassian.com/oauth/token/accessible-resources' => Http::response([]),
         ]);
 
-        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/jira/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('error', 'No accessible Jira sites found for this account.');
@@ -587,7 +587,7 @@ class OauthFlowTest extends TestCase
             'api.atlassian.com/oauth/token/accessible-resources' => Http::response('Unauthorized', 401),
         ]);
 
-        $response = $this->get("/oauth/callback/jira?code=auth-code&state={$state}");
+        $response = $this->get("/oauth/jira/callback?code=auth-code&state={$state}");
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('error');
@@ -638,7 +638,7 @@ class OauthFlowTest extends TestCase
             'auth.atlassian.com/oauth/revoke' => Http::response(null, 200),
         ]);
 
-        $response = $this->delete('/oauth/disconnect/jira');
+        $response = $this->delete('/oauth/jira/disconnect');
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('success', 'Jira disconnected successfully.');
@@ -669,7 +669,7 @@ class OauthFlowTest extends TestCase
             'auth.atlassian.com/oauth/revoke' => Http::response('Server Error', 500),
         ]);
 
-        $response = $this->delete('/oauth/disconnect/jira');
+        $response = $this->delete('/oauth/jira/disconnect');
 
         $response->assertRedirect('/intake');
         $response->assertSessionHas('warning');
@@ -695,7 +695,7 @@ class OauthFlowTest extends TestCase
             ]),
         ]);
 
-        $this->get("/oauth/callback/jira?code=auth-code&state={$state1}");
+        $this->get("/oauth/jira/callback?code=auth-code&state={$state1}");
 
         $source1 = Source::where('external_account', 'Site Alpha')->first();
         $this->assertNotNull($source1);

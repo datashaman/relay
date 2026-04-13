@@ -38,7 +38,7 @@ return [
     'github' => [
         'client_id' => env('GITHUB_CLIENT_ID'),
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
-        'redirect_uri' => env('GITHUB_REDIRECT_URI', 'http://localhost:8000/oauth/callback/github'),
+        'redirect_uri' => env('GITHUB_REDIRECT_URI', 'http://localhost:8000/oauth/github/callback'),
         'authorize_url' => 'https://github.com/login/oauth/authorize',
         'token_url' => 'https://github.com/login/oauth/access_token',
         'scopes' => ['repo', 'read:org', 'workflow'],
@@ -47,7 +47,7 @@ return [
     'jira' => [
         'client_id' => env('JIRA_CLIENT_ID'),
         'client_secret' => env('JIRA_CLIENT_SECRET'),
-        'redirect_uri' => env('JIRA_REDIRECT_URI', 'http://localhost:8000/oauth/callback/jira'),
+        'redirect_uri' => env('JIRA_REDIRECT_URI', 'http://localhost:8000/oauth/jira/callback'),
         'authorize_url' => 'https://auth.atlassian.com/authorize',
         'token_url' => 'https://auth.atlassian.com/oauth/token',
         'scopes' => ['read:jira-work', 'write:jira-work', 'read:jira-user', 'offline_access'],

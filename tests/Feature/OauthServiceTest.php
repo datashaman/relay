@@ -24,7 +24,7 @@ class OauthServiceTest extends TestCase
             'services.github' => [
                 'client_id' => 'gh-id',
                 'client_secret' => 'gh-secret',
-                'redirect_uri' => 'http://localhost:8000/oauth/callback/github',
+                'redirect_uri' => 'http://localhost:8000/oauth/github/callback',
                 'authorize_url' => 'https://github.com/login/oauth/authorize',
                 'token_url' => 'https://github.com/login/oauth/access_token',
                 'scopes' => ['repo', 'read:org', 'workflow'],
@@ -32,7 +32,7 @@ class OauthServiceTest extends TestCase
             'services.jira' => [
                 'client_id' => 'jira-id',
                 'client_secret' => 'jira-secret',
-                'redirect_uri' => 'http://localhost:8000/oauth/callback/jira',
+                'redirect_uri' => 'http://localhost:8000/oauth/jira/callback',
                 'authorize_url' => 'https://auth.atlassian.com/authorize',
                 'token_url' => 'https://auth.atlassian.com/oauth/token',
                 'scopes' => ['read:jira-work', 'write:jira-work', 'read:jira-user', 'offline_access'],
