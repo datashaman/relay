@@ -19,6 +19,7 @@ class Issue extends Model
         'title',
         'body',
         'status',
+        'raw_status',
         'external_url',
         'assignee',
         'labels',

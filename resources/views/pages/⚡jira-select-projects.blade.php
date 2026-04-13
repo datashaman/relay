@@ -16,6 +16,8 @@ class extends Component {
 
     public array $selected = [];
 
+    public array $selectedStatuses = [];
+
     public bool $onlyMine = false;
 
     public bool $onlyActiveSprint = false;
@@ -30,6 +32,7 @@ class extends Component {
         }
 
         $this->selected = $this->source->config['projects'] ?? [];
+        $this->selectedStatuses = $this->source->config['statuses'] ?? [];
         $this->onlyMine = (bool) ($this->source->config['only_mine'] ?? false);
         $this->onlyActiveSprint = (bool) ($this->source->config['only_active_sprint'] ?? false);
     }
@@ -39,6 +42,7 @@ class extends Component {
         $this->source->update([
             'config' => array_merge($this->source->config ?? [], [
                 'projects' => array_values($this->selected),
+                'statuses' => array_values($this->selectedStatuses),
                 'only_mine' => $this->onlyMine,
                 'only_active_sprint' => $this->onlyActiveSprint,
             ]),
@@ -58,6 +62,15 @@ class extends Component {
         }
     }
 
+    public function toggleStatus(string $name): void
+    {
+        if (in_array($name, $this->selectedStatuses, true)) {
+            $this->selectedStatuses = array_values(array_diff($this->selectedStatuses, [$name]));
+        } else {
+            $this->selectedStatuses[] = $name;
+        }
+    }
+
     public function with(OauthService $oauth): array
     {
         $token = $this->source->oauthTokens()->where('provider', 'jira')->first();
@@ -65,6 +78,7 @@ class extends Component {
         if (! $token) {
             return [
                 'projects' => [],
+                'statuses' => [],
                 'error' => 'No Jira token found for this source. Reconnect to refresh.',
             ];
         }
@@ -86,13 +100,22 @@ class extends Component {
                     || str_contains(strtolower($p['name']), $needle));
             }
 
+            $statuses = collect($client->listStatuses())
+                ->pluck('name')
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+
             return [
                 'projects' => $projects->sortBy('key')->values()->all(),
+                'statuses' => $statuses,
                 'error' => null,
             ];
         } catch (\Throwable $e) {
             return [
                 'projects' => [],
+                'statuses' => [],
                 'error' => 'Failed to load projects: '.$e->getMessage(),
             ];
         }
@@ -127,6 +150,28 @@ class extends Component {
             <span class="text-sm text-on-surface">Active sprint only <span class="text-on-surface-variant">(sprint in openSprints())</span></span>
         </label>
     </div>
+
+    @if (! empty($statuses))
+        <div class="bg-surface-container-low rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="font-label text-[10px] text-outline uppercase tracking-widest">Lanes (status)</span>
+                <span class="font-label text-[10px] text-outline uppercase tracking-widest">
+                    {{ count($selectedStatuses) }} selected · empty = all
+                </span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+                @foreach ($statuses as $statusName)
+                    @php $isSelected = in_array($statusName, $selectedStatuses, true); @endphp
+                    <button type="button" wire:click="toggleStatus('{{ $statusName }}')"
+                            wire:key="status-{{ $statusName }}"
+                            aria-pressed="{{ $isSelected ? 'true' : 'false' }}"
+                            class="inline-flex items-center rounded px-2 py-1 font-label text-[10px] uppercase tracking-wider transition-colors {{ $isSelected ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest' }}">
+                        {{ $statusName }}
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
         <div class="flex items-center gap-3 flex-1 min-w-48">

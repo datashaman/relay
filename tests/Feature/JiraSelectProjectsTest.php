@@ -50,10 +50,19 @@ class JiraSelectProjectsTest extends TestCase
         return $source;
     }
 
-    private function fakeProjectsResponse(array $projects): void
+    private function fakeProjectsResponse(array $projects, array $statuses = []): void
     {
+        if (empty($statuses)) {
+            $statuses = [
+                ['name' => 'To Do'],
+                ['name' => 'In Progress'],
+                ['name' => 'Done'],
+            ];
+        }
+
         Http::fake([
             self::BASE.'/project' => Http::response($projects),
+            self::BASE.'/status' => Http::response($statuses),
         ]);
     }
 
@@ -96,6 +105,7 @@ class JiraSelectProjectsTest extends TestCase
 
         Livewire::test('pages::jira-select-projects', ['source' => $source])
             ->call('toggle', 'TEST')
+            ->call('toggleStatus', 'In Progress')
             ->set('onlyMine', true)
             ->set('onlyActiveSprint', true)
             ->call('save')
@@ -103,9 +113,25 @@ class JiraSelectProjectsTest extends TestCase
 
         $source->refresh();
         $this->assertEquals(['TEST'], $source->config['projects']);
+        $this->assertEquals(['In Progress'], $source->config['statuses']);
         $this->assertTrue($source->config['only_mine']);
         $this->assertTrue($source->config['only_active_sprint']);
         $this->assertEquals('test-cloud', $source->config['cloud_id']);
+    }
+
+    public function test_lists_statuses_for_selection(): void
+    {
+        $source = $this->createJiraSource();
+        $this->fakeProjectsResponse([
+            ['id' => '1', 'key' => 'TEST', 'name' => 'Test Project'],
+        ], [
+            ['name' => 'In Review'],
+            ['name' => 'Backlog'],
+        ]);
+
+        Livewire::test('pages::jira-select-projects', ['source' => $source])
+            ->assertSee('In Review')
+            ->assertSee('Backlog');
     }
 
     public function test_loads_existing_selection_into_form(): void

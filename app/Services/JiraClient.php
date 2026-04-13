@@ -89,6 +89,11 @@ class JiraClient
         return $this->request('get', '/project')->json();
     }
 
+    public function listStatuses(): array
+    {
+        return $this->request('get', '/status')->json();
+    }
+
     public function listTransitions(string $issueIdOrKey): array
     {
         $response = $this->request('get', "/issue/{$issueIdOrKey}/transitions");
@@ -133,6 +138,7 @@ class JiraClient
             'assignee' => $fields['assignee']['displayName'] ?? null,
             'labels' => $fields['labels'] ?? [],
             'status' => self::mapStatus($fields['status']['name'] ?? null),
+            'raw_status' => $fields['status']['name'] ?? null,
         ];
     }
 

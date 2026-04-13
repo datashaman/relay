@@ -285,6 +285,15 @@ class extends Component {
                                     @endif
                                 </div>
                             @endif
+                            @php $jiraStatuses = $source->config['statuses'] ?? []; @endphp
+                            @if (! empty($jiraStatuses))
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Lanes:</span>
+                                    @foreach ($jiraStatuses as $statusName)
+                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">{{ $statusName }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @endif
 
@@ -399,6 +408,10 @@ class extends Component {
                                 </span>
                                 <span class="text-outline-variant">·</span>
                                 <span class="text-primary">{{ $externalRef }}</span>
+                                @if ($issue->raw_status)
+                                    <span class="text-outline-variant">·</span>
+                                    <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 tracking-wider">{{ $issue->raw_status }}</span>
+                                @endif
                                 @if ($issue->auto_accepted)
                                     <span class="text-outline-variant">·</span>
                                     <span class="text-primary">Auto-Accept</span>

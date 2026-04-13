@@ -248,6 +248,7 @@ class IssueSyncTest extends TestCase
             'external_id' => 'TEST-1',
             'title' => 'Jira bug',
             'assignee' => 'Jane',
+            'raw_status' => 'To Do',
         ]);
     }
 
@@ -260,6 +261,7 @@ class IssueSyncTest extends TestCase
             'config' => [
                 'cloud_id' => 'test-cloud-id',
                 'projects' => ['ABC', 'XYZ'],
+                'statuses' => ['In Review', 'Backlog'],
                 'only_mine' => true,
                 'only_active_sprint' => true,
             ],
@@ -273,6 +275,7 @@ class IssueSyncTest extends TestCase
             $url = urldecode($request->url());
 
             return str_contains($url, 'project in ("ABC","XYZ")')
+                && str_contains($url, 'status in ("In Review","Backlog")')
                 && str_contains($url, 'assignee = currentUser()')
                 && str_contains($url, 'sprint in openSprints()')
                 && str_contains($url, 'status != Done');

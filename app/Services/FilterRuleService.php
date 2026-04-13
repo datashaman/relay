@@ -108,6 +108,7 @@ class FilterRuleService
             'assignee' => $issueData['assignee'] ?? null,
             'labels' => $issueData['labels'] ?? [],
             'status' => $autoAccepted ? IssueStatus::Accepted : IssueStatus::Queued,
+            'raw_status' => $issueData['raw_status'] ?? null,
             'auto_accepted' => $autoAccepted,
             'repository_id' => $issueData['repository_id'] ?? null,
         ];

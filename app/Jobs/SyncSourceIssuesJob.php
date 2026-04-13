@@ -123,6 +123,12 @@ class SyncSourceIssuesJob implements ShouldQueue
             $clauses[] = 'project in ('.$quoted.')';
         }
 
+        $statuses = array_filter($config['statuses'] ?? []);
+        if (! empty($statuses)) {
+            $quoted = implode(',', array_map(fn ($s) => '"'.$s.'"', $statuses));
+            $clauses[] = 'status in ('.$quoted.')';
+        }
+
         if (! empty($config['only_mine'])) {
             $clauses[] = 'assignee = currentUser()';
         }
@@ -152,7 +158,7 @@ class SyncSourceIssuesJob implements ShouldQueue
 
     private function updateExistingIssue(Issue $issue, array $issueData): void
     {
-        $updatable = ['title', 'body', 'external_url', 'assignee', 'labels'];
+        $updatable = ['title', 'body', 'external_url', 'assignee', 'labels', 'raw_status'];
         $changes = [];
 
         foreach ($updatable as $field) {
