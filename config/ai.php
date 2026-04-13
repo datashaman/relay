@@ -25,7 +25,7 @@ return [
         ],
 
         'claude_code_cli' => [
-            'binary_path' => env('CLAUDE_CODE_BINARY', 'claude'),
+            'command' => env('CLAUDE_CODE_COMMAND', 'claude --dangerously-skip-permissions --print --output-format stream-json'),
             'working_directory' => env('CLAUDE_CODE_WORKING_DIR'),
             'timeout' => (int) env('CLAUDE_CODE_TIMEOUT', 300),
         ],

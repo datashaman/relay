@@ -355,7 +355,7 @@ class AiProviderTest extends TestCase
     public function test_manager_make_creates_claude_code_cli(): void
     {
         $manager = new AiProviderManager;
-        $provider = $manager->make('claude_code_cli', ['binary_path' => '/usr/local/bin/claude']);
+        $provider = $manager->make('claude_code_cli', ['command' => '/usr/local/bin/claude --print']);
 
         $this->assertInstanceOf(ClaudeCodeCliProvider::class, $provider);
     }

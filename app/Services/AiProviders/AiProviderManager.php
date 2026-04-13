@@ -40,7 +40,7 @@ class AiProviderManager
                 baseUrl: $merged['base_url'] ?? 'https://generativelanguage.googleapis.com',
             ),
             'claude_code_cli' => new ClaudeCodeCliProvider(
-                binaryPath: $merged['binary_path'] ?? 'claude',
+                command: $merged['command'] ?? 'claude --dangerously-skip-permissions --print --output-format stream-json',
                 workingDirectory: $merged['working_directory'] ?? null,
                 timeout: $merged['timeout'] ?? 300,
             ),

@@ -8,42 +8,15 @@ use Symfony\Component\Process\Process;
 class ClaudeCodeCliProvider implements AiProvider
 {
     public function __construct(
-        private string $binaryPath = 'claude',
+        private string $command = 'claude --dangerously-skip-permissions --print --output-format stream-json',
         private ?string $workingDirectory = null,
         private int $timeout = 300,
     ) {}
 
     public function chat(array $messages, array $tools = [], array $options = []): array
     {
-        $prompt = $this->buildPrompt($messages);
-
-        $args = [$this->binaryPath, '--print', '--output-format', 'json'];
-
-        if (isset($options['model'])) {
-            $args[] = '--model';
-            $args[] = $options['model'];
-        }
-
-        if (isset($options['max_tokens'])) {
-            $args[] = '--max-tokens';
-            $args[] = (string) $options['max_tokens'];
-        }
-
-        foreach ($options['allowedTools'] ?? [] as $tool) {
-            $args[] = '--allowedTools';
-            $args[] = $tool;
-        }
-
-        $args[] = '--';
-        $args[] = $prompt;
-
-        $process = new Process($args);
-        $process->setTimeout($this->timeout);
-
-        if ($this->workingDirectory) {
-            $process->setWorkingDirectory($this->workingDirectory);
-        }
-
+        $args = $this->buildArgs($messages, $options);
+        $process = $this->spawn($args);
         $process->run();
 
         if (! $process->isSuccessful()) {
@@ -52,35 +25,13 @@ class ClaudeCodeCliProvider implements AiProvider
             );
         }
 
-        return $this->normalizeOutput($process->getOutput());
+        return $this->parseStreamJsonOutput($process->getOutput());
     }
 
     public function stream(array $messages, array $tools = [], array $options = []): \Generator
     {
-        $prompt = $this->buildPrompt($messages);
-
-        $args = [$this->binaryPath, '--output-format', 'stream-json'];
-
-        if (isset($options['model'])) {
-            $args[] = '--model';
-            $args[] = $options['model'];
-        }
-
-        foreach ($options['allowedTools'] ?? [] as $tool) {
-            $args[] = '--allowedTools';
-            $args[] = $tool;
-        }
-
-        $args[] = '--';
-        $args[] = $prompt;
-
-        $process = new Process($args);
-        $process->setTimeout($this->timeout);
-
-        if ($this->workingDirectory) {
-            $process->setWorkingDirectory($this->workingDirectory);
-        }
-
+        $args = $this->buildArgs($messages, $options);
+        $process = $this->spawn($args);
         $process->start();
 
         $buffer = '';
@@ -98,22 +49,11 @@ class ClaudeCodeCliProvider implements AiProvider
                 if ($line === '') {
                     continue;
                 }
-
                 $event = json_decode($line, true);
                 if (! $event) {
                     continue;
                 }
-
-                yield [
-                    'type' => match ($event['type'] ?? null) {
-                        'assistant' => 'content',
-                        'result' => 'done',
-                        default => 'other',
-                    },
-                    'content' => $event['message']['content'][0]['text'] ?? ($event['result'] ?? null),
-                    'tool_calls' => null,
-                    'usage' => null,
-                ];
+                yield $this->normalizeEvent($event);
             }
         }
 
@@ -126,6 +66,43 @@ class ClaudeCodeCliProvider implements AiProvider
         }
     }
 
+    private function buildArgs(array $messages, array $options): array
+    {
+        $args = $this->splitCommand($this->command);
+
+        if (isset($options['model'])) {
+            $args[] = '--model';
+            $args[] = $options['model'];
+        }
+
+        foreach ($options['allowedTools'] ?? [] as $tool) {
+            $args[] = '--allowedTools';
+            $args[] = $tool;
+        }
+
+        $args[] = '--';
+        $args[] = $this->buildPrompt($messages);
+
+        return $args;
+    }
+
+    private function spawn(array $args): Process
+    {
+        $process = new Process($args);
+        $process->setTimeout($this->timeout);
+
+        if ($this->workingDirectory) {
+            $process->setWorkingDirectory($this->workingDirectory);
+        }
+
+        return $process;
+    }
+
+    private function splitCommand(string $command): array
+    {
+        return preg_split('/\s+/', trim($command)) ?: ['claude'];
+    }
+
     private function buildPrompt(array $messages): string
     {
         $parts = [];
@@ -136,29 +113,75 @@ class ClaudeCodeCliProvider implements AiProvider
         return implode("\n\n", $parts);
     }
 
-    private function normalizeOutput(string $output): array
+    /**
+     * Accumulate the NDJSON stream into a single response matching the
+     * AiProvider::chat() contract. Final assistant text lands in content;
+     * tool_use content blocks land in tool_calls.
+     */
+    private function parseStreamJsonOutput(string $output): array
     {
-        $data = json_decode($output, true);
+        $text = '';
+        $toolCalls = [];
+        $usage = ['input_tokens' => 0, 'output_tokens' => 0];
+        $raw = [];
 
-        if (is_array($data)) {
-            $content = $data['result'] ?? $output;
+        foreach (preg_split('/\r?\n/', trim($output)) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $event = json_decode($line, true);
+            if (! is_array($event)) {
+                continue;
+            }
+            $raw[] = $event;
 
-            return [
-                'content' => is_string($content) ? $content : json_encode($content),
-                'tool_calls' => [],
-                'usage' => [
-                    'input_tokens' => $data['usage']['input_tokens'] ?? 0,
-                    'output_tokens' => $data['usage']['output_tokens'] ?? 0,
-                ],
-                'raw' => $data,
-            ];
+            $type = $event['type'] ?? null;
+
+            if ($type === 'assistant' && isset($event['message']['content']) && is_array($event['message']['content'])) {
+                foreach ($event['message']['content'] as $block) {
+                    if (($block['type'] ?? null) === 'text' && isset($block['text'])) {
+                        $text .= $block['text'];
+                    } elseif (($block['type'] ?? null) === 'tool_use') {
+                        $toolCalls[] = [
+                            'id' => $block['id'] ?? '',
+                            'name' => $block['name'] ?? '',
+                            'arguments' => $block['input'] ?? [],
+                        ];
+                    }
+                }
+            }
+
+            if ($type === 'result') {
+                if ($text === '' && isset($event['result'])) {
+                    $text = is_string($event['result']) ? $event['result'] : json_encode($event['result']);
+                }
+                $usage = [
+                    'input_tokens' => $event['usage']['input_tokens'] ?? 0,
+                    'output_tokens' => $event['usage']['output_tokens'] ?? 0,
+                ];
+            }
         }
 
         return [
-            'content' => $output,
-            'tool_calls' => [],
-            'usage' => ['input_tokens' => 0, 'output_tokens' => 0],
-            'raw' => ['output' => $output],
+            'content' => $text,
+            'tool_calls' => $toolCalls,
+            'usage' => $usage,
+            'raw' => $raw,
+        ];
+    }
+
+    private function normalizeEvent(array $event): array
+    {
+        return [
+            'type' => match ($event['type'] ?? null) {
+                'assistant' => 'content',
+                'result' => 'done',
+                default => 'other',
+            },
+            'content' => $event['message']['content'][0]['text'] ?? ($event['result'] ?? null),
+            'tool_calls' => null,
+            'usage' => null,
         ];
     }
 }
