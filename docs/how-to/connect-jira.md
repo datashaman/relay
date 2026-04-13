@@ -65,6 +65,22 @@ The selected site is persisted on the source. To change it later, disconnect and
 
 From the intake page, click **Test connection** on the Jira source. A green badge confirms the token and site are valid. Click **Sync now** to pull issues into the intake queue.
 
+## 9. Map components to repositories
+
+Unlike GitHub issues, Jira issues don't live in a specific repository. Relay resolves the target repo via the issue's **Jira component**:
+
+1. Each synced issue captures its first component (lowest component id wins when an issue has multiple).
+2. Components are listed per Jira source under **Components → Repos** on the intake page, or directly at `/sources/{source}/components`.
+3. On that page, attach one or more repositories to each component. Repositories must already exist in Relay — add them via the normal repository flow first.
+
+When you **Accept** a Jira issue from the intake queue, Relay shows one button per attached repository. Each click starts a Run pinned to that repo. If an issue legitimately spans three repos, you can start three independent Runs — one per repo — from the same issue.
+
+**Component with no repos attached:** the Accept button is replaced by a "Map repos →" link. The issue stays in the queue until you attach at least one repository.
+
+**Issue with no component:** the intake shows "No component" and no Accept button. Add the component in Jira, or resync, before it can be worked on.
+
+**Auto-accept filter rules + Jira:** because a repo choice can't be inferred, auto-accepted Jira issues land in `Accepted` status but do not auto-start a Run. You still click a repository to start. Auto-accept for GitHub is unchanged.
+
 ## Troubleshooting
 
 ### `invalid_scope`

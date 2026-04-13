@@ -36,7 +36,7 @@ Commits the implement agent's changes, pushes the branch, opens a pull request, 
 ## Dependencies
 
 - Requires `issue.source.oauthTokens` for GitHub API authentication
-- Requires `issue.repository` with name in `owner/repo` format
+- Requires a repository with name in `owner/repo` format. The agent reads `run->repository` (set at run start); falls back to `issue->repository` for older runs predating the explicit field.
 - Changelog path and deploy hook configured in `config/relay.php`
 
 ## Constraints
