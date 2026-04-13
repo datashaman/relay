@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ActivityFeedController;
 use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\FilterRuleController;
@@ -72,4 +71,4 @@ Route::post('/escalation-rules/{escalationRule}/move-down', [EscalationRuleContr
 Route::get('/runs/{run}/progress', [RunProgressController::class, 'show'])->name('runs.progress');
 Route::get('/runs/{run}/timeline', [RunTimelineController::class, 'show'])->name('runs.timeline');
 
-Route::get('/activity', [ActivityFeedController::class, 'index'])->name('activity.index');
+Route::livewire('/activity', 'pages::activity')->name('activity.index');
