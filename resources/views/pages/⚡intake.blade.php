@@ -248,6 +248,46 @@ class extends Component {
                         </div>
                     @endif
 
+                    {{-- Projects + filters (Jira only) --}}
+                    @if ($source->type->value === 'jira')
+                        @php
+                            $jiraProjects = $source->config['projects'] ?? [];
+                            $onlyMine = ! empty($source->config['only_mine']);
+                            $onlyActiveSprint = ! empty($source->config['only_active_sprint']);
+                        @endphp
+                        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Projects &amp; filters</span>
+                                <a href="{{ route('jira.select-projects', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
+                                    {{ empty($jiraProjects) && ! $onlyMine && ! $onlyActiveSprint ? 'Choose' : 'Edit' }} →
+                                </a>
+                            </div>
+                            @if (empty($jiraProjects))
+                                <p class="font-label text-[10px] text-stage-stuck uppercase tracking-wider">
+                                    No projects selected · sync will pull from all accessible projects
+                                </p>
+                            @else
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    @foreach ($jiraProjects as $projectKey)
+                                        <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[10px] tracking-wider font-mono">
+                                            {{ $projectKey }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                            @if ($onlyMine || $onlyActiveSprint)
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    @if ($onlyMine)
+                                        <span class="inline-flex items-center rounded bg-secondary-container/30 text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">My issues</span>
+                                    @endif
+                                    @if ($onlyActiveSprint)
+                                        <span class="inline-flex items-center rounded bg-secondary-container/30 text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">Active sprint</span>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     {{-- Filter rules summary --}}
                     @php $rule = $source->filterRule; @endphp
                     <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">

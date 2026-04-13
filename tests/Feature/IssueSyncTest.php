@@ -250,6 +250,34 @@ class IssueSyncTest extends TestCase
         ]);
     }
 
+    public function test_jira_sync_jql_includes_project_and_filter_clauses(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::Jira,
+            'external_account' => 'jira-user',
+            'is_active' => true,
+            'config' => [
+                'cloud_id' => 'test-cloud-id',
+                'projects' => ['ABC', 'XYZ'],
+                'only_mine' => true,
+                'only_active_sprint' => true,
+            ],
+        ]);
+        $this->createToken($source);
+        $this->fakeJiraIssues();
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        Http::assertSent(function ($request) {
+            $url = urldecode($request->url());
+
+            return str_contains($url, 'project in ("ABC","XYZ")')
+                && str_contains($url, 'assignee = currentUser()')
+                && str_contains($url, 'sprint in openSprints()')
+                && str_contains($url, 'status != Done');
+        });
+    }
+
     public function test_sync_records_error_when_no_token(): void
     {
         $source = $this->createGitHubSource();

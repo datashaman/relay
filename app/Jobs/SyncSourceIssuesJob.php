@@ -97,7 +97,7 @@ class SyncSourceIssuesJob implements ShouldQueue
     private function fetchJiraIssues($token, OauthService $oauth): array
     {
         $client = new JiraClient($token, $oauth, $this->source);
-        $jql = $this->source->config['jql'] ?? 'status != Done ORDER BY updated DESC';
+        $jql = $this->buildJiraJql();
         $issues = $client->allIssues($jql);
 
         $mapped = [];
@@ -108,6 +108,32 @@ class SyncSourceIssuesJob implements ShouldQueue
         }
 
         return $mapped;
+    }
+
+    private function buildJiraJql(): string
+    {
+        $config = $this->source->config ?? [];
+        $base = $config['jql'] ?? 'status != Done';
+
+        $clauses = [];
+
+        $projects = array_filter($config['projects'] ?? []);
+        if (! empty($projects)) {
+            $quoted = implode(',', array_map(fn ($k) => '"'.$k.'"', $projects));
+            $clauses[] = 'project in ('.$quoted.')';
+        }
+
+        if (! empty($config['only_mine'])) {
+            $clauses[] = 'assignee = currentUser()';
+        }
+
+        if (! empty($config['only_active_sprint'])) {
+            $clauses[] = 'sprint in openSprints()';
+        }
+
+        $clauses[] = '('.$base.')';
+
+        return implode(' AND ', $clauses).' ORDER BY updated DESC';
     }
 
     private function syncIssue(array $issueData, FilterRuleService $filterService): void
