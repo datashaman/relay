@@ -12,6 +12,7 @@ use App\Events\RunStuck;
 use App\Events\StageTransitioned;
 use App\Jobs\ExecuteStageJob;
 use App\Models\Issue;
+use App\Models\Repository;
 use App\Models\Run;
 use App\Models\Stage;
 use App\Models\StageEvent;
@@ -30,10 +31,13 @@ class OrchestratorService
         private WorktreeService $worktreeService,
     ) {}
 
-    public function startRun(Issue $issue, array $context = []): Run
+    public function startRun(Issue $issue, ?Repository $repository = null, array $context = []): Run
     {
+        $repository ??= $issue->repository;
+
         $run = Run::create([
             'issue_id' => $issue->id,
+            'repository_id' => $repository?->id,
             'status' => RunStatus::Running,
             'iteration' => 0,
             'started_at' => now(),
@@ -41,14 +45,14 @@ class OrchestratorService
 
         $issue->update(['status' => IssueStatus::InProgress]);
 
-        if (! $issue->repository) {
+        if (! $repository) {
             $this->failRunImmediately($run, $issue, 'Issue is not linked to a repository. The sync should attach one; check your source config.');
 
             return $run;
         }
 
         try {
-            $this->worktreeService->createWorktree($run, $issue->repository);
+            $this->worktreeService->createWorktree($run, $repository);
         } catch (\Throwable $e) {
             $this->failRunImmediately($run, $issue, 'Worktree setup failed: '.$e->getMessage());
 

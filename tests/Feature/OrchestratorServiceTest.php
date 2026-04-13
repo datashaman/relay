@@ -87,6 +87,32 @@ class OrchestratorServiceTest extends TestCase
         $this->assertEquals(StageName::Preflight, $stage->name);
     }
 
+    public function test_start_run_uses_explicit_repository_over_issue_repository(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $issue = Issue::factory()->create(['status' => IssueStatus::Accepted]);
+        $overrideRepo = Repository::factory()->create();
+
+        $run = $this->orchestrator->startRun($issue, $overrideRepo);
+
+        $this->assertEquals($overrideRepo->id, $run->repository_id);
+        $this->assertNotEquals($issue->repository_id, $run->repository_id);
+    }
+
+    public function test_start_run_falls_back_to_issue_repository(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $issue = Issue::factory()->create(['status' => IssueStatus::Accepted]);
+
+        $run = $this->orchestrator->startRun($issue);
+
+        $this->assertEquals($issue->repository_id, $run->repository_id);
+    }
+
     public function test_start_run_auto_advances_when_autonomous(): void
     {
         Queue::fake();

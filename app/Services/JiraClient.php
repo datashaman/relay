@@ -11,7 +11,7 @@ class JiraClient
 {
     private const MAX_RESULTS = 50;
 
-    private const ISSUE_FIELDS = ['summary', 'description', 'assignee', 'labels', 'status'];
+    private const ISSUE_FIELDS = ['summary', 'description', 'assignee', 'labels', 'status', 'components'];
 
     private string $baseUrl;
 
@@ -129,6 +129,7 @@ class JiraClient
     public static function mapToIssueAttributes(array $jiraIssue): array
     {
         $fields = $jiraIssue['fields'] ?? [];
+        $component = self::pickComponent($fields['components'] ?? [], $jiraIssue['key'] ?? $jiraIssue['id'] ?? null);
 
         return [
             'external_id' => (string) ($jiraIssue['key'] ?? $jiraIssue['id']),
@@ -139,6 +140,31 @@ class JiraClient
             'labels' => $fields['labels'] ?? [],
             'status' => self::mapStatus($fields['status']['name'] ?? null),
             'raw_status' => $fields['status']['name'] ?? null,
+            'component_external_id' => $component['id'] ?? null,
+            'component_name' => $component['name'] ?? null,
+        ];
+    }
+
+    private static function pickComponent(array $components, ?string $issueKey): array
+    {
+        if (empty($components)) {
+            return [];
+        }
+
+        if (count($components) > 1) {
+            \Illuminate\Support\Facades\Log::warning('Jira issue has multiple components; using lowest id.', [
+                'issue_key' => $issueKey,
+                'component_ids' => array_map(fn ($c) => $c['id'] ?? null, $components),
+            ]);
+        }
+
+        usort($components, fn ($a, $b) => ((int) ($a['id'] ?? 0)) <=> ((int) ($b['id'] ?? 0)));
+
+        $picked = $components[0];
+
+        return [
+            'id' => isset($picked['id']) ? (string) $picked['id'] : null,
+            'name' => $picked['name'] ?? null,
         ];
     }
 

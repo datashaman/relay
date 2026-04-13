@@ -252,6 +252,75 @@ class IssueSyncTest extends TestCase
         ]);
     }
 
+    public function test_jira_sync_creates_component_and_links_issue(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'CDE-42',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'Cross-repo ticket',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'To Do'],
+                    'components' => [
+                        ['id' => '500', 'name' => 'yuvee'],
+                    ],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $this->assertDatabaseHas('components', [
+            'source_id' => $source->id,
+            'external_id' => '500',
+            'name' => 'yuvee',
+        ]);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'CDE-42')->first();
+        $this->assertNotNull($issue->component_id);
+        $this->assertSame('yuvee', $issue->component->name);
+        $this->assertNull($issue->repository_id);
+    }
+
+    public function test_jira_sync_reuses_existing_component_and_updates_name(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+
+        $existing = \App\Models\Component::create([
+            'source_id' => $source->id,
+            'external_id' => '500',
+            'name' => 'old-name',
+        ]);
+
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'CDE-42',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'x',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'To Do'],
+                    'components' => [['id' => '500', 'name' => 'yuvee']],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $this->assertSame(1, \App\Models\Component::where('source_id', $source->id)->count());
+        $this->assertSame('yuvee', $existing->fresh()->name);
+    }
+
     public function test_jira_sync_jql_includes_project_and_filter_clauses(): void
     {
         $source = Source::factory()->create([

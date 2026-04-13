@@ -90,7 +90,7 @@ class FilterRuleService
             $attributes,
         );
 
-        if ($issue->wasRecentlyCreated && ($attributes['auto_accepted'] ?? false)) {
+        if ($issue->wasRecentlyCreated && ($attributes['auto_accepted'] ?? false) && $issue->repository_id !== null) {
             app(OrchestratorService::class)->startRun($issue);
         }
 
@@ -111,6 +111,7 @@ class FilterRuleService
             'raw_status' => $issueData['raw_status'] ?? null,
             'auto_accepted' => $autoAccepted,
             'repository_id' => $issueData['repository_id'] ?? null,
+            'component_id' => $issueData['component_id'] ?? null,
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\IssueStatus;
 use App\Enums\SourceType;
+use App\Models\Component;
 use App\Models\Issue;
 use App\Models\Source;
 use App\Services\FilterRuleService;
@@ -104,10 +105,33 @@ class SyncSourceIssuesJob implements ShouldQueue
         foreach ($issues as $jiraIssue) {
             $attrs = JiraClient::mapToIssueAttributes($jiraIssue);
             unset($attrs['status']);
+            $attrs['component_id'] = $this->resolveComponentId($attrs);
+            unset($attrs['component_external_id'], $attrs['component_name']);
             $mapped[] = $attrs;
         }
 
         return $mapped;
+    }
+
+    private function resolveComponentId(array $attrs): ?int
+    {
+        $externalId = $attrs['component_external_id'] ?? null;
+        $name = $attrs['component_name'] ?? null;
+
+        if (! $externalId) {
+            return null;
+        }
+
+        $component = Component::firstOrCreate(
+            ['source_id' => $this->source->id, 'external_id' => $externalId],
+            ['name' => $name ?? $externalId],
+        );
+
+        if ($name !== null && $component->name !== $name) {
+            $component->update(['name' => $name]);
+        }
+
+        return $component->id;
     }
 
     private function buildJiraJql(): string
@@ -169,6 +193,10 @@ class SyncSourceIssuesJob implements ShouldQueue
 
         if ($issue->repository_id === null && ! empty($issueData['repository_id'])) {
             $changes['repository_id'] = $issueData['repository_id'];
+        }
+
+        if (array_key_exists('component_id', $issueData) && $issue->component_id !== $issueData['component_id']) {
+            $changes['component_id'] = $issueData['component_id'];
         }
 
         if (! empty($changes)) {

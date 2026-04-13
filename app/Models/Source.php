@@ -54,4 +54,9 @@ class Source extends Model
     {
         return $this->hasOne(FilterRule::class);
     }
+
+    public function components(): HasMany
+    {
+        return $this->hasMany(Component::class);
+    }
 }

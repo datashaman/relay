@@ -315,6 +315,31 @@ class JiraClientTest extends TestCase
         $this->assertEquals('accepted', $attrs['status']);
     }
 
+    public function test_maps_first_component_sorted_by_id(): void
+    {
+        $jiraIssue = $this->fakeJiraIssue('10001', 'Ticket', 'TEST-1', [
+            'components' => [
+                ['id' => '20', 'name' => 'zebra'],
+                ['id' => '10', 'name' => 'yuvee'],
+            ],
+        ]);
+
+        $attrs = JiraClient::mapToIssueAttributes($jiraIssue);
+
+        $this->assertSame('10', $attrs['component_external_id']);
+        $this->assertSame('yuvee', $attrs['component_name']);
+    }
+
+    public function test_map_issue_without_components(): void
+    {
+        $jiraIssue = $this->fakeJiraIssue('10001', 'Ticket');
+
+        $attrs = JiraClient::mapToIssueAttributes($jiraIssue);
+
+        $this->assertNull($attrs['component_external_id']);
+        $this->assertNull($attrs['component_name']);
+    }
+
     public function test_requests_include_accept_and_content_type(): void
     {
         Http::fake([

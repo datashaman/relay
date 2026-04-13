@@ -271,7 +271,7 @@ PROMPT;
         $userContent .= "- **Branch:** {$run->branch}\n";
         $userContent .= "- **Issue:** {$run->issue->title}\n";
 
-        $repository = $run->issue->repository;
+        $repository = $run->repository ?? $run->issue->repository;
         if ($repository) {
             $userContent .= "- **Default branch:** {$repository->default_branch}\n";
         }
@@ -403,7 +403,7 @@ PROMPT;
             return 'Error: No OAuth token available for this source.';
         }
 
-        $repository = $issue->repository;
+        $repository = $run->repository ?? $issue->repository;
         if (! $repository) {
             return 'Error: No repository configured for this issue.';
         }

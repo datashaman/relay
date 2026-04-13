@@ -15,6 +15,7 @@ class Run extends Model
 
     protected $fillable = [
         'issue_id',
+        'repository_id',
         'status',
         'stuck_state',
         'guidance',
@@ -50,6 +51,11 @@ class Run extends Model
     public function issue(): BelongsTo
     {
         return $this->belongsTo(Issue::class);
+    }
+
+    public function repository(): BelongsTo
+    {
+        return $this->belongsTo(Repository::class);
     }
 
     public function stages(): HasMany

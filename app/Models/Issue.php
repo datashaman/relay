@@ -15,6 +15,7 @@ class Issue extends Model
     protected $fillable = [
         'source_id',
         'repository_id',
+        'component_id',
         'external_id',
         'title',
         'body',
@@ -43,6 +44,11 @@ class Issue extends Model
     public function repository(): BelongsTo
     {
         return $this->belongsTo(Repository::class);
+    }
+
+    public function component(): BelongsTo
+    {
+        return $this->belongsTo(Component::class);
     }
 
     public function runs(): HasMany
