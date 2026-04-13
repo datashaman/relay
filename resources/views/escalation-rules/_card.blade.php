@@ -62,7 +62,8 @@
                 <button type="submit" data-rule-move="down" class="font-label text-sm text-outline hover:text-on-surface leading-none" aria-label="Move down">↓</button>
             </form>
             <button type="button" data-rule-edit class="font-label text-[10px] uppercase tracking-widest leading-none text-primary hover:underline">Edit</button>
-            <form method="POST" action="{{ route('escalation-rules.destroy', $rule) }}" data-rule-delete class="contents">
+            <form method="POST" action="{{ route('escalation-rules.destroy', $rule) }}" class="contents"
+                  onsubmit="return confirm('Delete this rule?')">
                 @csrf @method('DELETE')
                 <button type="submit" class="font-label text-[10px] uppercase tracking-widest leading-none text-error hover:underline">Delete</button>
             </form>

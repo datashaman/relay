@@ -8,6 +8,7 @@ use App\Enums\StageName;
 use App\Models\AutonomyConfig;
 use App\Models\EscalationRule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class ConfigScreenTest extends TestCase
@@ -47,9 +48,9 @@ class ConfigScreenTest extends TestCase
 
     public function test_update_global_changes_default_level(): void
     {
-        $response = $this->post('/config/global', ['level' => 'autonomous']);
-
-        $response->assertRedirect('/config');
+        Livewire::test('pages::config')
+            ->call('setGlobal', 'autonomous')
+            ->assertHasNoErrors();
 
         $config = AutonomyConfig::where('scope', AutonomyScope::Global)
             ->whereNull('scope_id')
@@ -61,9 +62,10 @@ class ConfigScreenTest extends TestCase
 
     public function test_update_global_rejects_invalid_level(): void
     {
-        $response = $this->post('/config/global', ['level' => 'invalid']);
+        $this->expectException(\ValueError::class);
 
-        $response->assertSessionHasErrors('level');
+        Livewire::test('pages::config')
+            ->call('setGlobal', 'invalid');
     }
 
     public function test_update_stage_creates_override(): void
@@ -75,9 +77,9 @@ class ConfigScreenTest extends TestCase
             'level' => AutonomyLevel::Supervised,
         ]);
 
-        $response = $this->post('/config/stage/preflight', ['level' => 'manual']);
-
-        $response->assertRedirect('/config');
+        Livewire::test('pages::config')
+            ->call('setStage', 'preflight', 'manual')
+            ->assertHasNoErrors();
 
         $config = AutonomyConfig::where('scope', AutonomyScope::Stage)
             ->where('stage', StageName::Preflight)
@@ -95,9 +97,8 @@ class ConfigScreenTest extends TestCase
             'level' => AutonomyLevel::Manual,
         ]);
 
-        $response = $this->post('/config/stage/preflight', ['level' => '']);
-
-        $response->assertRedirect('/config');
+        Livewire::test('pages::config')
+            ->call('setStage', 'preflight', '');
 
         $this->assertNull(
             AutonomyConfig::where('scope', AutonomyScope::Stage)
@@ -115,33 +116,35 @@ class ConfigScreenTest extends TestCase
             'level' => AutonomyLevel::Supervised,
         ]);
 
-        $response = $this->post('/config/stage/preflight', ['level' => 'autonomous']);
-
-        $response->assertSessionHasErrors('level');
+        Livewire::test('pages::config')
+            ->call('setStage', 'preflight', 'autonomous')
+            ->assertHasErrors('stage.preflight');
     }
 
     public function test_update_iteration_cap_valid(): void
     {
-        $response = $this->post('/config/iteration-cap', ['iteration_cap' => 10]);
-
-        $response->assertRedirect('/config');
-        $response->assertSessionHas('success');
+        Livewire::test('pages::config')
+            ->set('iterationCap', 10)
+            ->call('saveIterationCap')
+            ->assertHasNoErrors();
 
         config(['relay.iteration_cap' => 5]);
     }
 
     public function test_update_iteration_cap_rejects_below_min(): void
     {
-        $response = $this->post('/config/iteration-cap', ['iteration_cap' => 0]);
-
-        $response->assertSessionHasErrors('iteration_cap');
+        Livewire::test('pages::config')
+            ->set('iterationCap', 0)
+            ->call('saveIterationCap')
+            ->assertHasErrors('iterationCap');
     }
 
     public function test_update_iteration_cap_rejects_above_max(): void
     {
-        $response = $this->post('/config/iteration-cap', ['iteration_cap' => 21]);
-
-        $response->assertSessionHasErrors('iteration_cap');
+        Livewire::test('pages::config')
+            ->set('iterationCap', 21)
+            ->call('saveIterationCap')
+            ->assertHasErrors('iterationCap');
     }
 
     public function test_index_shows_escalation_rules(): void

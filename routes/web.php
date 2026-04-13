@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\FilterRuleController;
 use App\Http\Controllers\IssueController;
@@ -57,10 +56,7 @@ Route::get('/jira/select-site', [OauthController::class, 'jiraSiteSelectionForm'
 Route::post('/jira/select-site', [OauthController::class, 'jiraSelectSite'])
     ->name('jira.select-site');
 
-Route::get('/config', [ConfigController::class, 'index'])->name('config.index');
-Route::post('/config/global', [ConfigController::class, 'updateGlobal'])->name('config.update-global');
-Route::post('/config/stage/{stage}', [ConfigController::class, 'updateStage'])->name('config.update-stage');
-Route::post('/config/iteration-cap', [ConfigController::class, 'updateIterationCap'])->name('config.update-iteration-cap');
+Route::livewire('/config', 'pages::config')->name('config.index');
 Route::post('/escalation-rules', [EscalationRuleController::class, 'store'])->name('escalation-rules.store');
 Route::put('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'update'])->name('escalation-rules.update');
 Route::delete('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'destroy'])->name('escalation-rules.destroy');
