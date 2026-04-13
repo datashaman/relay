@@ -5,6 +5,7 @@ use App\Services\GitHubClient;
 use App\Services\OauthService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new
@@ -15,7 +16,10 @@ class extends Component {
 
     public array $selected = [];
 
-    public ?string $error = null;
+    #[Url]
+    public string $search = '';
+
+    public int $page = 1;
 
     public function mount(): void
     {
@@ -24,6 +28,11 @@ class extends Component {
         }
 
         $this->selected = $this->source->config['repositories'] ?? [];
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->page = 1;
     }
 
     public function save()
@@ -48,19 +57,42 @@ class extends Component {
         }
     }
 
+    public function nextPage(): void
+    {
+        $this->page++;
+    }
+
+    public function prevPage(): void
+    {
+        if ($this->page > 1) {
+            $this->page--;
+        }
+    }
+
     public function with(OauthService $oauth): array
     {
         $token = $this->source->oauthTokens()->where('provider', 'github')->first();
 
         if (! $token) {
-            return ['repos' => [], 'error' => 'No GitHub token found for this source. Reconnect to refresh.'];
+            return [
+                'repos' => [],
+                'hasNext' => false,
+                'error' => 'No GitHub token found for this source. Reconnect to refresh.',
+            ];
         }
 
         try {
             $token = $oauth->refreshIfExpired($token);
             $client = new GitHubClient($token, $oauth);
-            $repos = collect($client->allRepos())
-                ->sortByDesc('updated_at')
+
+            if ($this->search !== '') {
+                $query = 'user:'.$this->source->external_account.' '.$this->search.' in:name,description';
+                $result = $client->searchRepos($query, $this->page);
+            } else {
+                $result = $client->listRepos($this->page);
+            }
+
+            $repos = collect($result['data'])
                 ->map(fn ($r) => [
                     'full_name' => $r['full_name'],
                     'private' => (bool) ($r['private'] ?? false),
@@ -69,9 +101,17 @@ class extends Component {
                 ->values()
                 ->all();
 
-            return ['repos' => $repos, 'error' => null];
+            return [
+                'repos' => $repos,
+                'hasNext' => $result['next_page'] !== null,
+                'error' => null,
+            ];
         } catch (\Throwable $e) {
-            return ['repos' => [], 'error' => 'Failed to load repositories: '.$e->getMessage()];
+            return [
+                'repos' => [],
+                'hasNext' => false,
+                'error' => 'Failed to load repositories: '.$e->getMessage(),
+            ];
         }
     }
 };
@@ -91,23 +131,38 @@ class extends Component {
         </p>
     </div>
 
+    <div class="bg-surface-container-low rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3 flex-1 min-w-48">
+            <label class="font-label text-[10px] text-outline uppercase tracking-widest shrink-0" for="repo-search">Search</label>
+            <div class="relative flex-1">
+                <input type="text" id="repo-search" wire:model.live.debounce.400ms="search"
+                       placeholder="name or description…"
+                       class="w-full rounded-md bg-surface-container-lowest border-outline-variant text-on-surface text-sm px-3 py-2 pr-8 focus:border-primary focus:ring-primary">
+                <span wire:loading wire:target="search" class="absolute right-2 top-1/2 -translate-y-1/2 font-label text-[10px] text-outline uppercase">…</span>
+            </div>
+        </div>
+        <span class="font-label text-[10px] text-outline uppercase tracking-widest">
+            {{ count($selected) }} selected
+        </span>
+        <button type="button" wire:click="save"
+                class="rounded-md bg-primary text-on-primary px-4 py-2 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
+            Save Selection
+        </button>
+    </div>
+
     @if ($error)
         <div class="rounded-md bg-error-container/20 border-l-4 border-error px-4 py-3">
             <p class="text-sm text-error">{{ $error }}</p>
         </div>
     @elseif (empty($repos))
-        <p class="text-sm text-outline">No repositories accessible with this token.</p>
+        <p class="text-sm text-outline">
+            @if ($search !== '')
+                No repositories matched "{{ $search }}".
+            @else
+                No repositories accessible with this token.
+            @endif
+        </p>
     @else
-        <div class="flex items-center justify-between bg-surface-container-low rounded-xl p-4">
-            <span class="font-label text-[10px] text-outline uppercase tracking-widest">
-                {{ count($selected) }} / {{ count($repos) }} selected
-            </span>
-            <button type="button" wire:click="save"
-                    class="rounded-md bg-primary text-on-primary px-4 py-2 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
-                Save Selection
-            </button>
-        </div>
-
         <div class="bg-surface-container-low rounded-xl divide-y divide-outline-variant/20 overflow-hidden">
             @foreach ($repos as $repo)
                 @php $isSelected = in_array($repo['full_name'], $selected, true); @endphp
@@ -136,14 +191,33 @@ class extends Component {
             @endforeach
         </div>
 
-        <div class="flex items-center gap-2">
-            <button type="button" wire:click="save"
-                    class="rounded-md bg-primary text-on-primary px-4 py-2 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
-                Save Selection
-            </button>
-            <a href="{{ route('intake.index') }}" class="rounded-md bg-surface-container-high text-on-surface px-4 py-2 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
-                Cancel
-            </a>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                @if ($page > 1)
+                    <button type="button" wire:click="prevPage"
+                            class="rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
+                        ← Prev
+                    </button>
+                @endif
+                @if ($hasNext)
+                    <button type="button" wire:click="nextPage"
+                            class="rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
+                        Next →
+                    </button>
+                @endif
+                <span class="font-label text-[10px] text-outline uppercase tracking-widest">
+                    Page {{ $page }}
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" wire:click="save"
+                        class="rounded-md bg-primary text-on-primary px-4 py-2 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
+                    Save Selection
+                </button>
+                <a href="{{ route('intake.index') }}" class="rounded-md bg-surface-container-high text-on-surface px-4 py-2 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
+                    Cancel
+                </a>
+            </div>
         </div>
     @endif
 </div>

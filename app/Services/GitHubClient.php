@@ -100,6 +100,23 @@ class GitHubClient
         return $this->fetchAllPages('/user/repos', ['sort' => 'updated']);
     }
 
+    public function searchRepos(string $query, int $page = 1, int $perPage = self::PER_PAGE): array
+    {
+        $response = $this->request('get', '/search/repositories', [
+            'q' => $query,
+            'page' => $page,
+            'per_page' => $perPage,
+            'sort' => 'updated',
+        ]);
+        $body = $response->json();
+
+        return [
+            'data' => $body['items'] ?? [],
+            'total' => $body['total_count'] ?? 0,
+            'next_page' => $this->extractNextPage($response),
+        ];
+    }
+
     private function paginatedGet(string $path, array $params = []): array
     {
         $response = $this->request('get', $path, $params);

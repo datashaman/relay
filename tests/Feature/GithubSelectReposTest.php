@@ -128,6 +128,41 @@ class GithubSelectReposTest extends TestCase
             ->assertSee('No GitHub token found');
     }
 
+    public function test_search_hits_search_api(): void
+    {
+        $source = $this->createGithubSourceWithToken();
+
+        Http::fake([
+            'api.github.com/search/repositories*' => Http::response([
+                'total_count' => 1,
+                'items' => [
+                    ['full_name' => 'testuser/matching-repo', 'private' => false, 'description' => 'A match', 'updated_at' => '2026-04-10T00:00:00Z'],
+                ],
+            ], 200, ['Link' => '<https://api.github.com/search/repositories?page=1>; rel="last"']),
+            'api.github.com/user/repos*' => Http::response([], 200),
+        ]);
+
+        Livewire::test('pages::github-select-repos', ['source' => $source])
+            ->set('search', 'matching')
+            ->assertSee('testuser/matching-repo');
+
+        Http::assertSent(fn ($request) => str_contains((string) $request->url(), '/search/repositories')
+            && str_contains((string) $request->url(), 'user%3Atestuser'));
+    }
+
+    public function test_initial_load_uses_user_repos_endpoint(): void
+    {
+        $source = $this->createGithubSourceWithToken();
+        $this->fakeReposResponse([
+            ['full_name' => 'acme/api', 'private' => false, 'description' => null, 'updated_at' => '2026-04-10T00:00:00Z'],
+        ]);
+
+        Livewire::test('pages::github-select-repos', ['source' => $source]);
+
+        Http::assertSent(fn ($request) => str_contains((string) $request->url(), '/user/repos'));
+        Http::assertNotSent(fn ($request) => str_contains((string) $request->url(), '/search/repositories'));
+    }
+
     public function test_non_github_source_is_rejected(): void
     {
         $source = Source::factory()->create([
