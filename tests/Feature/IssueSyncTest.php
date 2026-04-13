@@ -96,11 +96,9 @@ class IssueSyncTest extends TestCase
         }
 
         Http::fake([
-            'api.atlassian.com/ex/jira/test-cloud-id/rest/api/3/search*' => Http::response([
+            'api.atlassian.com/ex/jira/test-cloud-id/rest/api/3/search/jql*' => Http::response([
                 'issues' => $issues,
-                'total' => count($issues),
-                'startAt' => 0,
-                'maxResults' => 50,
+                'isLast' => true,
             ]),
         ]);
     }

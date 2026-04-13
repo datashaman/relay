@@ -11,6 +11,8 @@ class JiraClient
 {
     private const MAX_RESULTS = 50;
 
+    private const ISSUE_FIELDS = ['summary', 'description', 'assignee', 'labels', 'status'];
+
     private string $baseUrl;
 
     public function __construct(
@@ -27,34 +29,39 @@ class JiraClient
         $this->baseUrl = "https://api.atlassian.com/ex/jira/{$cloudId}/rest/api/3";
     }
 
-    public function searchIssues(string $jql, int $startAt = 0, int $maxResults = self::MAX_RESULTS): array
+    public function searchIssues(string $jql, ?string $pageToken = null, int $maxResults = self::MAX_RESULTS): array
     {
-        $response = $this->request('get', '/search', [
+        $params = [
             'jql' => $jql,
-            'startAt' => $startAt,
             'maxResults' => $maxResults,
-        ]);
+            'fields' => implode(',', self::ISSUE_FIELDS),
+        ];
+
+        if ($pageToken !== null) {
+            $params['nextPageToken'] = $pageToken;
+        }
+
+        $response = $this->request('get', '/search/jql', $params);
 
         $data = $response->json();
 
         return [
             'issues' => $data['issues'] ?? [],
-            'total' => $data['total'] ?? 0,
-            'startAt' => $data['startAt'] ?? $startAt,
-            'maxResults' => $data['maxResults'] ?? $maxResults,
+            'nextPageToken' => $data['nextPageToken'] ?? null,
+            'isLast' => $data['isLast'] ?? ! isset($data['nextPageToken']),
         ];
     }
 
     public function allIssues(string $jql): array
     {
         $all = [];
-        $startAt = 0;
+        $pageToken = null;
 
         do {
-            $result = $this->searchIssues($jql, $startAt);
+            $result = $this->searchIssues($jql, $pageToken);
             $all = array_merge($all, $result['issues']);
-            $startAt += $result['maxResults'];
-        } while ($startAt < $result['total']);
+            $pageToken = $result['nextPageToken'];
+        } while ($pageToken !== null && ! $result['isLast']);
 
         return $all;
     }

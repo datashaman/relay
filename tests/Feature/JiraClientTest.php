@@ -63,18 +63,20 @@ class JiraClientTest extends TestCase
     public function test_search_issues_with_jql(): void
     {
         Http::fake([
-            self::BASE . '/search*' => Http::response($this->fixture('search_issues')),
+            self::BASE . '/search/jql*' => Http::response($this->fixture('search_issues')),
         ]);
 
         $result = $this->client->searchIssues('project = TEST');
 
         $this->assertCount(2, $result['issues']);
-        $this->assertEquals(2, $result['total']);
+        $this->assertTrue($result['isLast']);
+        $this->assertNull($result['nextPageToken']);
         $this->assertEquals('Bug in login', $result['issues'][0]['fields']['summary']);
 
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), '/search')
+            return str_contains($request->url(), '/search/jql')
                 && str_contains($request->url(), 'jql=')
+                && str_contains($request->url(), 'fields=')
                 && $request->hasHeader('Authorization', 'Bearer jira_test_token');
         });
     }
@@ -148,49 +150,46 @@ class JiraClientTest extends TestCase
         });
     }
 
-    public function test_pagination_with_start_at(): void
+    public function test_pagination_with_page_token(): void
     {
         Http::fake([
-            self::BASE . '/search*' => Http::response([
+            self::BASE . '/search/jql*' => Http::response([
                 'issues' => [
                     $this->fakeJiraIssue('10003', 'Third issue'),
                 ],
-                'total' => 3,
-                'startAt' => 2,
-                'maxResults' => 50,
+                'nextPageToken' => 'page-3',
+                'isLast' => false,
             ]),
         ]);
 
-        $result = $this->client->searchIssues('project = TEST', startAt: 2);
+        $result = $this->client->searchIssues('project = TEST', pageToken: 'page-2');
 
         $this->assertCount(1, $result['issues']);
-        $this->assertEquals(2, $result['startAt']);
+        $this->assertEquals('page-3', $result['nextPageToken']);
+        $this->assertFalse($result['isLast']);
 
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'startAt=2');
+            return str_contains($request->url(), 'nextPageToken=page-2');
         });
     }
 
     public function test_all_issues_fetches_all_pages(): void
     {
         Http::fake([
-            self::BASE . '/search*' => Http::sequence()
+            self::BASE . '/search/jql*' => Http::sequence()
                 ->push([
                     'issues' => [
                         $this->fakeJiraIssue('10001', 'First'),
                         $this->fakeJiraIssue('10002', 'Second'),
                     ],
-                    'total' => 3,
-                    'startAt' => 0,
-                    'maxResults' => 2,
+                    'nextPageToken' => 'page-2',
+                    'isLast' => false,
                 ])
                 ->push([
                     'issues' => [
                         $this->fakeJiraIssue('10003', 'Third'),
                     ],
-                    'total' => 3,
-                    'startAt' => 2,
-                    'maxResults' => 2,
+                    'isLast' => true,
                 ]),
         ]);
 
