@@ -29,6 +29,30 @@ class extends Component {
         $source->update(['is_intake_paused' => ! $source->is_intake_paused]);
     }
 
+    public function togglePauseRepo(int $sourceId, string $repoFullName): void
+    {
+        $source = Source::findOrFail($sourceId);
+
+        if ($source->type->value !== 'github') {
+            return;
+        }
+
+        $repos = $source->config['repositories'] ?? [];
+        if (! in_array($repoFullName, $repos, true)) {
+            return;
+        }
+
+        $paused = $source->paused_repositories ?? [];
+
+        if (in_array($repoFullName, $paused, true)) {
+            $paused = array_values(array_diff($paused, [$repoFullName]));
+        } else {
+            $paused[] = $repoFullName;
+        }
+
+        $source->update(['paused_repositories' => $paused]);
+    }
+
     public function syncNow(int $sourceId): void
     {
         $source = Source::findOrFail($sourceId);
@@ -245,7 +269,10 @@ class extends Component {
 
                     {{-- Repositories (GitHub only) --}}
                     @if ($source->type->value === 'github')
-                        @php $repos = $source->config['repositories'] ?? []; @endphp
+                        @php
+                            $repos = $source->config['repositories'] ?? [];
+                            $pausedRepos = $source->paused_repositories ?? [];
+                        @endphp
                         <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
                             <div class="flex items-center justify-between">
                                 <span class="font-label text-[10px] text-outline uppercase tracking-wider">Repositories</span>
@@ -258,13 +285,31 @@ class extends Component {
                                     None selected · sync will fail until you pick repos
                                 </p>
                             @else
-                                <div class="flex items-center gap-1.5 flex-wrap">
+                                <ul class="divide-y divide-outline-variant/20">
                                     @foreach ($repos as $repoName)
-                                        <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[10px] tracking-wider font-mono">
-                                            {{ $repoName }}
-                                        </span>
+                                        @php $repoPaused = in_array($repoName, $pausedRepos, true); @endphp
+                                        <li wire:key="repo-{{ $source->id }}-{{ $repoName }}"
+                                            class="flex items-center justify-between gap-2 py-1.5">
+                                            <div class="flex items-center gap-1.5 min-w-0">
+                                                <span class="font-mono text-[11px] text-on-surface-variant truncate">{{ $repoName }}</span>
+                                                @if ($repoPaused)
+                                                    <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
+                                                        Paused
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center rounded bg-secondary-container/30 text-secondary px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
+                                                        Active
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <button type="button"
+                                                    wire:click="togglePauseRepo({{ $source->id }}, '{{ $repoName }}')"
+                                                    class="shrink-0 rounded px-2 py-0.5 font-label text-[10px] uppercase tracking-wider {{ $repoPaused ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest' }}">
+                                                {{ $repoPaused ? 'Resume' : 'Pause' }}
+                                            </button>
+                                        </li>
                                     @endforeach
-                                </div>
+                                </ul>
                             @endif
                         </div>
                     @endif

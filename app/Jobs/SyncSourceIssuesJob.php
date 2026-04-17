@@ -6,6 +6,7 @@ use App\Enums\IssueStatus;
 use App\Enums\SourceType;
 use App\Models\Component;
 use App\Models\Issue;
+use App\Models\Repository;
 use App\Models\Source;
 use App\Services\FilterRuleService;
 use App\Services\GitHubClient;
@@ -37,6 +38,7 @@ class SyncSourceIssuesJob implements ShouldQueue
 
         if (! $token) {
             $this->recordError('No OAuth token found for this source.');
+
             return;
         }
 
@@ -74,8 +76,12 @@ class SyncSourceIssuesJob implements ShouldQueue
         $mapped = [];
 
         foreach ($repos as $repoFullName) {
+            if ($this->source->isRepositoryPaused($repoFullName)) {
+                continue;
+            }
+
             [$owner, $repo] = explode('/', $repoFullName, 2);
-            $repository = \App\Models\Repository::firstOrCreate(
+            $repository = Repository::firstOrCreate(
                 ['name' => $repoFullName],
             );
 
@@ -86,7 +92,7 @@ class SyncSourceIssuesJob implements ShouldQueue
                     continue;
                 }
                 $attrs = GitHubClient::mapToIssueAttributes($ghIssue);
-                $attrs['external_id'] = $repoFullName . '#' . $attrs['external_id'];
+                $attrs['external_id'] = $repoFullName.'#'.$attrs['external_id'];
                 $attrs['repository_id'] = $repository->id;
                 $mapped[] = $attrs;
             }
@@ -174,6 +180,7 @@ class SyncSourceIssuesJob implements ShouldQueue
 
         if ($existing) {
             $this->updateExistingIssue($existing, $issueData);
+
             return;
         }
 
