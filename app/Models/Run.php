@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\RunStatus;
 use App\Enums\StuckState;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +29,9 @@ class Run extends Model
         'clarification_questions',
         'clarification_answers',
         'iteration',
+        'has_conflicts',
+        'conflict_detected_at',
+        'conflict_files',
         'started_at',
         'completed_at',
     ];
@@ -41,11 +45,27 @@ class Run extends Model
             'known_facts' => 'array',
             'clarification_questions' => 'array',
             'clarification_answers' => 'array',
+            'conflict_files' => 'array',
             'stuck_unread' => 'boolean',
+            'has_conflicts' => 'boolean',
             'iteration' => 'integer',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'conflict_detected_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Runs that are still actively in the pipeline — i.e. have a
+     * worktree and should be considered for conflict detection.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            RunStatus::Pending,
+            RunStatus::Running,
+            RunStatus::Stuck,
+        ]);
     }
 
     public function issue(): BelongsTo

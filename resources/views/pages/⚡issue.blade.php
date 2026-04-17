@@ -129,6 +129,11 @@ class extends Component
                                 @if ($listRun && $listRun->iteration > 1)
                                     <span class="text-xs text-primary">↺ {{ $listRun->iteration }}</span>
                                 @endif
+                                @if ($listRun && $listRun->has_conflicts)
+                                    <span class="inline-flex items-center rounded-full bg-error-container/40 text-error px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-widest" title="Merge conflicts detected">
+                                        Conflict
+                                    </span>
+                                @endif
                             </div>
                         </a>
                     @endforeach
@@ -365,6 +370,33 @@ class extends Component
 
                 @if ($activeIssue)
                     <div class="p-4 flex-1 overflow-y-auto">
+                        @if ($latestRun && $latestRun->has_conflicts)
+                            <div class="mb-4 rounded-md bg-error-container/30 border border-error/40 p-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center rounded-full bg-error text-on-error px-2 py-0.5 font-label text-[10px] uppercase tracking-widest">
+                                        Merge Conflict
+                                    </span>
+                                    @if ($latestRun->conflict_detected_at)
+                                        <span class="text-xs text-on-surface-variant">{{ $latestRun->conflict_detected_at->diffForHumans() }}</span>
+                                    @endif
+                                </div>
+                                @if (! empty($latestRun->conflict_files))
+                                    <ul class="mt-2 text-xs text-on-surface-variant font-mono space-y-0.5">
+                                        @foreach ($latestRun->conflict_files as $file)
+                                            <li>{{ $file }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                                <form method="POST" action="{{ route('issues.resolve-conflicts', $latestRun) }}" class="mt-3">
+                                    @csrf
+                                    <button type="submit" data-resolve-btn
+                                            class="w-full rounded-md bg-error px-4 py-2 text-sm font-medium text-on-error hover:bg-error/90 transition-colors">
+                                        Resolve with AI
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+
                         @if ($currentStage && $currentStage->status === \App\Enums\StageStatus::AwaitingApproval)
                             <div class="mb-4">
                                 <span class="inline-flex items-center rounded-full bg-stage-stuck/20 text-stage-stuck px-2.5 py-0.5 font-label text-[10px] uppercase tracking-widest">
