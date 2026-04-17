@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\RunStatus;
 use App\Enums\StageStatus;
+use App\Jobs\ResolveConflictsJob;
 use App\Models\Run;
 use App\Models\Stage;
 use App\Services\OrchestratorService;
@@ -59,6 +60,21 @@ class IssueViewController extends Controller
 
         return redirect()->route('issues.show', $stage->run->issue)
             ->with('success', ucfirst($stage->name->value) . ' stage retrying.');
+    }
+
+    public function resolveConflicts(Run $run): RedirectResponse
+    {
+        $run->load('issue');
+
+        if (! $run->has_conflicts) {
+            return redirect()->route('issues.show', $run->issue)
+                ->with('error', 'This run has no detected conflicts.');
+        }
+
+        ResolveConflictsJob::dispatch($run);
+
+        return redirect()->route('issues.show', $run->issue)
+            ->with('success', 'Conflict resolution started. This may take a few minutes.');
     }
 
     public function guidance(Run $run, Request $request): RedirectResponse

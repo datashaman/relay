@@ -12,8 +12,10 @@ use App\Models\Issue;
 use App\Models\Run;
 use App\Models\Source;
 use App\Models\Stage;
+use App\Jobs\ResolveConflictsJob;
 use App\Services\OrchestratorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class IssueViewTest extends TestCase
@@ -269,6 +271,89 @@ class IssueViewTest extends TestCase
         $content = $response->getContent();
         $this->assertStringContainsString('grid-cols-1', $content);
         $this->assertStringContainsString('lg:grid-cols-12', $content);
+    }
+
+    public function test_conflict_badge_shown_when_run_has_conflicts(): void
+    {
+        $issue = $this->createPipelineIssue();
+        $run = Run::factory()->create([
+            'issue_id' => $issue->id,
+            'status' => RunStatus::Running,
+            'has_conflicts' => true,
+            'conflict_detected_at' => now(),
+            'conflict_files' => ['src/Foo.php', 'src/Bar.php'],
+        ]);
+        Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Stuck,
+        ]);
+
+        $response = $this->get(route('issues.show', $issue));
+
+        $response->assertStatus(200);
+        $response->assertSee('Merge Conflict');
+        $response->assertSee('Resolve with AI');
+        $response->assertSee('src/Foo.php');
+    }
+
+    public function test_no_conflict_badge_when_run_is_clean(): void
+    {
+        $issue = $this->createPipelineIssue();
+        $run = Run::factory()->create([
+            'issue_id' => $issue->id,
+            'status' => RunStatus::Running,
+            'has_conflicts' => false,
+        ]);
+        Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Implement,
+            'status' => StageStatus::Running,
+        ]);
+
+        $response = $this->get(route('issues.show', $issue));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('Resolve with AI');
+    }
+
+    public function test_resolve_conflicts_dispatches_job(): void
+    {
+        Queue::fake();
+
+        $issue = $this->createPipelineIssue();
+        $run = Run::factory()->create([
+            'issue_id' => $issue->id,
+            'status' => RunStatus::Running,
+            'has_conflicts' => true,
+            'conflict_detected_at' => now(),
+            'conflict_files' => ['a.php'],
+        ]);
+
+        $response = $this->post(route('issues.resolve-conflicts', $run));
+
+        $response->assertRedirect(route('issues.show', $issue));
+        $response->assertSessionHas('success');
+        Queue::assertPushed(ResolveConflictsJob::class, function ($job) use ($run) {
+            return $job->run->id === $run->id;
+        });
+    }
+
+    public function test_resolve_conflicts_rejects_when_no_conflicts(): void
+    {
+        Queue::fake();
+
+        $issue = $this->createPipelineIssue();
+        $run = Run::factory()->create([
+            'issue_id' => $issue->id,
+            'status' => RunStatus::Running,
+            'has_conflicts' => false,
+        ]);
+
+        $response = $this->post(route('issues.resolve-conflicts', $run));
+
+        $response->assertSessionHas('error');
+        Queue::assertNotPushed(ResolveConflictsJob::class);
     }
 
     public function test_completed_issue_shows_completed_badge(): void
