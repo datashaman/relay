@@ -3,12 +3,12 @@
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new
 #[Layout('layouts::app', ['containerClass' => 'max-w-7xl'])]
-class extends Component {
+class extends Component
+{
     public Issue $issue;
 
     public function title(): string
@@ -165,7 +165,7 @@ class extends Component {
                             @if ($latestRun->preflight_doc)
                                 <details open>
                                     <summary class="cursor-pointer text-sm font-semibold text-on-surface-variant">Preflight Doc</summary>
-                                    <div class="mt-2 prose prose-sm dark:prose-invert max-w-none bg-surface-container rounded-xl p-3 text-xs whitespace-pre-wrap">{{ $latestRun->preflight_doc }}</div>
+                                    <x-markdown :content="$latestRun->preflight_doc" class="mt-2 prose prose-sm dark:prose-invert max-w-none bg-surface-container rounded-xl p-3 text-xs" />
                                 </details>
                             @endif
 
