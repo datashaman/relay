@@ -17,6 +17,7 @@ Route::post('/sources/{source}/sync', [SourceController::class, 'syncNow'])->nam
 
 Route::post('/issues/stages/{stage}/approve', [IssueViewController::class, 'approve'])->name('issues.approve');
 Route::post('/issues/stages/{stage}/reject', [IssueViewController::class, 'reject'])->name('issues.reject-stage');
+Route::post('/issues/stages/{stage}/retry', [IssueViewController::class, 'retry'])->name('issues.retry-stage');
 Route::post('/issues/runs/{run}/guidance', [IssueViewController::class, 'guidance'])->name('issues.guidance');
 
 Route::livewire('/issues/{issue}', 'pages::issue')->name('issues.show');

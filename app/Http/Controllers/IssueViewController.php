@@ -46,6 +46,21 @@ class IssueViewController extends Controller
             ->with('success', ucfirst($stage->name->value) . ' stage rejected.');
     }
 
+    public function retry(Stage $stage): RedirectResponse
+    {
+        $stage->load('run.issue');
+
+        if ($stage->status !== StageStatus::Failed) {
+            return redirect()->route('issues.show', $stage->run->issue)
+                ->with('error', 'This stage has not failed.');
+        }
+
+        $this->orchestrator->retryStage($stage);
+
+        return redirect()->route('issues.show', $stage->run->issue)
+            ->with('success', ucfirst($stage->name->value) . ' stage retrying.');
+    }
+
     public function guidance(Run $run, Request $request): RedirectResponse
     {
         $run->load('issue');
