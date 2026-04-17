@@ -8,7 +8,8 @@ use Livewire\Component;
 new
 #[Title('Preflight Doc')]
 #[Layout('layouts::app')]
-class extends Component {
+class extends Component
+{
     public Run $run;
 
     public function mount(): void
@@ -49,9 +50,7 @@ class extends Component {
     </a>
 </div>
 
-<div class="prose dark:prose-invert max-w-none rounded-xl bg-surface-container-low p-6">
-    {!! nl2br(e($doc)) !!}
-</div>
+<x-markdown :content="$doc" class="prose dark:prose-invert max-w-none rounded-xl bg-surface-container-low p-6" />
 
 @if (! empty($history))
     <div class="mt-8">
@@ -65,7 +64,7 @@ class extends Component {
                             (iteration {{ $version['iteration'] }})
                         @endif
                     </summary>
-                    <div class="px-4 pb-4 text-sm text-on-surface-variant whitespace-pre-wrap">{{ $version['doc'] }}</div>
+                    <x-markdown :content="$version['doc']" class="px-4 pb-4 prose prose-sm dark:prose-invert max-w-none text-on-surface-variant" />
                 </details>
             @endforeach
         </div>
