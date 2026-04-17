@@ -10,6 +10,7 @@ use App\Models\Source;
 use App\Services\FilterRuleService;
 use App\Services\OauthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class IssueQueueTest extends TestCase
@@ -253,7 +254,54 @@ class IssueQueueTest extends TestCase
         $response = $this->get('/intake');
 
         $content = $response->getContent();
-        $this->assertStringNotContainsString('issues/' . Issue::first()->id . '/accept', $content);
+        $this->assertStringNotContainsString('issues/'.Issue::first()->id.'/accept', $content);
+    }
+
+    public function test_toggle_pause_repo_adds_and_removes_entry(): void
+    {
+        $source = $this->createSource([
+            'type' => SourceType::GitHub,
+            'config' => ['repositories' => ['owner/repo1', 'owner/repo2']],
+        ]);
+
+        Livewire::test('pages::intake')
+            ->call('togglePauseRepo', $source->id, 'owner/repo1');
+
+        $this->assertEquals(['owner/repo1'], $source->fresh()->paused_repositories);
+
+        Livewire::test('pages::intake')
+            ->call('togglePauseRepo', $source->id, 'owner/repo1');
+
+        $this->assertEquals([], $source->fresh()->paused_repositories);
+    }
+
+    public function test_toggle_pause_repo_ignores_repo_not_in_config(): void
+    {
+        $source = $this->createSource([
+            'type' => SourceType::GitHub,
+            'config' => ['repositories' => ['owner/repo1']],
+        ]);
+
+        Livewire::test('pages::intake')
+            ->call('togglePauseRepo', $source->id, 'owner/unknown');
+
+        $this->assertNull($source->fresh()->paused_repositories);
+    }
+
+    public function test_toggle_pause_repo_does_not_affect_source_pause(): void
+    {
+        $source = $this->createSource([
+            'type' => SourceType::GitHub,
+            'is_intake_paused' => false,
+            'config' => ['repositories' => ['owner/repo1', 'owner/repo2']],
+        ]);
+
+        Livewire::test('pages::intake')
+            ->call('togglePauseRepo', $source->id, 'owner/repo1');
+
+        $fresh = $source->fresh();
+        $this->assertFalse($fresh->is_intake_paused);
+        $this->assertEquals(['owner/repo1'], $fresh->paused_repositories);
     }
 
     public function test_labels_displayed_on_issues(): void

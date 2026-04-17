@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\IssueStatus;
 use App\Enums\SourceType;
 use App\Jobs\SyncSourceIssuesJob;
+use App\Models\Component;
 use App\Models\FilterRule;
 use App\Models\Issue;
 use App\Models\OauthToken;
@@ -293,7 +294,7 @@ class IssueSyncTest extends TestCase
         $source = $this->createJiraSource();
         $this->createToken($source);
 
-        $existing = \App\Models\Component::create([
+        $existing = Component::create([
             'source_id' => $source->id,
             'external_id' => '500',
             'name' => 'old-name',
@@ -317,7 +318,7 @@ class IssueSyncTest extends TestCase
 
         SyncSourceIssuesJob::dispatchSync($source);
 
-        $this->assertSame(1, \App\Models\Component::where('source_id', $source->id)->count());
+        $this->assertSame(1, Component::where('source_id', $source->id)->count());
         $this->assertSame('yuvee', $existing->fresh()->name);
     }
 
@@ -566,6 +567,57 @@ class IssueSyncTest extends TestCase
         $this->assertDatabaseCount('issues', 2);
         $this->assertDatabaseHas('issues', ['external_id' => 'owner/repo1#1', 'title' => 'Repo1 issue']);
         $this->assertDatabaseHas('issues', ['external_id' => 'owner/repo2#1', 'title' => 'Repo2 issue']);
+    }
+
+    public function test_sync_skips_individually_paused_repo(): void
+    {
+        $source = $this->createGitHubSource([
+            'repositories' => ['owner/repo1', 'owner/repo2'],
+        ]);
+        $source->update(['paused_repositories' => ['owner/repo1']]);
+        $this->createToken($source);
+
+        Http::fake([
+            'api.github.com/repos/owner/repo1/issues*' => Http::response([
+                ['number' => 1, 'title' => 'Repo1 issue', 'body' => '', 'html_url' => 'https://github.com/owner/repo1/issues/1', 'assignee' => null, 'labels' => []],
+            ]),
+            'api.github.com/repos/owner/repo2/issues*' => Http::response([
+                ['number' => 1, 'title' => 'Repo2 issue', 'body' => '', 'html_url' => 'https://github.com/owner/repo2/issues/1', 'assignee' => null, 'labels' => []],
+            ]),
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $this->assertDatabaseCount('issues', 1);
+        $this->assertDatabaseMissing('issues', ['external_id' => 'owner/repo1#1']);
+        $this->assertDatabaseHas('issues', ['external_id' => 'owner/repo2#1', 'title' => 'Repo2 issue']);
+
+        Http::assertNotSent(fn ($request) => str_contains((string) $request->url(), '/repos/owner/repo1/issues'));
+    }
+
+    public function test_source_level_pause_takes_precedence_over_per_repo(): void
+    {
+        $source = $this->createGitHubSource([
+            'repositories' => ['owner/repo1', 'owner/repo2'],
+        ]);
+        $source->update([
+            'is_intake_paused' => true,
+            'paused_repositories' => [],
+        ]);
+        $this->createToken($source);
+
+        Http::fake([
+            'api.github.com/repos/owner/repo1/issues*' => Http::response([
+                ['number' => 1, 'title' => 'Repo1 issue', 'body' => '', 'html_url' => 'https://github.com/owner/repo1/issues/1', 'assignee' => null, 'labels' => []],
+            ]),
+            'api.github.com/repos/owner/repo2/issues*' => Http::response([
+                ['number' => 1, 'title' => 'Repo2 issue', 'body' => '', 'html_url' => 'https://github.com/owner/repo2/issues/1', 'assignee' => null, 'labels' => []],
+            ]),
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $this->assertDatabaseCount('issues', 0);
     }
 
     public function test_configurable_sync_interval(): void

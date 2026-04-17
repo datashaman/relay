@@ -37,10 +37,18 @@ class extends Component {
 
     public function save()
     {
+        $selected = array_values($this->selected);
+
+        $paused = array_values(array_intersect(
+            $this->source->paused_repositories ?? [],
+            $selected,
+        ));
+
         $this->source->update([
             'config' => array_merge($this->source->config ?? [], [
-                'repositories' => array_values($this->selected),
+                'repositories' => $selected,
             ]),
+            'paused_repositories' => $paused,
         ]);
 
         session()->flash('success', count($this->selected).' repositories selected for '.$this->source->external_account.'.');

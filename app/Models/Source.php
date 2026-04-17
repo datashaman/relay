@@ -19,6 +19,7 @@ class Source extends Model
         'last_synced_at',
         'is_active',
         'is_intake_paused',
+        'paused_repositories',
         'backlog_threshold',
         'config',
         'sync_error',
@@ -33,11 +34,17 @@ class Source extends Model
             'last_synced_at' => 'datetime',
             'is_active' => 'boolean',
             'is_intake_paused' => 'boolean',
+            'paused_repositories' => 'array',
             'backlog_threshold' => 'integer',
             'config' => 'array',
             'next_retry_at' => 'datetime',
             'sync_interval' => 'integer',
         ];
+    }
+
+    public function isRepositoryPaused(string $repoFullName): bool
+    {
+        return in_array($repoFullName, $this->paused_repositories ?? [], true);
     }
 
     public function issues(): HasMany

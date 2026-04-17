@@ -163,6 +163,24 @@ class GithubSelectReposTest extends TestCase
         Http::assertNotSent(fn ($request) => str_contains((string) $request->url(), '/search/repositories'));
     }
 
+    public function test_save_prunes_orphaned_paused_repositories(): void
+    {
+        $source = $this->createGithubSourceWithToken(['repositories' => ['acme/api', 'acme/web']]);
+        $source->update(['paused_repositories' => ['acme/api', 'acme/web']]);
+
+        $this->fakeReposResponse([
+            ['full_name' => 'acme/api', 'private' => false, 'description' => null, 'updated_at' => '2026-04-10T00:00:00Z'],
+        ]);
+
+        Livewire::test('pages::github-select-repos', ['source' => $source])
+            ->call('toggle', 'acme/web')
+            ->call('save');
+
+        $source->refresh();
+        $this->assertEquals(['acme/api'], $source->config['repositories']);
+        $this->assertEquals(['acme/api'], $source->paused_repositories);
+    }
+
     public function test_non_github_source_is_rejected(): void
     {
         $source = Source::factory()->create([
