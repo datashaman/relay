@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\EscalationRuleController;
+use App\Http\Controllers\GitHubWebhookController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueViewController;
+use App\Http\Controllers\JiraWebhookController;
 use App\Http\Controllers\OauthController;
 use App\Http\Controllers\RunProgressController;
 use App\Http\Controllers\SourceController;
@@ -66,3 +68,6 @@ Route::get('/runs/{run}/progress', [RunProgressController::class, 'show'])->name
 Route::livewire('/runs/{run}/timeline', 'pages::run-timeline')->name('runs.timeline');
 
 Route::livewire('/activity', 'pages::activity')->name('activity.index');
+
+Route::post('/webhooks/github/{source}', GitHubWebhookController::class)->name('webhooks.github');
+Route::post('/webhooks/jira/{source}/{token}', JiraWebhookController::class)->name('webhooks.jira');

@@ -178,7 +178,7 @@ class IssueQueueTest extends TestCase
         ]);
 
         $job = new SyncSourceIssuesJob($source);
-        $job->handle(app(OauthService::class), app(FilterRuleService::class));
+        $job->handle(app(OauthService::class), app(\App\Services\IssueIntakeService::class));
 
         $this->assertEquals(0, Issue::count());
     }
@@ -199,7 +199,7 @@ class IssueQueueTest extends TestCase
         ]);
 
         $job = new SyncSourceIssuesJob($source);
-        $job->handle(app(OauthService::class), app(FilterRuleService::class));
+        $job->handle(app(OauthService::class), app(\App\Services\IssueIntakeService::class));
 
         $this->assertEquals(2, Issue::count());
     }

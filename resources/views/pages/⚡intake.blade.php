@@ -139,6 +139,8 @@ class extends Component {
     {
         $sources = Source::with('filterRule')->orderBy('name')->get();
 
+        $sources->each->ensureWebhookSecret();
+
         return [
             'sources' => $sources,
             'pausedCount' => $sources->where('is_intake_paused', true)->count(),
@@ -387,6 +389,45 @@ class extends Component {
                             @endif
                         </div>
                     @endif
+
+                    {{-- Webhook health --}}
+                    @php
+                        $webhookUrl = $source->type->value === 'github'
+                            ? route('webhooks.github', $source)
+                            : route('webhooks.jira', [$source, $source->webhook_secret]);
+                    @endphp
+                    <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-label text-[10px] text-outline uppercase tracking-wider">Webhook</span>
+                            @if ($source->webhook_last_delivery_at)
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">
+                                    Last delivery {{ $source->webhook_last_delivery_at->diffForHumans(null, true) }} ago
+                                </span>
+                            @else
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Never delivered</span>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" readonly
+                                   value="{{ $webhookUrl }}"
+                                   class="flex-1 min-w-0 bg-surface-container-high text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
+                                   onclick="this.select()">
+                        </div>
+                        @if ($source->type->value === 'github')
+                            <div class="flex items-center gap-2">
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Secret</span>
+                                <input type="text" readonly
+                                       value="{{ $source->webhook_secret }}"
+                                       class="flex-1 min-w-0 bg-surface-container-high text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
+                                       onclick="this.select()">
+                            </div>
+                        @endif
+                        @if ($source->webhook_last_error)
+                            <div class="rounded-md bg-error-container/20 border-l-2 border-error px-2 py-1.5">
+                                <p class="text-xs text-error leading-snug">{{ $source->webhook_last_error }}</p>
+                            </div>
+                        @endif
+                    </div>
 
                     {{-- Filter rules summary --}}
                     @php $rule = $source->filterRule; @endphp

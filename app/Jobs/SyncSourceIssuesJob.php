@@ -4,12 +4,10 @@ namespace App\Jobs;
 
 use App\Enums\IssueStatus;
 use App\Enums\SourceType;
-use App\Models\Component;
-use App\Models\Issue;
 use App\Models\Repository;
 use App\Models\Source;
-use App\Services\FilterRuleService;
 use App\Services\GitHubClient;
+use App\Services\IssueIntakeService;
 use App\Services\JiraClient;
 use App\Services\OauthService;
 use Illuminate\Bus\Queueable;
@@ -26,7 +24,7 @@ class SyncSourceIssuesJob implements ShouldQueue
         public Source $source,
     ) {}
 
-    public function handle(OauthService $oauth, FilterRuleService $filterService): void
+    public function handle(OauthService $oauth, IssueIntakeService $intake): void
     {
         if ($this->isIntakePaused()) {
             return;
@@ -47,11 +45,11 @@ class SyncSourceIssuesJob implements ShouldQueue
 
             $rawIssues = match ($this->source->type) {
                 SourceType::GitHub => $this->fetchGitHubIssues($token, $oauth),
-                SourceType::Jira => $this->fetchJiraIssues($token, $oauth),
+                SourceType::Jira => $this->fetchJiraIssues($token, $oauth, $intake),
             };
 
             foreach ($rawIssues as $issueData) {
-                $this->syncIssue($issueData, $filterService);
+                $intake->upsertIssue($this->source, $issueData);
             }
 
             $this->source->update([
@@ -101,7 +99,7 @@ class SyncSourceIssuesJob implements ShouldQueue
         return $mapped;
     }
 
-    private function fetchJiraIssues($token, OauthService $oauth): array
+    private function fetchJiraIssues($token, OauthService $oauth, IssueIntakeService $intake): array
     {
         $client = new JiraClient($token, $oauth, $this->source);
         $jql = $this->buildJiraJql();
@@ -111,33 +109,12 @@ class SyncSourceIssuesJob implements ShouldQueue
         foreach ($issues as $jiraIssue) {
             $attrs = JiraClient::mapToIssueAttributes($jiraIssue);
             unset($attrs['status']);
-            $attrs['component_id'] = $this->resolveComponentId($attrs);
+            $attrs['component_id'] = $intake->resolveComponentId($this->source, $attrs);
             unset($attrs['component_external_id'], $attrs['component_name']);
             $mapped[] = $attrs;
         }
 
         return $mapped;
-    }
-
-    private function resolveComponentId(array $attrs): ?int
-    {
-        $externalId = $attrs['component_external_id'] ?? null;
-        $name = $attrs['component_name'] ?? null;
-
-        if (! $externalId) {
-            return null;
-        }
-
-        $component = Component::firstOrCreate(
-            ['source_id' => $this->source->id, 'external_id' => $externalId],
-            ['name' => $name ?? $externalId],
-        );
-
-        if ($name !== null && $component->name !== $name) {
-            $component->update(['name' => $name]);
-        }
-
-        return $component->id;
     }
 
     private function buildJiraJql(): string
@@ -170,45 +147,6 @@ class SyncSourceIssuesJob implements ShouldQueue
         $clauses[] = '('.$base.')';
 
         return implode(' AND ', $clauses).' ORDER BY updated DESC';
-    }
-
-    private function syncIssue(array $issueData, FilterRuleService $filterService): void
-    {
-        $existing = Issue::where('source_id', $this->source->id)
-            ->where('external_id', $issueData['external_id'])
-            ->first();
-
-        if ($existing) {
-            $this->updateExistingIssue($existing, $issueData);
-
-            return;
-        }
-
-        $filterService->applyToSync($issueData, $this->source);
-    }
-
-    private function updateExistingIssue(Issue $issue, array $issueData): void
-    {
-        $updatable = ['title', 'body', 'external_url', 'assignee', 'labels', 'raw_status'];
-        $changes = [];
-
-        foreach ($updatable as $field) {
-            if (array_key_exists($field, $issueData) && $issue->{$field} !== $issueData[$field]) {
-                $changes[$field] = $issueData[$field];
-            }
-        }
-
-        if ($issue->repository_id === null && ! empty($issueData['repository_id'])) {
-            $changes['repository_id'] = $issueData['repository_id'];
-        }
-
-        if (array_key_exists('component_id', $issueData) && $issue->component_id !== $issueData['component_id']) {
-            $changes['component_id'] = $issueData['component_id'];
-        }
-
-        if (! empty($changes)) {
-            $issue->update($changes);
-        }
     }
 
     private function isIntakePaused(): bool
