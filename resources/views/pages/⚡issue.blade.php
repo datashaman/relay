@@ -437,11 +437,21 @@ class extends Component {
                             </div>
 
                         @elseif ($latestRun && $latestRun->status === \App\Enums\RunStatus::Failed)
-                            <div class="text-center py-6">
-                                <span class="inline-flex items-center rounded-full bg-error-container/30 text-error px-3 py-1 text-sm font-medium">
-                                    Failed
+                            @php $failedStage = $latestRun->stages()->where('status', \App\Enums\StageStatus::Failed)->latest('id')->first(); @endphp
+                            <div class="mb-4">
+                                <span class="inline-flex items-center rounded-full bg-error-container/30 text-error px-2.5 py-0.5 font-label text-[10px] uppercase tracking-widest">
+                                    Failed{{ $failedStage ? ' — ' . ucfirst($failedStage->name->value) : '' }}
                                 </span>
                             </div>
+                            @if ($failedStage)
+                                <form method="POST" action="{{ route('issues.retry-stage', $failedStage) }}">
+                                    @csrf
+                                    <button type="submit" data-retry-btn
+                                            class="w-full rounded-md bg-error px-4 py-2 text-sm font-medium text-on-error hover:bg-error/90 transition-colors">
+                                        Retry
+                                    </button>
+                                </form>
+                            @endif
 
                         @else
                             <div class="text-center py-6 text-sm text-on-surface-variant">

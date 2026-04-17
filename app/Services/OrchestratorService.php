@@ -221,6 +221,23 @@ class OrchestratorService
         $this->transitionStage($newStage, ['guidance' => $guidance]);
     }
 
+    public function retryStage(Stage $stage): void
+    {
+        $run = $stage->run;
+
+        $run->update([
+            'status' => RunStatus::Running,
+            'completed_at' => null,
+        ]);
+
+        $run->issue->update(['status' => IssueStatus::InProgress]);
+
+        $newStage = $this->createStage($run, $stage->name, $stage->iteration);
+        $this->recordEvent($newStage, 'retried', 'user');
+
+        $this->transitionStage($newStage);
+    }
+
     public function restart(Run $run): void
     {
         $run->update([
