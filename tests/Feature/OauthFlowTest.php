@@ -438,11 +438,11 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/jira/callback?code=auth-code&state={$state}");
 
-        $response->assertRedirect('/intake');
-        $response->assertSessionHas('success', 'Jira connected successfully (My Jira Site).');
-
         $source = Source::where('type', 'jira')->first();
         $this->assertNotNull($source);
+        $response->assertRedirect(route('jira.select-projects', $source));
+        $response->assertSessionHas('success', 'Jira connected. Pick the projects Relay should sync.');
+
         $this->assertEquals('My Jira Site', $source->external_account);
         $this->assertEquals('cloud-id-abc', $source->config['cloud_id']);
         $this->assertEquals('https://mysite.atlassian.net', $source->config['site_url']);
@@ -501,7 +501,7 @@ class OauthFlowTest extends TestCase
 
         \Livewire\Livewire::test('pages::jira-select-site')
             ->call('selectSite', 'cloud-2')
-            ->assertRedirect('/intake');
+            ->assertRedirect('/sources/1/projects');
 
         $source = Source::where('type', 'jira')->first();
         $this->assertNotNull($source);

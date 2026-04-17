@@ -22,7 +22,7 @@ Issues enter via connected sources (GitHub Issues, Jira), pass through an intake
 `App\Services\OrchestratorService` drives the pipeline. It manages stage lifecycle and enforces autonomy gates at every transition.
 
 **Stage lifecycle methods:**
-- `startRun(Issue, context)` — creates a Run, starts Preflight
+- `startRun(Issue, Repository?, context)` — creates a Run pinned to a specific repository, starts Preflight. For GitHub issues the repo is taken from `issue->repository`; for Jira issues (where the issue belongs to a Component that maps to one or more repositories) the caller picks a specific repo.
 - `startStage(Stage, context)` — dispatches execution via `ExecuteStageJob`
 - `pause(Stage)` — sets AwaitingApproval for human gate
 - `resume(Stage, context)` — resumes after approval
@@ -136,16 +136,25 @@ Four failure modes, each with a specific resolution path:
 
 ```
 Source ──< Issue ──< Run ──< Stage ──< StageEvent
-  │                   │
-  ├── OauthToken      ├── preflight_doc
-  └── FilterRule      ├── guidance
-                      └── preflight_doc_history
+  │         │         │
+  │         │         └── repository_id (the repo this run operates on)
+  │         │
+  │         ├── repository_id  (GitHub: set at sync time)
+  │         └── component_id   (Jira: set at sync time)
+  │
+  ├── OauthToken
+  ├── FilterRule
+  └── Component ──>< Repository  (many-to-many via component_repository)
 
-Repository (linked to Issue via issue.repository_id)
 AutonomyConfig (keyed by scope + scope_id + stage)
 EscalationRule (condition JSON, target level)
 ProviderConfig (keyed by scope + stage)
 ```
+
+Two paths link an issue to a repository:
+
+- **GitHub:** `issue.repository_id` is set during sync (one repo per issue, matches the GitHub repo the issue lives in).
+- **Jira:** `issue.component_id` is set during sync from the issue's first Jira component (sorted by id). A Component belongs to a Source and can be attached to one or more Repositories via `component_repository`. When starting a run, the caller picks which of those repos to operate on, and the choice is stored on `run.repository_id`.
 
 All models use Eloquent with enum-cast columns. Sensitive fields (tokens, secrets) use the `encrypted` cast.
 

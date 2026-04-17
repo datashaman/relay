@@ -44,6 +44,12 @@ class extends Component {
 
         $oauth->storeToken($source, 'jira', $pending['token_data']);
 
+        if (empty($source->config['projects'] ?? [])) {
+            session()->flash('success', 'Jira connected. Pick the projects Relay should sync.');
+
+            return $this->redirectRoute('jira.select-projects', $source, navigate: true);
+        }
+
         session()->flash('success', 'Jira connected successfully ('.$site['name'].').');
 
         return $this->redirectRoute('intake.index', navigate: true);

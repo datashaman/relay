@@ -215,7 +215,7 @@ PROMPT;
         ]);
 
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
-            $response = $provider->chat($messages, self::TOOLS);
+            $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
 
             if (empty($response['tool_calls'])) {
                 $this->recordEvent($stage, 'release_no_tool_call', 'release_agent', [
@@ -271,7 +271,7 @@ PROMPT;
         $userContent .= "- **Branch:** {$run->branch}\n";
         $userContent .= "- **Issue:** {$run->issue->title}\n";
 
-        $repository = $run->issue->repository;
+        $repository = $run->repository ?? $run->issue->repository;
         if ($repository) {
             $userContent .= "- **Default branch:** {$repository->default_branch}\n";
         }
@@ -403,7 +403,7 @@ PROMPT;
             return 'Error: No OAuth token available for this source.';
         }
 
-        $repository = $issue->repository;
+        $repository = $run->repository ?? $issue->repository;
         if (! $repository) {
             return 'Error: No repository configured for this issue.';
         }

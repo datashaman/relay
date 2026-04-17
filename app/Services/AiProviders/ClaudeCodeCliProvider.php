@@ -8,15 +8,15 @@ use Symfony\Component\Process\Process;
 class ClaudeCodeCliProvider implements AiProvider
 {
     public function __construct(
-        private string $command = 'claude --dangerously-skip-permissions --print --output-format stream-json',
+        private string $command = 'claude --dangerously-skip-permissions --print --output-format stream-json --verbose',
         private ?string $workingDirectory = null,
         private int $timeout = 300,
     ) {}
 
     public function chat(array $messages, array $tools = [], array $options = []): array
     {
-        $args = $this->buildArgs($messages, $options);
-        $process = $this->spawn($args);
+        $args = $this->buildArgs($messages, $options, $tools);
+        $process = $this->spawn($args, $options['cwd'] ?? null);
         $process->run();
 
         if (! $process->isSuccessful()) {
@@ -25,13 +25,13 @@ class ClaudeCodeCliProvider implements AiProvider
             );
         }
 
-        return $this->parseStreamJsonOutput($process->getOutput());
+        return $this->parseStreamJsonOutput($process->getOutput(), $tools);
     }
 
     public function stream(array $messages, array $tools = [], array $options = []): \Generator
     {
-        $args = $this->buildArgs($messages, $options);
-        $process = $this->spawn($args);
+        $args = $this->buildArgs($messages, $options, $tools);
+        $process = $this->spawn($args, $options['cwd'] ?? null);
         $process->start();
 
         $buffer = '';
@@ -66,7 +66,7 @@ class ClaudeCodeCliProvider implements AiProvider
         }
     }
 
-    private function buildArgs(array $messages, array $options): array
+    private function buildArgs(array $messages, array $options, array $tools = []): array
     {
         $args = $this->splitCommand($this->command);
 
@@ -81,18 +81,19 @@ class ClaudeCodeCliProvider implements AiProvider
         }
 
         $args[] = '--';
-        $args[] = $this->buildPrompt($messages);
+        $args[] = $this->buildPrompt($messages, $tools);
 
         return $args;
     }
 
-    private function spawn(array $args): Process
+    private function spawn(array $args, ?string $cwd = null): Process
     {
         $process = new Process($args);
         $process->setTimeout($this->timeout);
 
-        if ($this->workingDirectory) {
-            $process->setWorkingDirectory($this->workingDirectory);
+        $dir = $cwd ?? $this->workingDirectory;
+        if ($dir) {
+            $process->setWorkingDirectory($dir);
         }
 
         return $process;
@@ -103,11 +104,34 @@ class ClaudeCodeCliProvider implements AiProvider
         return preg_split('/\s+/', trim($command)) ?: ['claude'];
     }
 
-    private function buildPrompt(array $messages): string
+    private function buildPrompt(array $messages, array $tools = []): string
     {
         $parts = [];
         foreach ($messages as $msg) {
             $parts[] = $msg['content'];
+        }
+
+        $terminal = $this->pickTerminalTool($tools);
+        if ($terminal !== null) {
+            $schema = json_encode($terminal['parameters'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            $parts[] = <<<PROMPT
+# Response Format
+
+Use your built-in tools (Read, Write, Edit, Bash, Grep, Glob) to
+accomplish the task. All file operations are already scoped to the
+worktree via the working directory.
+
+When — and only when — the task is fully complete, respond with
+**ONLY** a single JSON object matching the schema below. No prose,
+no markdown fences, no explanation outside the JSON.
+
+The JSON you emit will be delivered to the orchestrator as a
+`{$terminal['name']}` tool call.
+
+Schema for `{$terminal['name']}`:
+
+{$schema}
+PROMPT;
         }
 
         return implode("\n\n", $parts);
@@ -116,9 +140,13 @@ class ClaudeCodeCliProvider implements AiProvider
     /**
      * Accumulate the NDJSON stream into a single response matching the
      * AiProvider::chat() contract. Final assistant text lands in content;
-     * tool_use content blocks land in tool_calls.
+     * built-in tool_use blocks (Read/Write/Bash/etc.) land in tool_calls.
+     *
+     * When agent tools are passed, the model is prompted to respond with
+     * raw JSON matching one tool's schema — parse that text and synthesize
+     * a matching tool_calls entry so PreflightAgent et al. can consume it.
      */
-    private function parseStreamJsonOutput(string $output): array
+    private function parseStreamJsonOutput(string $output, array $tools = []): array
     {
         $text = '';
         $toolCalls = [];
@@ -163,12 +191,89 @@ class ClaudeCodeCliProvider implements AiProvider
             }
         }
 
+        $terminal = $this->pickTerminalTool($tools);
+        if ($terminal !== null && $text !== '') {
+            $synthetic = $this->synthesizeToolCall($text, $terminal);
+            if ($synthetic !== null) {
+                $toolCalls[] = $synthetic;
+            }
+        }
+
         return [
             'content' => $text,
             'tool_calls' => $toolCalls,
             'usage' => $usage,
             'raw' => $raw,
         ];
+    }
+
+    /**
+     * Pick the tool the CLI should target with its JSON response.
+     *
+     * For single-tool flows (preflight) that's the one tool. For multi-tool
+     * flows (implement/verify/release) the iterative tool surface is meant
+     * for OpenAI-style function calling which Claude Code doesn't do —
+     * instead we locate the terminal "done" tool by the `_complete` suffix
+     * and map the model's final JSON back to that one. Claude Code uses
+     * its own built-in Read/Write/Bash etc. to do the actual work.
+     */
+    private function pickTerminalTool(array $tools): ?array
+    {
+        if (empty($tools)) {
+            return null;
+        }
+
+        if (count($tools) === 1) {
+            return $tools[0];
+        }
+
+        foreach ($tools as $tool) {
+            if (str_ends_with($tool['name'] ?? '', '_complete')) {
+                return $tool;
+            }
+        }
+
+        return null;
+    }
+
+    private function synthesizeToolCall(string $text, array $tool): ?array
+    {
+        $json = $this->extractJson($text);
+        if ($json === null) {
+            return null;
+        }
+
+        return [
+            'id' => 'synth-'.uniqid(),
+            'name' => $tool['name'] ?? '',
+            'arguments' => $json,
+        ];
+    }
+
+    /**
+     * Pull a JSON object out of arbitrary text. Handles the common shapes:
+     * bare JSON, fenced ```json blocks, or a JSON object embedded in prose.
+     */
+    private function extractJson(string $text): ?array
+    {
+        $text = trim($text);
+
+        // Strip fenced code block if present.
+        if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/s', $text, $m)) {
+            $text = $m[1];
+        }
+
+        // Find first { and matching }.
+        $first = strpos($text, '{');
+        $last = strrpos($text, '}');
+        if ($first === false || $last === false || $last <= $first) {
+            return null;
+        }
+
+        $candidate = substr($text, $first, $last - $first + 1);
+        $decoded = json_decode($candidate, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     private function normalizeEvent(array $event): array

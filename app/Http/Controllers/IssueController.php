@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\IssueStatus;
 use App\Models\Issue;
+use App\Models\Repository;
 use App\Models\Source;
 use App\Services\OrchestratorService;
 use Illuminate\Http\JsonResponse;
@@ -16,17 +17,45 @@ class IssueController extends Controller
         private OrchestratorService $orchestrator,
     ) {}
 
-    public function accept(Issue $issue): RedirectResponse
+    public function accept(Issue $issue, Request $request): RedirectResponse
     {
         if ($issue->status !== IssueStatus::Queued) {
             return redirect()->route('intake.index')
                 ->with('error', 'Only queued issues can be accepted.');
         }
 
-        $this->orchestrator->startRun($issue);
+        $repository = $this->resolveAcceptRepository($issue, $request);
+
+        if ($repository === false) {
+            return redirect()->route('intake.index')
+                ->with('error', 'Pick a repository to start this issue on.');
+        }
+
+        $this->orchestrator->startRun($issue, $repository);
 
         return redirect()->route('intake.index')
             ->with('success', "Issue \"{$issue->title}\" accepted. Preflight starting.");
+    }
+
+    private function resolveAcceptRepository(Issue $issue, Request $request): Repository|false|null
+    {
+        if ($issue->repository_id) {
+            return $issue->repository;
+        }
+
+        if (! $issue->component_id) {
+            return null;
+        }
+
+        $repoId = $request->integer('repository_id');
+
+        if (! $repoId) {
+            return false;
+        }
+
+        $repository = $issue->component->repositories()->whereKey($repoId)->first();
+
+        return $repository ?: false;
     }
 
     public function reject(Issue $issue): RedirectResponse

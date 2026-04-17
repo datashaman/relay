@@ -46,6 +46,12 @@ Route::livewire('/jira/select-site', 'pages::jira-select-site')
 Route::livewire('/sources/{source}/repositories', 'pages::github-select-repos')
     ->name('github.select-repos');
 
+Route::livewire('/sources/{source}/projects', 'pages::jira-select-projects')
+    ->name('jira.select-projects');
+
+Route::livewire('/sources/{source}/components', 'pages::components')
+    ->name('components.index');
+
 Route::livewire('/config', 'pages::config')->name('config.index');
 Route::post('/escalation-rules', [EscalationRuleController::class, 'store'])->name('escalation-rules.store');
 Route::put('/escalation-rules/{escalationRule}', [EscalationRuleController::class, 'update'])->name('escalation-rules.update');

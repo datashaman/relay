@@ -11,6 +11,8 @@ class JiraClient
 {
     private const MAX_RESULTS = 50;
 
+    private const ISSUE_FIELDS = ['summary', 'description', 'assignee', 'labels', 'status', 'components'];
+
     private string $baseUrl;
 
     public function __construct(
@@ -27,34 +29,52 @@ class JiraClient
         $this->baseUrl = "https://api.atlassian.com/ex/jira/{$cloudId}/rest/api/3";
     }
 
-    public function searchIssues(string $jql, int $startAt = 0, int $maxResults = self::MAX_RESULTS): array
+    public function searchIssues(string $jql, ?string $pageToken = null, int $maxResults = self::MAX_RESULTS): array
     {
-        $response = $this->request('get', '/search', [
+        $params = [
             'jql' => $jql,
-            'startAt' => $startAt,
             'maxResults' => $maxResults,
-        ]);
+            'fields' => implode(',', self::ISSUE_FIELDS),
+        ];
+
+        if ($pageToken !== null) {
+            $params['nextPageToken'] = $pageToken;
+        }
+
+        $response = $this->request('get', '/search/jql', $params);
 
         $data = $response->json();
 
         return [
             'issues' => $data['issues'] ?? [],
-            'total' => $data['total'] ?? 0,
-            'startAt' => $data['startAt'] ?? $startAt,
-            'maxResults' => $data['maxResults'] ?? $maxResults,
+            'nextPageToken' => $data['nextPageToken'] ?? null,
+            'isLast' => $data['isLast'] ?? ! isset($data['nextPageToken']),
         ];
     }
 
     public function allIssues(string $jql): array
     {
         $all = [];
-        $startAt = 0;
+        $pageToken = null;
+        $seenTokens = [];
 
-        do {
-            $result = $this->searchIssues($jql, $startAt);
+        while (true) {
+            $result = $this->searchIssues($jql, $pageToken);
             $all = array_merge($all, $result['issues']);
-            $startAt += $result['maxResults'];
-        } while ($startAt < $result['total']);
+
+            if ($result['isLast'] || empty($result['nextPageToken'])) {
+                break;
+            }
+
+            $next = $result['nextPageToken'];
+
+            if (isset($seenTokens[$next])) {
+                throw new \RuntimeException('Jira pagination did not advance (nextPageToken repeated).');
+            }
+            $seenTokens[$next] = true;
+
+            $pageToken = $next;
+        }
 
         return $all;
     }
@@ -67,6 +87,11 @@ class JiraClient
     public function listProjects(): array
     {
         return $this->request('get', '/project')->json();
+    }
+
+    public function listStatuses(): array
+    {
+        return $this->request('get', '/status')->json();
     }
 
     public function listTransitions(string $issueIdOrKey): array
@@ -104,15 +129,42 @@ class JiraClient
     public static function mapToIssueAttributes(array $jiraIssue): array
     {
         $fields = $jiraIssue['fields'] ?? [];
+        $component = self::pickComponent($fields['components'] ?? [], $jiraIssue['key'] ?? $jiraIssue['id'] ?? null);
 
         return [
-            'external_id' => (string) $jiraIssue['id'],
+            'external_id' => (string) ($jiraIssue['key'] ?? $jiraIssue['id']),
             'title' => $fields['summary'] ?? '',
             'body' => self::extractDescription($fields['description'] ?? null),
             'external_url' => $jiraIssue['self'] ?? '',
             'assignee' => $fields['assignee']['displayName'] ?? null,
             'labels' => $fields['labels'] ?? [],
             'status' => self::mapStatus($fields['status']['name'] ?? null),
+            'raw_status' => $fields['status']['name'] ?? null,
+            'component_external_id' => $component['id'] ?? null,
+            'component_name' => $component['name'] ?? null,
+        ];
+    }
+
+    private static function pickComponent(array $components, ?string $issueKey): array
+    {
+        if (empty($components)) {
+            return [];
+        }
+
+        if (count($components) > 1) {
+            \Illuminate\Support\Facades\Log::warning('Jira issue has multiple components; using lowest id.', [
+                'issue_key' => $issueKey,
+                'component_ids' => array_map(fn ($c) => $c['id'] ?? null, $components),
+            ]);
+        }
+
+        usort($components, fn ($a, $b) => ((int) ($a['id'] ?? 0)) <=> ((int) ($b['id'] ?? 0)));
+
+        $picked = $components[0];
+
+        return [
+            'id' => isset($picked['id']) ? (string) $picked['id'] : null,
+            'name' => $picked['name'] ?? null,
         ];
     }
 

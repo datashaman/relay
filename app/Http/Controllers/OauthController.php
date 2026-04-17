@@ -92,7 +92,7 @@ class OauthController extends Controller
                 if ($provider === 'github') {
                     $this->oauth->revokeGitHubToken($token->access_token);
                 } elseif ($provider === 'jira') {
-                    $this->oauth->revokeJiraToken($token->access_token);
+                    $this->oauth->revokeJiraToken($token);
                 }
             } catch (\RuntimeException $e) {
                 $revocationError = $e->getMessage();
@@ -138,6 +138,11 @@ class OauthController extends Controller
             }
 
             $this->oauth->storeToken($source, 'jira', $tokenData);
+
+            if (empty($source->config['projects'] ?? [])) {
+                return redirect()->route('jira.select-projects', $source)
+                    ->with('success', 'Jira connected. Pick the projects Relay should sync.');
+            }
 
             return redirect()->route('intake.index')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
         }

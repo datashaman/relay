@@ -15,10 +15,12 @@ use App\Jobs\ExecuteStageJob;
 use App\Models\AutonomyConfig;
 use App\Models\EscalationRule;
 use App\Models\Issue;
+use App\Models\Repository;
 use App\Models\Run;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\OrchestratorService;
+use App\Services\WorktreeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -83,6 +85,32 @@ class OrchestratorServiceTest extends TestCase
         $stage = $run->stages()->first();
         $this->assertNotNull($stage);
         $this->assertEquals(StageName::Preflight, $stage->name);
+    }
+
+    public function test_start_run_uses_explicit_repository_over_issue_repository(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $issue = Issue::factory()->create(['status' => IssueStatus::Accepted]);
+        $overrideRepo = Repository::factory()->create();
+
+        $run = $this->orchestrator->startRun($issue, $overrideRepo);
+
+        $this->assertEquals($overrideRepo->id, $run->repository_id);
+        $this->assertNotEquals($issue->repository_id, $run->repository_id);
+    }
+
+    public function test_start_run_falls_back_to_issue_repository(): void
+    {
+        Queue::fake();
+        $this->setGlobalAutonomy(AutonomyLevel::Autonomous);
+
+        $issue = Issue::factory()->create(['status' => IssueStatus::Accepted]);
+
+        $run = $this->orchestrator->startRun($issue);
+
+        $this->assertEquals($issue->repository_id, $run->repository_id);
     }
 
     public function test_start_run_auto_advances_when_autonomous(): void

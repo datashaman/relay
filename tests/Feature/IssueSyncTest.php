@@ -83,6 +83,7 @@ class IssueSyncTest extends TestCase
             $issues = [
                 [
                     'id' => '10001',
+                    'key' => 'TEST-1',
                     'self' => 'https://jira.example.com/issue/10001',
                     'fields' => [
                         'summary' => 'Jira bug',
@@ -96,11 +97,9 @@ class IssueSyncTest extends TestCase
         }
 
         Http::fake([
-            'api.atlassian.com/ex/jira/test-cloud-id/rest/api/3/search*' => Http::response([
+            'api.atlassian.com/ex/jira/test-cloud-id/rest/api/3/search/jql*' => Http::response([
                 'issues' => $issues,
-                'total' => count($issues),
-                'startAt' => 0,
-                'maxResults' => 50,
+                'isLast' => true,
             ]),
         ]);
     }
@@ -246,10 +245,110 @@ class IssueSyncTest extends TestCase
         $this->assertDatabaseCount('issues', 1);
         $this->assertDatabaseHas('issues', [
             'source_id' => $source->id,
-            'external_id' => '10001',
+            'external_id' => 'TEST-1',
             'title' => 'Jira bug',
             'assignee' => 'Jane',
+            'raw_status' => 'To Do',
         ]);
+    }
+
+    public function test_jira_sync_creates_component_and_links_issue(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'CDE-42',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'Cross-repo ticket',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'To Do'],
+                    'components' => [
+                        ['id' => '500', 'name' => 'yuvee'],
+                    ],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $this->assertDatabaseHas('components', [
+            'source_id' => $source->id,
+            'external_id' => '500',
+            'name' => 'yuvee',
+        ]);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'CDE-42')->first();
+        $this->assertNotNull($issue->component_id);
+        $this->assertSame('yuvee', $issue->component->name);
+        $this->assertNull($issue->repository_id);
+    }
+
+    public function test_jira_sync_reuses_existing_component_and_updates_name(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+
+        $existing = \App\Models\Component::create([
+            'source_id' => $source->id,
+            'external_id' => '500',
+            'name' => 'old-name',
+        ]);
+
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'CDE-42',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'x',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'To Do'],
+                    'components' => [['id' => '500', 'name' => 'yuvee']],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $this->assertSame(1, \App\Models\Component::where('source_id', $source->id)->count());
+        $this->assertSame('yuvee', $existing->fresh()->name);
+    }
+
+    public function test_jira_sync_jql_includes_project_and_filter_clauses(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::Jira,
+            'external_account' => 'jira-user',
+            'is_active' => true,
+            'config' => [
+                'cloud_id' => 'test-cloud-id',
+                'projects' => ['ABC', 'XYZ'],
+                'statuses' => ['In Review', 'Backlog'],
+                'only_mine' => true,
+                'only_active_sprint' => true,
+            ],
+        ]);
+        $this->createToken($source);
+        $this->fakeJiraIssues();
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        Http::assertSent(function ($request) {
+            $url = urldecode($request->url());
+
+            return str_contains($url, 'project in ("ABC","XYZ")')
+                && str_contains($url, 'status in ("In Review","Backlog")')
+                && str_contains($url, 'assignee = currentUser()')
+                && str_contains($url, 'sprint in openSprints()')
+                && str_contains($url, 'status != Done');
+        });
     }
 
     public function test_sync_records_error_when_no_token(): void

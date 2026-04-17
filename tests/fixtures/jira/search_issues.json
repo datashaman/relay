@@ -25,7 +25,5 @@
             }
         }
     ],
-    "total": 2,
-    "startAt": 0,
-    "maxResults": 50
+    "isLast": true
 }

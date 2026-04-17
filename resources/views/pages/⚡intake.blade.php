@@ -3,6 +3,7 @@
 use App\Enums\IssueStatus;
 use App\Jobs\SyncSourceIssuesJob;
 use App\Models\Issue;
+use App\Models\Repository;
 use App\Models\Source;
 use App\Services\GitHubClient;
 use App\Services\JiraClient;
@@ -61,7 +62,7 @@ class extends Component {
         }
     }
 
-    public function acceptIssue(int $issueId, OrchestratorService $orchestrator): void
+    public function acceptIssue(int $issueId, OrchestratorService $orchestrator, ?int $repositoryId = null): void
     {
         $issue = Issue::findOrFail($issueId);
 
@@ -71,7 +72,27 @@ class extends Component {
             return;
         }
 
-        $orchestrator->startRun($issue);
+        $repository = null;
+
+        if ($repositoryId !== null) {
+            if ($issue->component_id) {
+                $repository = $issue->component->repositories()->whereKey($repositoryId)->first();
+            } else {
+                $repository = Repository::whereKey($repositoryId)->first();
+            }
+
+            if (! $repository) {
+                session()->flash('error', 'Selected repository is not available for this issue.');
+
+                return;
+            }
+        } elseif ($issue->component_id && ! $issue->repository_id) {
+            session()->flash('error', 'Pick a repository to start this issue on.');
+
+            return;
+        }
+
+        $orchestrator->startRun($issue, $repository);
 
         session()->flash('success', "Issue \"{$issue->title}\" accepted. Preflight starting.");
     }
@@ -98,7 +119,7 @@ class extends Component {
             'sources' => $sources,
             'pausedCount' => $sources->where('is_intake_paused', true)->count(),
             'connectedCount' => $sources->where('is_active', true)->count(),
-            'incoming' => Issue::with('source')
+            'incoming' => Issue::with(['source', 'component.repositories', 'repository'])
                 ->where('status', IssueStatus::Queued)
                 ->orderByDesc('created_at')
                 ->limit(15)
@@ -248,6 +269,80 @@ class extends Component {
                         </div>
                     @endif
 
+                    {{-- Components → repositories map (Jira only) --}}
+                    @if ($source->type->value === 'jira')
+                        @php
+                            $componentCount = $source->components()->count();
+                            $componentsWithRepos = $source->components()->has('repositories')->count();
+                        @endphp
+                        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Components → Repos</span>
+                                <a href="{{ route('components.index', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
+                                    Map →
+                                </a>
+                            </div>
+                            @if ($componentCount === 0)
+                                <p class="font-label text-[10px] text-outline uppercase tracking-wider">
+                                    None yet · discovered on next sync
+                                </p>
+                            @else
+                                <p class="font-label text-[10px] {{ $componentsWithRepos < $componentCount ? 'text-stage-stuck' : 'text-outline' }} uppercase tracking-wider">
+                                    {{ $componentsWithRepos }} / {{ $componentCount }} mapped
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Projects + filters (Jira only) --}}
+                    @if ($source->type->value === 'jira')
+                        @php
+                            $jiraProjects = $source->config['projects'] ?? [];
+                            $onlyMine = ! empty($source->config['only_mine']);
+                            $onlyActiveSprint = ! empty($source->config['only_active_sprint']);
+                        @endphp
+                        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Projects &amp; filters</span>
+                                <a href="{{ route('jira.select-projects', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
+                                    {{ empty($jiraProjects) && ! $onlyMine && ! $onlyActiveSprint ? 'Choose' : 'Edit' }} →
+                                </a>
+                            </div>
+                            @if (empty($jiraProjects))
+                                <p class="font-label text-[10px] text-stage-stuck uppercase tracking-wider">
+                                    No projects selected · sync will pull from all accessible projects
+                                </p>
+                            @else
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    @foreach ($jiraProjects as $projectKey)
+                                        <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[10px] tracking-wider font-mono">
+                                            {{ $projectKey }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                            @if ($onlyMine || $onlyActiveSprint)
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    @if ($onlyMine)
+                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">My issues</span>
+                                    @endif
+                                    @if ($onlyActiveSprint)
+                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">Active sprint</span>
+                                    @endif
+                                </div>
+                            @endif
+                            @php $jiraStatuses = $source->config['statuses'] ?? []; @endphp
+                            @if (! empty($jiraStatuses))
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Lanes:</span>
+                                    @foreach ($jiraStatuses as $statusName)
+                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">{{ $statusName }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     {{-- Filter rules summary --}}
                     @php $rule = $source->filterRule; @endphp
                     <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
@@ -359,6 +454,10 @@ class extends Component {
                                 </span>
                                 <span class="text-outline-variant">·</span>
                                 <span class="text-primary">{{ $externalRef }}</span>
+                                @if ($issue->raw_status)
+                                    <span class="text-outline-variant">·</span>
+                                    <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 tracking-wider">{{ $issue->raw_status }}</span>
+                                @endif
                                 @if ($issue->auto_accepted)
                                     <span class="text-outline-variant">·</span>
                                     <span class="text-primary">Auto-Accept</span>
@@ -389,11 +488,42 @@ class extends Component {
                             @endif
                         </div>
 
-                        <div class="shrink-0 flex flex-col gap-1">
-                            <button type="button" wire:click="acceptIssue({{ $issue->id }})"
-                                    class="w-full rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
-                                Accept
-                            </button>
+                        <div class="shrink-0 flex flex-col gap-1 min-w-[9rem]">
+                            @php
+                                $componentRepos = $issue->component?->repositories ?? collect();
+                                $hasDirectRepo = (bool) $issue->repository_id;
+                            @endphp
+
+                            @if ($hasDirectRepo)
+                                <button type="button" wire:click="acceptIssue({{ $issue->id }})"
+                                        class="w-full rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
+                                    Accept
+                                </button>
+                            @elseif ($issue->component_id && $componentRepos->isNotEmpty())
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider text-right">
+                                    Start on · {{ $issue->component->name }}
+                                </span>
+                                @foreach ($componentRepos as $repo)
+                                    <button type="button" wire:click="acceptIssue({{ $issue->id }}, {{ $repo->id }})"
+                                            class="w-full rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90 font-mono truncate"
+                                            title="{{ $repo->name }}">
+                                        {{ $repo->name }}
+                                    </button>
+                                @endforeach
+                            @elseif ($issue->component_id)
+                                <span class="rounded-md bg-stage-stuck/20 text-stage-stuck px-3 py-1.5 font-label text-[10px] uppercase tracking-widest text-center">
+                                    No repos for {{ $issue->component->name }}
+                                </span>
+                                <a href="{{ route('components.index', $issue->source) }}"
+                                   class="w-full rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest text-center">
+                                    Map repos →
+                                </a>
+                            @else
+                                <span class="rounded-md bg-stage-stuck/20 text-stage-stuck px-3 py-1.5 font-label text-[10px] uppercase tracking-widest text-center">
+                                    No component
+                                </span>
+                            @endif
+
                             <button type="button" wire:click="rejectIssue({{ $issue->id }})"
                                     class="w-full rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
                                 Reject

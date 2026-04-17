@@ -11,6 +11,8 @@ class WorktreeService
 {
     public function createWorktree(Run $run, Repository $repository): string
     {
+        $this->ensureCloned($repository, $run->issue?->source);
+
         $root = $repository->worktree_root ?? $repository->path;
         $worktreePath = $root . '/relay-' . $run->id;
         $branch = $run->branch ?? 'relay/run-' . $run->id;
@@ -30,6 +32,66 @@ class WorktreeService
 
         return $worktreePath;
     }
+
+    /**
+     * Ensure the repository has a local clone. Called lazily the first time
+     * a run needs a worktree. If path is already set we trust it; otherwise
+     * clone from GitHub into {relay.repos_root}/{owner}/{repo} and record
+     * path + default_branch on the repository row.
+     */
+    public function ensureCloned(Repository $repository, ?\App\Models\Source $source = null): void
+    {
+        if ($repository->path) {
+            return;
+        }
+
+        $root = rtrim(config('relay.repos_root'), '/');
+        $target = $root . '/' . $repository->name;
+
+        if (! is_dir($target . '/.git')) {
+            @mkdir(dirname($target), 0755, true);
+
+            $cloneUrl = $this->buildCloneUrl($repository, $source);
+
+            $result = Process::run(['git', 'clone', '--quiet', $cloneUrl, $target]);
+
+            if (! $result->successful()) {
+                // Scrub the token before surfacing the error.
+                $safeStderr = preg_replace('/x-access-token:[^@]+@/', 'x-access-token:***@', $result->errorOutput());
+                throw new \RuntimeException(
+                    "git clone failed (exit {$result->exitCode()}). stderr: {$safeStderr}"
+                );
+            }
+        }
+
+        $defaultBranch = $repository->default_branch ?: $this->resolveDefaultBranch($target);
+
+        $repository->update([
+            'path' => $target,
+            'default_branch' => $defaultBranch,
+        ]);
+    }
+
+    private function buildCloneUrl(Repository $repository, ?\App\Models\Source $source): string
+    {
+        if ($source && $source->type->value === 'github') {
+            $token = $source->oauthTokens()->where('provider', 'github')->first();
+            if ($token && $token->access_token) {
+                return "https://x-access-token:{$token->access_token}@github.com/{$repository->name}.git";
+            }
+        }
+
+        // No GitHub source / token available — fall back to SSH and hope the worker has an agent.
+        return 'git@github.com:' . $repository->name . '.git';
+    }
+
+    private function resolveDefaultBranch(string $path): string
+    {
+        $result = Process::path($path)->run(['git', 'symbolic-ref', '--short', 'HEAD']);
+
+        return trim($result->output()) ?: 'main';
+    }
+
 
     public function removeWorktree(Run $run, Repository $repository): void
     {

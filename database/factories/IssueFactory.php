@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\IssueStatus;
 use App\Models\Issue;
+use App\Models\Repository;
 use App\Models\Source;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -15,7 +16,7 @@ class IssueFactory extends Factory
     {
         return [
             'source_id' => Source::factory(),
-            'repository_id' => null,
+            'repository_id' => Repository::factory(),
             'external_id' => (string) fake()->unique()->numberBetween(1, 100000),
             'title' => fake()->sentence(),
             'body' => fake()->paragraph(),
