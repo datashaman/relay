@@ -38,13 +38,13 @@ class IssueIntakeService
             return null;
         }
 
-        $changes = ['raw_status' => 'deleted'];
+        $rejected = Issue::where('id', $issue->id)
+            ->where('status', IssueStatus::Queued)
+            ->update(['status' => IssueStatus::Rejected, 'raw_status' => 'deleted']);
 
-        if ($issue->status === IssueStatus::Queued) {
-            $changes['status'] = IssueStatus::Rejected;
+        if ($rejected === 0) {
+            Issue::where('id', $issue->id)->update(['raw_status' => 'deleted']);
         }
-
-        $issue->update($changes);
 
         return $issue->fresh();
     }
