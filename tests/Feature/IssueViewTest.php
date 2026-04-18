@@ -4,15 +4,15 @@ namespace Tests\Feature;
 
 use App\Enums\IssueStatus;
 use App\Enums\RunStatus;
+use App\Enums\SourceType;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
-use App\Enums\SourceType;
 use App\Enums\StuckState;
+use App\Jobs\ResolveConflictsJob;
 use App\Models\Issue;
 use App\Models\Run;
 use App\Models\Source;
 use App\Models\Stage;
-use App\Jobs\ResolveConflictsJob;
 use App\Services\OrchestratorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -161,7 +161,7 @@ class IssueViewTest extends TestCase
             'status' => StageStatus::AwaitingApproval,
         ]);
 
-        $this->mock(OrchestratorService::class, function ($mock) use ($stage) {
+        $this->mock(OrchestratorService::class, function ($mock) {
             $mock->shouldReceive('resume')->once();
         });
 

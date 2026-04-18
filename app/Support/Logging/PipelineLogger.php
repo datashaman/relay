@@ -1,0 +1,93 @@
+<?php
+
+namespace App\Support\Logging;
+
+use App\Models\Run;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+class PipelineLogger
+{
+    public const CHANNEL = 'pipeline';
+
+    public static function stageStarted(Run $run, string $stage, array $context = []): void
+    {
+        self::emit('info', 'stage_started', array_merge(self::runContext($run), [
+            'stage' => $stage,
+        ], $context));
+    }
+
+    public static function stageCompleted(Run $run, string $stage, int $durationMs, array $context = []): void
+    {
+        self::emit('info', 'stage_completed', array_merge(self::runContext($run), [
+            'stage' => $stage,
+            'duration_ms' => $durationMs,
+        ], $context));
+    }
+
+    public static function stageFailed(Run $run, string $stage, ?Throwable $exception = null, array $context = []): void
+    {
+        $base = array_merge(self::runContext($run), ['stage' => $stage]);
+
+        if ($exception !== null) {
+            $base['exception_class'] = $exception::class;
+            $base['exception_message'] = $exception->getMessage();
+        }
+
+        self::emit('error', 'stage_failed', array_merge($base, $context));
+    }
+
+    public static function event(Run $run, string $event, array $context = []): void
+    {
+        self::emit('info', $event, array_merge(self::runContext($run), $context));
+    }
+
+    public static function aiCall(string $provider, string $model, array $usage, array $context = []): void
+    {
+        self::emit('info', 'ai_call', array_merge([
+            'provider' => $provider,
+            'model' => $model,
+            'tokens_prompt' => (int) ($usage['input_tokens'] ?? 0),
+            'tokens_completion' => (int) ($usage['output_tokens'] ?? 0),
+        ], $context));
+    }
+
+    public static function aiError(string $provider, string $model, ?int $status, ?string $body, array $context = []): void
+    {
+        self::emit('error', 'ai_error', array_merge([
+            'provider' => $provider,
+            'model' => $model,
+            'status' => $status,
+            'error_body' => $body === null ? null : self::truncate($body, 2048),
+        ], $context));
+    }
+
+    private static function truncate(string $value, int $limit): string
+    {
+        if (strlen($value) <= $limit) {
+            return $value;
+        }
+
+        return substr($value, 0, $limit).'…[truncated]';
+    }
+
+    private static function runContext(Run $run): array
+    {
+        return [
+            'run_id' => $run->id,
+            'issue_id' => $run->issue_id,
+        ];
+    }
+
+    private static function emit(string $level, string $event, array $context): void
+    {
+        try {
+            Log::channel(self::CHANNEL)->{$level}('pipeline.'.$event, array_merge(
+                ['event' => $event],
+                $context,
+            ));
+        } catch (Throwable) {
+            // Logging must never break the pipeline.
+        }
+    }
+}

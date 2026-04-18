@@ -29,7 +29,7 @@ class ImplementAgentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->worktreePath = sys_get_temp_dir() . '/relay-test-worktree-' . uniqid();
+        $this->worktreePath = sys_get_temp_dir().'/relay-test-worktree-'.uniqid();
         mkdir($this->worktreePath, 0755, true);
     }
 
@@ -48,7 +48,7 @@ class ImplementAgentTest extends TestCase
             if ($item === '.' || $item === '..') {
                 continue;
             }
-            $path = $dir . '/' . $item;
+            $path = $dir.'/'.$item;
             if (is_dir($path)) {
                 $this->removeDirectory($path);
             } else {
@@ -163,8 +163,8 @@ class ImplementAgentTest extends TestCase
 
         $stage->refresh();
         $this->assertEquals(StageStatus::Completed, $stage->status);
-        $this->assertFileExists($this->worktreePath . '/app/profile.php');
-        $this->assertEquals('<?php echo "profile";', file_get_contents($this->worktreePath . '/app/profile.php'));
+        $this->assertFileExists($this->worktreePath.'/app/profile.php');
+        $this->assertEquals('<?php echo "profile";', file_get_contents($this->worktreePath.'/app/profile.php'));
     }
 
     public function test_implement_agent_records_events(): void
@@ -506,7 +506,7 @@ class ImplementAgentTest extends TestCase
 
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        file_put_contents($this->worktreePath . '/existing.txt', 'hello world');
+        file_put_contents($this->worktreePath.'/existing.txt', 'hello world');
 
         $capturedMessages = [];
         $mock = new class($capturedMessages) implements AiProvider
@@ -569,9 +569,9 @@ class ImplementAgentTest extends TestCase
 
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        mkdir($this->worktreePath . '/src', 0755, true);
-        file_put_contents($this->worktreePath . '/src/index.php', '<?php');
-        file_put_contents($this->worktreePath . '/src/helper.php', '<?php');
+        mkdir($this->worktreePath.'/src', 0755, true);
+        file_put_contents($this->worktreePath.'/src/index.php', '<?php');
+        file_put_contents($this->worktreePath.'/src/helper.php', '<?php');
 
         $capturedMessages = [];
         $mock = new class($capturedMessages) implements AiProvider

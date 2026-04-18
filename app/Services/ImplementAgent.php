@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Contracts\AiProvider;
 use App\Enums\StageName;
 use App\Events\DiffUpdated;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\AiProviders\AiProviderManager;
+use App\Support\Logging\PipelineLogger;
 use Illuminate\Support\Facades\Process;
 
 class ImplementAgent
@@ -171,8 +171,23 @@ PROMPT;
             'has_failure_context' => isset($context['failure_report']),
         ]);
 
+        PipelineLogger::event($run, 'implement.execute_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'has_failure_context' => isset($context['failure_report']),
+        ]);
+
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
-            $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
+            $response = $provider->chat($messages, self::TOOLS, [
+                'cwd' => $worktreePath,
+                'log_context' => [
+                    'run_id' => $run->id,
+                    'issue_id' => $run->issue_id,
+                    'stage' => $stage->name->value,
+                    'iteration' => $stage->iteration,
+                    'loop' => $loop,
+                ],
+            ]);
 
             if (empty($response['tool_calls'])) {
                 $this->recordEvent($stage, 'implement_no_tool_call', 'implement_agent', [
@@ -188,6 +203,12 @@ PROMPT;
                     $this->recordEvent($stage, 'implement_complete', 'implement_agent', [
                         'summary' => $toolCall['arguments']['summary'] ?? '',
                         'files_changed' => $toolCall['arguments']['files_changed'] ?? [],
+                    ]);
+
+                    PipelineLogger::event($run, 'implement.complete', [
+                        'stage' => $stage->name->value,
+                        'iteration' => $stage->iteration,
+                        'files_changed_count' => count($toolCall['arguments']['files_changed'] ?? []),
                     ]);
 
                     $this->broadcastDiff($stage, $worktreePath);
@@ -216,6 +237,13 @@ PROMPT;
         $this->recordEvent($stage, 'implement_loop_limit', 'implement_agent', [
             'max_loops' => self::MAX_TOOL_LOOPS,
         ]);
+
+        PipelineLogger::event($run, 'implement.loop_limit', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'max_loops' => self::MAX_TOOL_LOOPS,
+        ]);
+
         $this->orchestrator->fail($stage, 'Implement agent exceeded maximum tool call loops.');
     }
 
@@ -225,7 +253,7 @@ PROMPT;
             ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
         ];
 
-        $userContent = "# Preflight Document\n\n" . ($run->preflight_doc ?? 'No preflight document available.') . "\n\n";
+        $userContent = "# Preflight Document\n\n".($run->preflight_doc ?? 'No preflight document available.')."\n\n";
 
         if (! empty($context['failure_report'])) {
             $userContent .= "# Previous Verification Failure\n\n";
@@ -235,13 +263,13 @@ PROMPT;
                     $userContent .= "- {$failure}\n";
                 }
             } else {
-                $userContent .= $context['failure_report'] . "\n";
+                $userContent .= $context['failure_report']."\n";
             }
             $userContent .= "\n";
         }
 
         if (! empty($context['guidance'])) {
-            $userContent .= "# User Guidance\n\n" . $context['guidance'] . "\n\n";
+            $userContent .= "# User Guidance\n\n".$context['guidance']."\n\n";
         }
 
         $messages[] = ['role' => 'user', 'content' => $userContent];
@@ -259,7 +287,7 @@ PROMPT;
             'run_linter' => $this->toolRunLinter($arguments, $worktreePath),
             'git_status' => $this->toolGitStatus($worktreePath),
             'git_diff' => $this->toolGitDiff($worktreePath),
-            default => 'Error: Unknown tool "' . $name . '".',
+            default => 'Error: Unknown tool "'.$name.'".',
         };
     }
 
@@ -271,7 +299,7 @@ PROMPT;
         }
 
         if (! file_exists($path)) {
-            return 'Error: File not found: ' . ($arguments['path'] ?? '');
+            return 'Error: File not found: '.($arguments['path'] ?? '');
         }
 
         $content = file_get_contents($path);
@@ -293,7 +321,7 @@ PROMPT;
 
         file_put_contents($path, $arguments['content'] ?? '');
 
-        return 'File written: ' . ($arguments['path'] ?? '');
+        return 'File written: '.($arguments['path'] ?? '');
     }
 
     private function toolListFiles(array $arguments, string $worktreePath): string
@@ -304,7 +332,7 @@ PROMPT;
         }
 
         if (! is_dir($path)) {
-            return 'Error: Directory not found: ' . ($arguments['path'] ?? '');
+            return 'Error: Directory not found: '.($arguments['path'] ?? '');
         }
 
         $entries = scandir($path);
@@ -313,8 +341,8 @@ PROMPT;
             if ($entry === '.' || $entry === '..') {
                 continue;
             }
-            $full = $path . '/' . $entry;
-            $lines[] = is_dir($full) ? $entry . '/' : $entry;
+            $full = $path.'/'.$entry;
+            $lines[] = is_dir($full) ? $entry.'/' : $entry;
         }
 
         return implode("\n", $lines) ?: '(empty directory)';
@@ -332,7 +360,7 @@ PROMPT;
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', $command]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         if (! $result->successful()) {
@@ -358,13 +386,13 @@ PROMPT;
 
         $fileArgs = implode(' ', array_map('escapeshellarg', $files));
 
-        $linterBin = file_exists($worktreePath . '/vendor/bin/pint') ? 'vendor/bin/pint' : 'vendor/bin/php-cs-fixer fix';
+        $linterBin = file_exists($worktreePath.'/vendor/bin/pint') ? 'vendor/bin/pint' : 'vendor/bin/php-cs-fixer fix';
 
         $result = Process::path($worktreePath)
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', "{$linterBin} {$fileArgs}"]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
 
         return $this->truncate($output, self::OUTPUT_MAX_BYTES) ?: '(no output)';
     }
@@ -393,7 +421,7 @@ PROMPT;
     {
         $relative = ltrim($relative, '/');
 
-        $combined = $worktreePath . '/' . $relative;
+        $combined = $worktreePath.'/'.$relative;
 
         $resolved = realpath(dirname($combined));
         if ($resolved === false) {
@@ -401,9 +429,9 @@ PROMPT;
             if ($resolved === false) {
                 return null;
             }
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         } else {
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         }
 
         $realWorktree = realpath($worktreePath);
@@ -449,7 +477,7 @@ PROMPT;
             return $text;
         }
 
-        return substr($text, 0, $maxBytes) . "\n... (truncated at {$maxBytes} bytes)";
+        return substr($text, 0, $maxBytes)."\n... (truncated at {$maxBytes} bytes)";
     }
 
     private function truncateArguments(array $arguments): array
@@ -457,7 +485,7 @@ PROMPT;
         $truncated = [];
         foreach ($arguments as $key => $value) {
             if (is_string($value) && strlen($value) > 200) {
-                $truncated[$key] = substr($value, 0, 200) . '...';
+                $truncated[$key] = substr($value, 0, 200).'...';
             } else {
                 $truncated[$key] = $value;
             }

@@ -20,7 +20,6 @@ use App\Models\Run;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\OrchestratorService;
-use App\Services\WorktreeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;

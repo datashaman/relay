@@ -3,6 +3,7 @@
 namespace Native\Laravel;
 
 use Illuminate\Console\Application;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Application as Foundation;
 use Illuminate\Foundation\Http\Kernel;
 use Illuminate\Support\Arr;
@@ -84,7 +85,7 @@ class NativeServiceProvider extends PackageServiceProvider
 
         if (config('nativephp-internal.running')) {
             $this->app->singleton(
-                \Illuminate\Contracts\Debug\ExceptionHandler::class,
+                ExceptionHandler::class,
                 Handler::class
             );
 

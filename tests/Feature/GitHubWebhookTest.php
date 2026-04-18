@@ -8,6 +8,7 @@ use App\Models\Issue;
 use App\Models\Source;
 use App\Models\WebhookDelivery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class GitHubWebhookTest extends TestCase
@@ -24,7 +25,7 @@ class GitHubWebhookTest extends TestCase
         ]);
     }
 
-    private function postWebhook(Source $source, string $event, array $payload, ?string $secret = null, ?string $deliveryId = null, ?string $signature = null, bool $omitDeliveryId = false): \Illuminate\Testing\TestResponse
+    private function postWebhook(Source $source, string $event, array $payload, ?string $secret = null, ?string $deliveryId = null, ?string $signature = null, bool $omitDeliveryId = false): TestResponse
     {
         $secret ??= $source->webhook_secret;
         $deliveryId ??= 'delivery-'.fake()->uuid();

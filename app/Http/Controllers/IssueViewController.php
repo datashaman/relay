@@ -29,7 +29,7 @@ class IssueViewController extends Controller
         $this->orchestrator->resume($stage);
 
         return redirect()->route('issues.show', $stage->run->issue)
-            ->with('success', ucfirst($stage->name->value) . ' stage approved.');
+            ->with('success', ucfirst($stage->name->value).' stage approved.');
     }
 
     public function reject(Stage $stage): RedirectResponse
@@ -44,7 +44,7 @@ class IssueViewController extends Controller
         $this->orchestrator->fail($stage, 'Rejected by user.');
 
         return redirect()->route('issues.show', $stage->run->issue)
-            ->with('success', ucfirst($stage->name->value) . ' stage rejected.');
+            ->with('success', ucfirst($stage->name->value).' stage rejected.');
     }
 
     public function retry(Stage $stage): RedirectResponse
@@ -59,7 +59,7 @@ class IssueViewController extends Controller
         $this->orchestrator->retryStage($stage);
 
         return redirect()->route('issues.show', $stage->run->issue)
-            ->with('success', ucfirst($stage->name->value) . ' stage retrying.');
+            ->with('success', ucfirst($stage->name->value).' stage retrying.');
     }
 
     public function resolveConflicts(Run $run): RedirectResponse

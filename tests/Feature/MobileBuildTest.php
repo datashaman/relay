@@ -4,16 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\AutonomyLevel;
 use App\Enums\RunStatus;
-use App\Enums\StageName;
-use App\Enums\StageStatus;
 use App\Enums\StuckState;
 use App\Events\RunStuck;
 use App\Events\StageTransitioned;
-use App\Listeners\SendApprovalNotification;
 use App\Listeners\SendStuckNotification;
-use App\Models\AutonomyConfig;
 use App\Models\Issue;
-use App\Models\OauthToken;
 use App\Models\Run;
 use App\Models\Source;
 use App\Models\Stage;

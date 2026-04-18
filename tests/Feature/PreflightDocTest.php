@@ -14,6 +14,7 @@ use App\Services\AiProviders\AiProviderManager;
 use App\Services\PreflightAgent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class PreflightDocTest extends TestCase
@@ -600,7 +601,7 @@ class PreflightDocTest extends TestCase
         [$issue, $run, $stage] = $this->setupRunWithStage();
         $run->update(['preflight_doc' => '## Original doc']);
 
-        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+        Livewire::test('pages::preflight-edit-doc', ['run' => $run])
             ->set('preflightDoc', '## Edited doc with changes')
             ->call('save')
             ->assertRedirect(route('preflight.doc', $run));
@@ -617,7 +618,7 @@ class PreflightDocTest extends TestCase
         [$issue, $run, $stage] = $this->setupRunWithStage();
         $run->update(['preflight_doc' => '## Doc']);
 
-        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+        Livewire::test('pages::preflight-edit-doc', ['run' => $run])
             ->set('preflightDoc', '')
             ->call('save')
             ->assertHasErrors('preflightDoc');
@@ -627,7 +628,7 @@ class PreflightDocTest extends TestCase
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+        Livewire::test('pages::preflight-edit-doc', ['run' => $run])
             ->assertRedirect(route('intake.index'));
     }
 
@@ -641,7 +642,7 @@ class PreflightDocTest extends TestCase
             ],
         ]);
 
-        \Livewire\Livewire::test('pages::preflight-edit-doc', ['run' => $run])
+        Livewire::test('pages::preflight-edit-doc', ['run' => $run])
             ->set('preflightDoc', '## V3 doc')
             ->call('save');
 

@@ -17,7 +17,7 @@ class RunFactory extends Factory
             'issue_id' => Issue::factory(),
             'status' => RunStatus::Pending,
             'stuck_state' => null,
-            'branch' => 'relay/' . fake()->slug(3),
+            'branch' => 'relay/'.fake()->slug(3),
             'worktree_path' => null,
             'preflight_doc' => null,
             'preflight_doc_history' => null,

@@ -16,6 +16,7 @@ class GitHubClientTest extends TestCase
     use RefreshDatabase;
 
     private OauthToken $token;
+
     private GitHubClient $client;
 
     private function fixture(string $name): array

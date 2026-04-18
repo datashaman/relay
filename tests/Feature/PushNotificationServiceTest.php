@@ -68,7 +68,7 @@ class PushNotificationServiceTest extends TestCase
             return str_contains($request->url(), 'notification')
                 && $request['title'] === 'Pipeline Stuck'
                 && str_contains($request['body'], 'iteration_cap')
-                && $request['event'] === 'run.stuck.' . $run->id;
+                && $request['event'] === 'run.stuck.'.$run->id;
         });
     }
 
@@ -88,7 +88,7 @@ class PushNotificationServiceTest extends TestCase
             return str_contains($request->url(), 'notification')
                 && $request['title'] === 'Approval Required'
                 && str_contains($request['body'], 'Preflight')
-                && $request['event'] === 'stage.approval.' . $stage->id;
+                && $request['event'] === 'stage.approval.'.$stage->id;
         });
     }
 

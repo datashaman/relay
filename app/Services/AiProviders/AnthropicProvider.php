@@ -3,6 +3,8 @@
 namespace App\Services\AiProviders;
 
 use App\Contracts\AiProvider;
+use App\Support\Logging\PipelineLogger;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 class AnthropicProvider implements AiProvider
@@ -16,15 +18,43 @@ class AnthropicProvider implements AiProvider
     public function chat(array $messages, array $tools = [], array $options = []): array
     {
         $body = $this->buildRequestBody($messages, $tools, $options);
+        $model = $body['model'];
+        $logContext = is_array($options['log_context'] ?? null) ? $options['log_context'] : [];
+        $startedAt = microtime(true);
 
-        $response = Http::withHeaders([
-            'x-api-key' => $this->apiKey,
-            'anthropic-version' => '2023-06-01',
-        ])->post("{$this->baseUrl}/v1/messages", $body);
+        try {
+            $response = Http::withHeaders([
+                'x-api-key' => $this->apiKey,
+                'anthropic-version' => '2023-06-01',
+            ])->post("{$this->baseUrl}/v1/messages", $body);
 
-        $response->throw();
+            $response->throw();
+        } catch (RequestException $e) {
+            PipelineLogger::aiError(
+                'anthropic',
+                $model,
+                $e->response->status(),
+                $e->response->body(),
+                array_merge($logContext, ['duration_ms' => self::elapsedMs($startedAt)]),
+            );
+            throw $e;
+        }
 
-        return $this->normalizeResponse($response->json());
+        $normalized = $this->normalizeResponse($response->json());
+
+        PipelineLogger::aiCall(
+            'anthropic',
+            $model,
+            $normalized['usage'],
+            array_merge($logContext, ['duration_ms' => self::elapsedMs($startedAt)]),
+        );
+
+        return $normalized;
+    }
+
+    private static function elapsedMs(float $startedAt): int
+    {
+        return (int) round((microtime(true) - $startedAt) * 1000);
     }
 
     public function stream(array $messages, array $tools = [], array $options = []): \Generator

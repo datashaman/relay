@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Repository;
-use App\Models\Source;
 use App\Models\WebhookDelivery;
 use App\Services\GitHubClient;
 use App\Services\IssueIntakeService;

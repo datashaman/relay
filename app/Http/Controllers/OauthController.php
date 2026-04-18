@@ -5,11 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Source;
 use App\Services\MobileOauthService;
 use App\Services\OauthService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\View\View;
 
 class OauthController extends Controller
 {
@@ -59,7 +57,7 @@ class OauthController extends Controller
 
             $source = Source::firstOrCreate(
                 ['type' => $provider, 'external_account' => $accountName],
-                ['name' => ucfirst($provider) . ' Connection', 'is_active' => true],
+                ['name' => ucfirst($provider).' Connection', 'is_active' => true],
             );
 
             $this->oauth->storeToken($source, $provider, $tokenData);
@@ -69,7 +67,7 @@ class OauthController extends Controller
                     ->with('success', 'GitHub connected. Pick the repositories Relay should sync.');
             }
 
-            return redirect()->route('intake.index')->with('success', ucfirst($provider) . ' connected successfully.');
+            return redirect()->route('intake.index')->with('success', ucfirst($provider).' connected successfully.');
         } catch (\RuntimeException $e) {
             return redirect()->route('intake.index')->with('error', $e->getMessage());
         }
@@ -80,7 +78,7 @@ class OauthController extends Controller
         $source = Source::where('type', $provider)->first();
 
         if (! $source) {
-            return redirect()->route('intake.index')->with('error', 'No ' . ucfirst($provider) . ' connection found.');
+            return redirect()->route('intake.index')->with('error', 'No '.ucfirst($provider).' connection found.');
         }
 
         $token = $source->oauthTokens()->where('provider', $provider)->first();
@@ -103,10 +101,10 @@ class OauthController extends Controller
         $source->delete();
 
         if ($revocationError) {
-            return redirect()->route('intake.index')->with('warning', ucfirst($provider) . ' disconnected locally, but remote revocation failed: ' . $revocationError);
+            return redirect()->route('intake.index')->with('warning', ucfirst($provider).' disconnected locally, but remote revocation failed: '.$revocationError);
         }
 
-        return redirect()->route('intake.index')->with('success', ucfirst($provider) . ' disconnected successfully.');
+        return redirect()->route('intake.index')->with('success', ucfirst($provider).' disconnected successfully.');
     }
 
     private function handleJiraCallback(array $tokenData): RedirectResponse
@@ -114,7 +112,7 @@ class OauthController extends Controller
         try {
             $sites = $this->oauth->fetchJiraAccessibleResources($tokenData['access_token']);
         } catch (\RuntimeException $e) {
-            return redirect()->route('intake.index')->with('error', 'Failed to fetch Jira sites: ' . $e->getMessage());
+            return redirect()->route('intake.index')->with('error', 'Failed to fetch Jira sites: '.$e->getMessage());
         }
 
         if (empty($sites)) {
@@ -127,7 +125,7 @@ class OauthController extends Controller
             $source = Source::firstOrCreate(
                 ['type' => 'jira', 'external_account' => $site['name']],
                 [
-                    'name' => 'Jira: ' . $site['name'],
+                    'name' => 'Jira: '.$site['name'],
                     'is_active' => true,
                     'config' => ['cloud_id' => $site['id'], 'site_url' => $site['url'] ?? null],
                 ],
@@ -144,7 +142,7 @@ class OauthController extends Controller
                     ->with('success', 'Jira connected. Pick the projects Relay should sync.');
             }
 
-            return redirect()->route('intake.index')->with('success', 'Jira connected successfully (' . $site['name'] . ').');
+            return redirect()->route('intake.index')->with('success', 'Jira connected successfully ('.$site['name'].').');
         }
 
         $pendingKey = $this->getJiraPendingCacheKey();

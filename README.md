@@ -1,5 +1,7 @@
 # Relay
 
+[![CI](https://github.com/datashaman/relay/actions/workflows/ci.yml/badge.svg)](https://github.com/datashaman/relay/actions/workflows/ci.yml)
+
 An agentic issue pipeline that moves issues through four stages — **Preflight → Implement → Verify → Release** — each handled by a focused agent with a bounded tool set. Human-in-the-loop is configurable at workspace, stage, and issue scopes.
 
 Relay ships as a local-first native app built on Laravel 13 / PHP 8.4 with NativePHP for desktop (macOS, Windows, Linux) and mobile (iOS, Android). No cloud backend required.
@@ -116,11 +118,11 @@ tests/
 
 ## Documentation
 
-Documentation lives in [docs/](docs/) and is organised by the [Diataxis](https://diataxis.fr/) framework:
+Start at [docs/README.md](docs/README.md). The docs are organised by the [Diataxis](https://diataxis.fr/) framework:
 
-- **Tutorials** — [Running your first issue through the pipeline](docs/tutorials/first-run.md)
-- **How-to guides** — [connect GitHub](docs/how-to/connect-github.md), [connect Jira](docs/how-to/connect-jira.md), [configure autonomy](docs/how-to/configure-autonomy.md), [add an AI provider](docs/how-to/add-ai-provider.md), [add a stage](docs/how-to/add-stage.md)
+- **Tutorials** — first-run walkthrough and configuring a custom AI provider
+- **How-to guides** — source connectors, autonomy, adding providers/stages, plus a [troubleshooting](docs/how-to/troubleshooting/index.md) section keyed to the `pipeline` log channel
 - **Explanation** — [Architecture](docs/explanation/architecture.md)
-- **Reference** — [agents](docs/reference/agents/), [configuration](docs/reference/configuration.md), [stuck states](docs/reference/stuck-states.md)
+- **Reference** — per-agent, per-provider, and per-service pages; see the [index](docs/README.md#reference)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and conventions.

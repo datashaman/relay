@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Contracts\AiProvider;
 use App\Enums\StageName;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\AiProviders\AiProviderManager;
+use App\Support\Logging\PipelineLogger;
 
 class PreflightAgent
 {
@@ -150,6 +150,12 @@ PROMPT;
         $run = $stage->run;
         $issue = $run->issue;
 
+        PipelineLogger::event($run, 'preflight.execute_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'has_clarification_answers' => $run->clarification_answers !== null,
+        ]);
+
         if ($run->clarification_answers !== null || ($context['skip_to_doc'] ?? false)) {
             $this->generateAndStoreDoc($stage);
 
@@ -161,6 +167,12 @@ PROMPT;
         $messages = $this->buildMessages($issue, $context);
         $response = $provider->chat($messages, [self::ASSESS_TOOL], array_filter([
             'cwd' => $run->worktree_path,
+            'log_context' => [
+                'run_id' => $run->id,
+                'issue_id' => $run->issue_id,
+                'stage' => $stage->name->value,
+                'purpose' => 'preflight.assess',
+            ],
         ]));
 
         $assessment = $this->parseAssessment($response);
@@ -170,6 +182,13 @@ PROMPT;
         ]);
 
         $this->recordEvent($stage, 'assessment_complete', 'preflight_agent', [
+            'confidence' => $assessment['confidence'],
+            'known_facts_count' => count($assessment['known_facts']),
+            'questions_count' => count($assessment['questions'] ?? []),
+        ]);
+
+        PipelineLogger::event($run, 'preflight.assessment_complete', [
+            'stage' => $stage->name->value,
             'confidence' => $assessment['confidence'],
             'known_facts_count' => count($assessment['known_facts']),
             'questions_count' => count($assessment['questions'] ?? []),
@@ -189,6 +208,11 @@ PROMPT;
             'questions' => $assessment['questions'] ?? [],
         ]);
 
+        PipelineLogger::event($run, 'preflight.clarification_needed', [
+            'stage' => $stage->name->value,
+            'questions_count' => count($assessment['questions'] ?? []),
+        ]);
+
         $this->orchestrator->pause($stage);
     }
 
@@ -202,6 +226,12 @@ PROMPT;
         $messages = $this->buildDocMessages($run, $issue);
         $response = $provider->chat($messages, [self::DOC_TOOL], array_filter([
             'cwd' => $run->worktree_path,
+            'log_context' => [
+                'run_id' => $run->id,
+                'issue_id' => $run->issue_id,
+                'stage' => $stage->name->value,
+                'purpose' => 'preflight.generate_doc',
+            ],
         ]));
 
         $docData = $this->parseDocResponse($response);
@@ -227,6 +257,12 @@ PROMPT;
             'version' => count($run->preflight_doc_history ?? []) + 1,
         ]);
 
+        PipelineLogger::event($run, 'preflight.doc_generated', [
+            'stage' => $stage->name->value,
+            'sections' => array_keys($docData),
+            'version' => count($run->preflight_doc_history ?? []) + 1,
+        ]);
+
         $this->orchestrator->complete($stage);
     }
 
@@ -238,10 +274,10 @@ PROMPT;
 
         $content = "# Issue: {$issue->title}\n\n";
         if ($issue->body) {
-            $content .= $issue->body . "\n\n";
+            $content .= $issue->body."\n\n";
         }
         if (! empty($issue->labels)) {
-            $content .= 'Labels: ' . implode(', ', $issue->labels) . "\n";
+            $content .= 'Labels: '.implode(', ', $issue->labels)."\n";
         }
         if ($issue->assignee) {
             $content .= "Assignee: {$issue->assignee}\n";
@@ -303,7 +339,7 @@ PROMPT;
 
         $doc .= "## Acceptance Criteria\n\n";
         foreach ($data['acceptance_criteria'] as $i => $criterion) {
-            $doc .= ($i + 1) . ". {$criterion}\n";
+            $doc .= ($i + 1).". {$criterion}\n";
         }
         $doc .= "\n";
 
@@ -318,7 +354,7 @@ PROMPT;
         $scope = $data['scope_assessment'];
         $doc .= "## Scope Assessment\n\n";
         $doc .= "- **Size**: {$scope['size']}\n";
-        $doc .= '- **Risk Flags**: ' . (! empty($scope['risk_flags']) ? implode(', ', $scope['risk_flags']) : 'None') . "\n";
+        $doc .= '- **Risk Flags**: '.(! empty($scope['risk_flags']) ? implode(', ', $scope['risk_flags']) : 'None')."\n";
         $doc .= "- **Suggested Autonomy**: {$scope['suggested_autonomy']}\n";
 
         return $doc;
@@ -332,10 +368,10 @@ PROMPT;
 
         $issueContent = "# Issue: {$issue->title}\n\n";
         if ($issue->body) {
-            $issueContent .= $issue->body . "\n\n";
+            $issueContent .= $issue->body."\n\n";
         }
         if (! empty($issue->labels)) {
-            $issueContent .= 'Labels: ' . implode(', ', $issue->labels) . "\n";
+            $issueContent .= 'Labels: '.implode(', ', $issue->labels)."\n";
         }
         if ($issue->assignee) {
             $issueContent .= "Assignee: {$issue->assignee}\n";

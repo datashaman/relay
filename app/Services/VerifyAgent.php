@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Contracts\AiProvider;
 use App\Enums\StageName;
 use App\Events\TestResultUpdated;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\AiProviders\AiProviderManager;
+use App\Support\Logging\PipelineLogger;
 use Illuminate\Support\Facades\Process;
 
 class VerifyAgent
@@ -182,8 +182,22 @@ PROMPT;
             'iteration' => $stage->iteration,
         ]);
 
+        PipelineLogger::event($run, 'verify.execute_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+        ]);
+
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
-            $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
+            $response = $provider->chat($messages, self::TOOLS, [
+                'cwd' => $worktreePath,
+                'log_context' => [
+                    'run_id' => $run->id,
+                    'issue_id' => $run->issue_id,
+                    'stage' => $stage->name->value,
+                    'iteration' => $stage->iteration,
+                    'loop' => $loop,
+                ],
+            ]);
 
             if (empty($response['tool_calls'])) {
                 $this->recordEvent($stage, 'verify_no_tool_call', 'verify_agent', [
@@ -217,6 +231,13 @@ PROMPT;
         $this->recordEvent($stage, 'verify_loop_limit', 'verify_agent', [
             'max_loops' => self::MAX_TOOL_LOOPS,
         ]);
+
+        PipelineLogger::event($run, 'verify.loop_limit', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'max_loops' => self::MAX_TOOL_LOOPS,
+        ]);
+
         $this->orchestrator->fail($stage, 'Verify agent exceeded maximum tool call loops.');
     }
 
@@ -226,7 +247,7 @@ PROMPT;
             ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
         ];
 
-        $userContent = "# Preflight Document\n\n" . ($run->preflight_doc ?? 'No preflight document available.') . "\n\n";
+        $userContent = "# Preflight Document\n\n".($run->preflight_doc ?? 'No preflight document available.')."\n\n";
 
         $diffResult = Process::path($worktreePath)
             ->timeout(30)
@@ -252,6 +273,13 @@ PROMPT;
             'summary' => $summary,
             'failure_count' => count($failures),
             'failures' => $failures,
+        ]);
+
+        PipelineLogger::event($stage->run, 'verify.complete', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'passed' => $passed,
+            'failure_count' => count($failures),
         ]);
 
         TestResultUpdated::dispatch($stage, $summary, $passed ? 'passed' : 'failed');
@@ -296,7 +324,7 @@ PROMPT;
             'list_files' => $this->toolListFiles($arguments, $worktreePath),
             'run_shell' => $this->toolRunShell($arguments, $worktreePath),
             'git_diff' => $this->toolGitDiff($worktreePath),
-            default => 'Error: Unknown tool "' . $name . '".',
+            default => 'Error: Unknown tool "'.$name.'".',
         };
     }
 
@@ -317,7 +345,7 @@ PROMPT;
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', $command]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         $status = $result->successful() ? 'passed' : 'failed';
@@ -325,6 +353,13 @@ PROMPT;
         $this->recordEvent($stage, 'test_results', 'verify_agent', [
             'runner' => $runner,
             'filter' => $arguments['filter'] ?? null,
+            'exit_code' => $result->exitCode(),
+            'status' => $status,
+        ]);
+
+        PipelineLogger::event($stage->run, 'verify.test_results', [
+            'stage' => $stage->name->value,
+            'runner' => $runner,
             'exit_code' => $result->exitCode(),
             'status' => $status,
         ]);
@@ -353,17 +388,24 @@ PROMPT;
                     return "Error: Path escapes the worktree boundary: {$path}";
                 }
             }
-            $command .= ' ' . implode(' ', array_map('escapeshellarg', $arguments['paths']));
+            $command .= ' '.implode(' ', array_map('escapeshellarg', $arguments['paths']));
         }
 
         $result = Process::path($worktreePath)
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', $command]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         $this->recordEvent($stage, 'static_analysis_results', 'verify_agent', [
+            'analyzer' => $analyzer,
+            'exit_code' => $result->exitCode(),
+            'status' => $result->successful() ? 'passed' : 'failed',
+        ]);
+
+        PipelineLogger::event($stage->run, 'verify.static_analysis_results', [
+            'stage' => $stage->name->value,
             'analyzer' => $analyzer,
             'exit_code' => $result->exitCode(),
             'status' => $result->successful() ? 'passed' : 'failed',
@@ -384,10 +426,8 @@ PROMPT;
         }
 
         $command = match (true) {
-            str_contains($runner, 'pest'), str_contains($runner, 'phpunit')
-                => "{$runner} --coverage-text",
-            str_contains($runner, 'jest')
-                => "{$runner} --coverage --coverageReporters=text",
+            str_contains($runner, 'pest'), str_contains($runner, 'phpunit') => "{$runner} --coverage-text",
+            str_contains($runner, 'jest') => "{$runner} --coverage --coverageReporters=text",
             default => "{$runner} --coverage",
         };
 
@@ -395,7 +435,7 @@ PROMPT;
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', $command]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         $this->recordEvent($stage, 'coverage_results', 'verify_agent', [
@@ -413,7 +453,7 @@ PROMPT;
         }
 
         if (! file_exists($path)) {
-            return 'Error: File not found: ' . ($arguments['path'] ?? '');
+            return 'Error: File not found: '.($arguments['path'] ?? '');
         }
 
         return $this->truncate(file_get_contents($path), self::OUTPUT_MAX_BYTES);
@@ -427,7 +467,7 @@ PROMPT;
         }
 
         if (! is_dir($path)) {
-            return 'Error: Directory not found: ' . ($arguments['path'] ?? '');
+            return 'Error: Directory not found: '.($arguments['path'] ?? '');
         }
 
         $entries = scandir($path);
@@ -436,8 +476,8 @@ PROMPT;
             if ($entry === '.' || $entry === '..') {
                 continue;
             }
-            $full = $path . '/' . $entry;
-            $lines[] = is_dir($full) ? $entry . '/' : $entry;
+            $full = $path.'/'.$entry;
+            $lines[] = is_dir($full) ? $entry.'/' : $entry;
         }
 
         return implode("\n", $lines) ?: '(empty directory)';
@@ -455,7 +495,7 @@ PROMPT;
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', $command]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         if (! $result->successful()) {
@@ -476,19 +516,19 @@ PROMPT;
 
     private function detectTestRunner(string $worktreePath): ?string
     {
-        if (file_exists($worktreePath . '/vendor/bin/pest')) {
+        if (file_exists($worktreePath.'/vendor/bin/pest')) {
             return 'vendor/bin/pest';
         }
-        if (file_exists($worktreePath . '/vendor/bin/phpunit')) {
+        if (file_exists($worktreePath.'/vendor/bin/phpunit')) {
             return 'vendor/bin/phpunit';
         }
-        if (file_exists($worktreePath . '/node_modules/.bin/jest')) {
+        if (file_exists($worktreePath.'/node_modules/.bin/jest')) {
             return 'npx jest';
         }
-        if (file_exists($worktreePath . '/node_modules/.bin/mocha')) {
+        if (file_exists($worktreePath.'/node_modules/.bin/mocha')) {
             return 'npx mocha';
         }
-        if (file_exists($worktreePath . '/node_modules/.bin/vitest')) {
+        if (file_exists($worktreePath.'/node_modules/.bin/vitest')) {
             return 'npx vitest run';
         }
 
@@ -497,10 +537,10 @@ PROMPT;
 
     private function detectStaticAnalyzer(string $worktreePath): ?string
     {
-        if (file_exists($worktreePath . '/vendor/bin/phpstan')) {
+        if (file_exists($worktreePath.'/vendor/bin/phpstan')) {
             return 'vendor/bin/phpstan analyse';
         }
-        if (file_exists($worktreePath . '/node_modules/.bin/eslint')) {
+        if (file_exists($worktreePath.'/node_modules/.bin/eslint')) {
             return 'npx eslint .';
         }
 
@@ -511,7 +551,7 @@ PROMPT;
     {
         $relative = ltrim($relative, '/');
 
-        $combined = $worktreePath . '/' . $relative;
+        $combined = $worktreePath.'/'.$relative;
 
         $resolved = realpath(dirname($combined));
         if ($resolved === false) {
@@ -519,9 +559,9 @@ PROMPT;
             if ($resolved === false) {
                 return null;
             }
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         } else {
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         }
 
         $realWorktree = realpath($worktreePath);
@@ -554,7 +594,7 @@ PROMPT;
             return $text;
         }
 
-        return substr($text, 0, $maxBytes) . "\n... (truncated at {$maxBytes} bytes)";
+        return substr($text, 0, $maxBytes)."\n... (truncated at {$maxBytes} bytes)";
     }
 
     private function truncateArguments(array $arguments): array
@@ -562,7 +602,7 @@ PROMPT;
         $truncated = [];
         foreach ($arguments as $key => $value) {
             if (is_string($value) && strlen($value) > 200) {
-                $truncated[$key] = substr($value, 0, 200) . '...';
+                $truncated[$key] = substr($value, 0, 200).'...';
             } else {
                 $truncated[$key] = $value;
             }

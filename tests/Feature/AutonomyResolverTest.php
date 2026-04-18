@@ -21,7 +21,7 @@ class AutonomyResolverTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->resolver = new AutonomyResolver();
+        $this->resolver = new AutonomyResolver;
     }
 
     public function test_four_autonomy_levels_exist(): void

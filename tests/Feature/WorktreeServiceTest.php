@@ -17,14 +17,16 @@ class WorktreeServiceTest extends TestCase
     use RefreshDatabase;
 
     private WorktreeService $service;
+
     private Repository $repository;
+
     private Run $run;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->service = new WorktreeService();
+        $this->service = new WorktreeService;
 
         $this->repository = Repository::factory()->create([
             'path' => '/repos/my-project',
@@ -50,13 +52,13 @@ class WorktreeServiceTest extends TestCase
 
         $path = $this->service->createWorktree($this->run, $this->repository);
 
-        $this->assertEquals('/worktrees/relay-' . $this->run->id, $path);
+        $this->assertEquals('/worktrees/relay-'.$this->run->id, $path);
         $this->run->refresh();
         $this->assertEquals($path, $this->run->worktree_path);
         $this->assertEquals('relay/fix-123', $this->run->branch);
 
         Process::assertRan(function (PendingProcess $process) {
-            return $process->command === ['git', 'worktree', 'add', '-b', 'relay/fix-123', '/worktrees/relay-' . $this->run->id, 'main']
+            return $process->command === ['git', 'worktree', 'add', '-b', 'relay/fix-123', '/worktrees/relay-'.$this->run->id, 'main']
                 && $process->path === '/repos/my-project';
         });
     }
@@ -69,7 +71,7 @@ class WorktreeServiceTest extends TestCase
 
         $path = $this->service->createWorktree($this->run, $this->repository);
 
-        $this->assertEquals('/repos/my-project/relay-' . $this->run->id, $path);
+        $this->assertEquals('/repos/my-project/relay-'.$this->run->id, $path);
     }
 
     public function test_generates_branch_name_when_run_has_none(): void
@@ -81,7 +83,7 @@ class WorktreeServiceTest extends TestCase
         $this->service->createWorktree($this->run, $this->repository);
 
         $this->run->refresh();
-        $this->assertEquals('relay/run-' . $this->run->id, $this->run->branch);
+        $this->assertEquals('relay/run-'.$this->run->id, $this->run->branch);
     }
 
     public function test_runs_setup_script_after_worktree_creation(): void
@@ -94,11 +96,11 @@ class WorktreeServiceTest extends TestCase
 
         Process::assertRan(function (PendingProcess $process) {
             return $process->command === ['sh', '-c', 'npm install']
-                && $process->path === '/worktrees/relay-' . $this->run->id
+                && $process->path === '/worktrees/relay-'.$this->run->id
                 && $process->environment['RELAY_RUN_ID'] === (string) $this->run->id
                 && $process->environment['RELAY_ISSUE_ID'] === (string) $this->run->issue_id
                 && $process->environment['RELAY_BRANCH'] === 'relay/fix-123'
-                && $process->environment['RELAY_WORKTREE'] === '/worktrees/relay-' . $this->run->id;
+                && $process->environment['RELAY_WORKTREE'] === '/worktrees/relay-'.$this->run->id;
         });
     }
 
@@ -109,6 +111,7 @@ class WorktreeServiceTest extends TestCase
         $ran = [];
         Process::fake(function (PendingProcess $process) use (&$ran) {
             $ran[] = $process->command;
+
             return Process::result(output: '');
         });
 
@@ -120,7 +123,7 @@ class WorktreeServiceTest extends TestCase
 
     public function test_removes_worktree_after_teardown(): void
     {
-        $worktreePath = '/worktrees/relay-' . $this->run->id;
+        $worktreePath = '/worktrees/relay-'.$this->run->id;
         $this->run->update(['worktree_path' => $worktreePath]);
 
         Process::fake(['*' => Process::result(output: '')]);
@@ -137,7 +140,7 @@ class WorktreeServiceTest extends TestCase
 
     public function test_runs_teardown_script_before_removal(): void
     {
-        $worktreePath = '/worktrees/relay-' . $this->run->id;
+        $worktreePath = '/worktrees/relay-'.$this->run->id;
         $this->run->update(['worktree_path' => $worktreePath]);
         $this->repository->update(['teardown_script' => 'rm -rf node_modules']);
 
@@ -149,6 +152,7 @@ class WorktreeServiceTest extends TestCase
             if (in_array('remove', $process->command ?? [])) {
                 $callOrder[] = 'remove';
             }
+
             return Process::result(output: '');
         });
 
@@ -177,7 +181,7 @@ class WorktreeServiceTest extends TestCase
 
     public function test_run_script_executes_in_worktree(): void
     {
-        $worktreePath = '/worktrees/relay-' . $this->run->id;
+        $worktreePath = '/worktrees/relay-'.$this->run->id;
         $this->run->update(['worktree_path' => $worktreePath]);
         $this->repository->update(['run_script' => 'make build']);
 
@@ -195,7 +199,7 @@ class WorktreeServiceTest extends TestCase
 
     public function test_run_script_returns_null_when_not_configured(): void
     {
-        $this->run->update(['worktree_path' => '/worktrees/relay-' . $this->run->id]);
+        $this->run->update(['worktree_path' => '/worktrees/relay-'.$this->run->id]);
         $this->repository->update(['run_script' => null]);
 
         Process::fake();
@@ -219,7 +223,7 @@ class WorktreeServiceTest extends TestCase
                 && $process->environment['RELAY_RUN_ID'] === (string) $this->run->id
                 && $process->environment['RELAY_ISSUE_ID'] === (string) $this->run->issue_id
                 && $process->environment['RELAY_BRANCH'] === 'relay/fix-123'
-                && $process->environment['RELAY_WORKTREE'] === '/worktrees/relay-' . $this->run->id;
+                && $process->environment['RELAY_WORKTREE'] === '/worktrees/relay-'.$this->run->id;
         });
     }
 
@@ -231,6 +235,7 @@ class WorktreeServiceTest extends TestCase
             if (in_array('list', $process->command)) {
                 return Process::result(output: $porcelainOutput);
             }
+
             return Process::result(output: '');
         });
 
@@ -246,7 +251,7 @@ class WorktreeServiceTest extends TestCase
 
     public function test_does_not_recover_active_worktrees(): void
     {
-        $this->run->update(['worktree_path' => '/worktrees/relay-' . $this->run->id]);
+        $this->run->update(['worktree_path' => '/worktrees/relay-'.$this->run->id]);
 
         $porcelainOutput = "worktree /repos/my-project\nHEAD abc\nbranch refs/heads/main\n\nworktree /worktrees/relay-{$this->run->id}\nHEAD def\nbranch refs/heads/relay/fix\n\n";
 

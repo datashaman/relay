@@ -10,7 +10,6 @@ use App\Services\OauthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class SourceController extends Controller
 {
@@ -22,7 +21,7 @@ class SourceController extends Controller
     {
         SyncSourceIssuesJob::dispatch($source);
 
-        $message = 'Sync started for ' . ($source->external_account ?? $source->name) . '.';
+        $message = 'Sync started for '.($source->external_account ?? $source->name).'.';
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => $message]);
@@ -52,7 +51,7 @@ class SourceController extends Controller
 
             return response()->json(['success' => true, 'message' => 'Connection successful.']);
         } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Connection failed: ' . $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => 'Connection failed: '.$e->getMessage()], 422);
         }
     }
 }

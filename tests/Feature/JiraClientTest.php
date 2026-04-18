@@ -15,10 +15,13 @@ class JiraClientTest extends TestCase
     use RefreshDatabase;
 
     private OauthToken $token;
+
     private Source $source;
+
     private JiraClient $client;
 
     private const CLOUD_ID = 'test-cloud-123';
+
     private const BASE = 'api.atlassian.com/ex/jira/test-cloud-123/rest/api/3';
 
     private function fixture(string $name): array
@@ -63,7 +66,7 @@ class JiraClientTest extends TestCase
     public function test_search_issues_with_jql(): void
     {
         Http::fake([
-            self::BASE . '/search/jql*' => Http::response($this->fixture('search_issues')),
+            self::BASE.'/search/jql*' => Http::response($this->fixture('search_issues')),
         ]);
 
         $result = $this->client->searchIssues('project = TEST');
@@ -84,7 +87,7 @@ class JiraClientTest extends TestCase
     public function test_get_issue(): void
     {
         Http::fake([
-            self::BASE . '/issue/TEST-1' => Http::response($this->fixture('get_issue')),
+            self::BASE.'/issue/TEST-1' => Http::response($this->fixture('get_issue')),
         ]);
 
         $issue = $this->client->getIssue('TEST-1');
@@ -96,7 +99,7 @@ class JiraClientTest extends TestCase
     public function test_list_projects(): void
     {
         Http::fake([
-            self::BASE . '/project' => Http::response($this->fixture('list_projects')),
+            self::BASE.'/project' => Http::response($this->fixture('list_projects')),
         ]);
 
         $projects = $this->client->listProjects();
@@ -108,7 +111,7 @@ class JiraClientTest extends TestCase
     public function test_list_transitions(): void
     {
         Http::fake([
-            self::BASE . '/issue/TEST-1/transitions' => Http::response($this->fixture('list_transitions')),
+            self::BASE.'/issue/TEST-1/transitions' => Http::response($this->fixture('list_transitions')),
         ]);
 
         $transitions = $this->client->listTransitions('TEST-1');
@@ -120,7 +123,7 @@ class JiraClientTest extends TestCase
     public function test_transition_issue(): void
     {
         Http::fake([
-            self::BASE . '/issue/TEST-1/transitions' => Http::response([], 204),
+            self::BASE.'/issue/TEST-1/transitions' => Http::response([], 204),
         ]);
 
         $this->client->transitionIssue('TEST-1', '21');
@@ -135,7 +138,7 @@ class JiraClientTest extends TestCase
     public function test_add_comment(): void
     {
         Http::fake([
-            self::BASE . '/issue/TEST-1/comment' => Http::response($this->fixture('add_comment'), 201),
+            self::BASE.'/issue/TEST-1/comment' => Http::response($this->fixture('add_comment'), 201),
         ]);
 
         $result = $this->client->addComment('TEST-1', 'Hello from Relay');
@@ -153,7 +156,7 @@ class JiraClientTest extends TestCase
     public function test_pagination_with_page_token(): void
     {
         Http::fake([
-            self::BASE . '/search/jql*' => Http::response([
+            self::BASE.'/search/jql*' => Http::response([
                 'issues' => [
                     $this->fakeJiraIssue('10003', 'Third issue'),
                 ],
@@ -176,7 +179,7 @@ class JiraClientTest extends TestCase
     public function test_all_issues_throws_when_page_token_does_not_advance(): void
     {
         Http::fake([
-            self::BASE . '/search/jql*' => Http::response([
+            self::BASE.'/search/jql*' => Http::response([
                 'issues' => [$this->fakeJiraIssue('10001', 'First')],
                 'nextPageToken' => 'stuck',
                 'isLast' => false,
@@ -192,7 +195,7 @@ class JiraClientTest extends TestCase
     public function test_all_issues_fetches_all_pages(): void
     {
         Http::fake([
-            self::BASE . '/search/jql*' => Http::sequence()
+            self::BASE.'/search/jql*' => Http::sequence()
                 ->push([
                     'issues' => [
                         $this->fakeJiraIssue('10001', 'First'),
@@ -218,7 +221,7 @@ class JiraClientTest extends TestCase
     public function test_token_refresh_on_401(): void
     {
         Http::fake([
-            self::BASE . '/project' => Http::sequence()
+            self::BASE.'/project' => Http::sequence()
                 ->push(null, 401)
                 ->push([['id' => '10000', 'key' => 'TEST']], 200),
             'auth.atlassian.com/oauth/token' => Http::response([
@@ -239,13 +242,13 @@ class JiraClientTest extends TestCase
     public function test_cloud_id_scoped_in_url(): void
     {
         Http::fake([
-            self::BASE . '/project' => Http::response([]),
+            self::BASE.'/project' => Http::response([]),
         ]);
 
         $this->client->listProjects();
 
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), '/ex/jira/' . self::CLOUD_ID . '/rest/api/3');
+            return str_contains($request->url(), '/ex/jira/'.self::CLOUD_ID.'/rest/api/3');
         });
     }
 
@@ -343,7 +346,7 @@ class JiraClientTest extends TestCase
     public function test_requests_include_accept_and_content_type(): void
     {
         Http::fake([
-            self::BASE . '/*' => Http::response([]),
+            self::BASE.'/*' => Http::response([]),
         ]);
 
         $this->client->listProjects();

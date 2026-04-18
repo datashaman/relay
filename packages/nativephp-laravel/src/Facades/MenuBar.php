@@ -4,6 +4,7 @@ namespace Native\Laravel\Facades;
 
 use Illuminate\Support\Facades\Facade;
 use Native\Laravel\Menu\Menu;
+use Native\Laravel\MenuBar\MenuBarManager;
 
 /**
  * @method static \Native\Laravel\MenuBar\PendingCreateMenuBar create()
@@ -19,6 +20,6 @@ class MenuBar extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Native\Laravel\MenuBar\MenuBarManager::class;
+        return MenuBarManager::class;
     }
 }

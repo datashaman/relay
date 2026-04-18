@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\IssueStatus;
 use App\Models\FilterRule;
 use App\Models\Issue;
+use App\Models\Repository;
 use App\Models\Source;
 use App\Services\FilterRuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,12 +17,13 @@ class FilterRuleServiceTest extends TestCase
     use RefreshDatabase;
 
     private FilterRuleService $service;
+
     private Source $source;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new FilterRuleService();
+        $this->service = new FilterRuleService;
         $this->source = Source::factory()->create();
     }
 
@@ -34,7 +36,7 @@ class FilterRuleServiceTest extends TestCase
             'external_url' => 'https://github.com/org/repo/issues/123',
             'assignee' => null,
             'labels' => [],
-            'repository_id' => \App\Models\Repository::factory()->create()->id,
+            'repository_id' => Repository::factory()->create()->id,
         ], $overrides);
     }
 

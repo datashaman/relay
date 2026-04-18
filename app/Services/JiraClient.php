@@ -6,6 +6,7 @@ use App\Models\OauthToken;
 use App\Models\Source;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class JiraClient
 {
@@ -152,7 +153,7 @@ class JiraClient
         }
 
         if (count($components) > 1) {
-            \Illuminate\Support\Facades\Log::warning('Jira issue has multiple components; using lowest id.', [
+            Log::warning('Jira issue has multiple components; using lowest id.', [
                 'issue_key' => $issueKey,
                 'component_ids' => array_map(fn ($c) => $c['id'] ?? null, $components),
             ]);
@@ -202,7 +203,7 @@ class JiraClient
 
     private function request(string $method, string $path, array $data = []): Response
     {
-        $url = $this->baseUrl . $path;
+        $url = $this->baseUrl.$path;
 
         $this->token = $this->oauth->refreshIfExpired($this->token);
 

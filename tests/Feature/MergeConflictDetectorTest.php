@@ -31,7 +31,7 @@ class MergeConflictDetectorTest extends TestCase
     {
         parent::setUp();
 
-        $this->detector = new MergeConflictDetector();
+        $this->detector = new MergeConflictDetector;
 
         $this->repository = Repository::factory()->create([
             'path' => '/repos/my-project',
@@ -79,6 +79,7 @@ class MergeConflictDetectorTest extends TestCase
             if (($process->command[1] ?? null) === 'rev-parse' && in_array('MERGE_HEAD', $process->command, true)) {
                 return Process::result(output: 'abc123', exitCode: 0);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 
@@ -99,6 +100,7 @@ class MergeConflictDetectorTest extends TestCase
             if (($process->command[1] ?? null) === 'rev-parse' && in_array('MERGE_HEAD', $process->command, true)) {
                 return Process::result(output: 'abc123', exitCode: 0);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 
@@ -116,6 +118,7 @@ class MergeConflictDetectorTest extends TestCase
             if (($process->command[1] ?? null) === 'rev-parse' && in_array('MERGE_HEAD', $process->command, true)) {
                 return Process::result(output: '', exitCode: 1);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 
@@ -170,6 +173,7 @@ class MergeConflictDetectorTest extends TestCase
             if (($process->command[1] ?? null) === 'fetch') {
                 return Process::result(output: '', errorOutput: 'network unreachable', exitCode: 1);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 
@@ -214,6 +218,7 @@ class MergeConflictDetectorTest extends TestCase
             if (($process->command[1] ?? null) === 'rev-parse' && in_array('MERGE_HEAD', $process->command, true)) {
                 return Process::result(output: 'abc', exitCode: 0);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 
@@ -245,6 +250,7 @@ class MergeConflictDetectorTest extends TestCase
             if (($process->command[1] ?? null) === 'rev-parse' && in_array('MERGE_HEAD', $process->command, true)) {
                 return Process::result(output: 'abc', exitCode: 0);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 

@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
+/**
+ * @property SourceType $type
+ * @property string|null $webhook_secret
+ * @property bool $is_intake_paused
+ * @property array<int, string>|null $paused_repositories
+ * @property array<string, mixed>|null $config
+ */
 class Source extends Model
 {
     use HasFactory;

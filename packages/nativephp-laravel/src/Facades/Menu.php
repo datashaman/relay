@@ -10,6 +10,7 @@ use Native\Laravel\Menu\Items\Link;
 use Native\Laravel\Menu\Items\Radio;
 use Native\Laravel\Menu\Items\Role;
 use Native\Laravel\Menu\Items\Separator;
+use Native\Laravel\Menu\MenuBuilder;
 
 /**
  * @method static \Native\Laravel\Menu\Menu make(MenuItem ...$items)
@@ -46,6 +47,6 @@ class Menu extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Native\Laravel\Menu\MenuBuilder::class;
+        return MenuBuilder::class;
     }
 }

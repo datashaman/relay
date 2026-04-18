@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Repository;
 use App\Models\Run;
+use App\Models\Source;
 use App\Models\StageEvent;
 use Illuminate\Support\Facades\Process;
 
@@ -14,8 +15,8 @@ class WorktreeService
         $this->ensureCloned($repository, $run->issue?->source);
 
         $root = $repository->worktree_root ?? $repository->path;
-        $worktreePath = $root . '/relay-' . $run->id;
-        $branch = $run->branch ?? 'relay/run-' . $run->id;
+        $worktreePath = $root.'/relay-'.$run->id;
+        $branch = $run->branch ?? 'relay/run-'.$run->id;
 
         Process::path($repository->path)
             ->run(['git', 'worktree', 'add', '-b', $branch, $worktreePath, $repository->default_branch])
@@ -39,16 +40,16 @@ class WorktreeService
      * clone from GitHub into {relay.repos_root}/{owner}/{repo} and record
      * path + default_branch on the repository row.
      */
-    public function ensureCloned(Repository $repository, ?\App\Models\Source $source = null): void
+    public function ensureCloned(Repository $repository, ?Source $source = null): void
     {
         if ($repository->path) {
             return;
         }
 
         $root = rtrim(config('relay.repos_root'), '/');
-        $target = $root . '/' . $repository->name;
+        $target = $root.'/'.$repository->name;
 
-        if (! is_dir($target . '/.git')) {
+        if (! is_dir($target.'/.git')) {
             @mkdir(dirname($target), 0755, true);
 
             $cloneUrl = $this->buildCloneUrl($repository, $source);
@@ -72,7 +73,7 @@ class WorktreeService
         ]);
     }
 
-    private function buildCloneUrl(Repository $repository, ?\App\Models\Source $source): string
+    private function buildCloneUrl(Repository $repository, ?Source $source): string
     {
         if ($source && $source->type->value === 'github') {
             $token = $source->oauthTokens()->where('provider', 'github')->first();
@@ -82,7 +83,7 @@ class WorktreeService
         }
 
         // No GitHub source / token available — fall back to SSH and hope the worker has an agent.
-        return 'git@github.com:' . $repository->name . '.git';
+        return 'git@github.com:'.$repository->name.'.git';
     }
 
     private function resolveDefaultBranch(string $path): string
@@ -91,7 +92,6 @@ class WorktreeService
 
         return trim($result->output()) ?: 'main';
     }
-
 
     public function removeWorktree(Run $run, Repository $repository): void
     {
@@ -173,7 +173,7 @@ class WorktreeService
             ->timeout(300)
             ->run(['sh', '-c', $script]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
 
         $this->recordScriptEvent($run, $script, $output, $result->exitCode());
 
@@ -225,6 +225,7 @@ class WorktreeService
         if (preg_match('/\/relay-(\d+)$/', $path, $matches)) {
             return (int) $matches[1];
         }
+
         return null;
     }
 }

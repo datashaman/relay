@@ -46,7 +46,7 @@ class OauthService
             $params['prompt'] = 'consent';
         }
 
-        return $config['authorize_url'] . '?' . http_build_query($params);
+        return $config['authorize_url'].'?'.http_build_query($params);
     }
 
     public function validateState(string $state): string
@@ -73,7 +73,7 @@ class OauthService
         ]);
 
         if ($response->failed()) {
-            throw new \RuntimeException('Token exchange failed: ' . $response->body());
+            throw new \RuntimeException('Token exchange failed: '.$response->body());
         }
 
         return $response->json();
@@ -86,7 +86,7 @@ class OauthService
             ->get('https://api.github.com/user');
 
         if ($response->failed()) {
-            throw new \RuntimeException('Failed to fetch GitHub user: ' . $response->body());
+            throw new \RuntimeException('Failed to fetch GitHub user: '.$response->body());
         }
 
         return $response->json();
@@ -99,7 +99,7 @@ class OauthService
             ->get('https://api.atlassian.com/oauth/token/accessible-resources');
 
         if ($response->failed()) {
-            throw new \RuntimeException('Failed to fetch Jira accessible resources: ' . $response->body());
+            throw new \RuntimeException('Failed to fetch Jira accessible resources: '.$response->body());
         }
 
         return $response->json();
@@ -121,7 +121,7 @@ class OauthService
             ]);
 
         if ($response->failed() && $response->status() !== 400) {
-            throw new \RuntimeException('Jira token revocation failed: ' . $response->body());
+            throw new \RuntimeException('Jira token revocation failed: '.$response->body());
         }
     }
 
@@ -131,12 +131,12 @@ class OauthService
 
         $response = Http::withBasicAuth($config['client_id'], $config['client_secret'])
             ->accept('application/json')
-            ->delete('https://api.github.com/applications/' . $config['client_id'] . '/grant', [
+            ->delete('https://api.github.com/applications/'.$config['client_id'].'/grant', [
                 'access_token' => $accessToken,
             ]);
 
         if ($response->failed() && $response->status() !== 404) {
-            throw new \RuntimeException('GitHub token revocation failed: ' . $response->body());
+            throw new \RuntimeException('GitHub token revocation failed: '.$response->body());
         }
     }
 
@@ -173,7 +173,7 @@ class OauthService
         ]);
 
         if ($response->failed()) {
-            throw new \RuntimeException('Token refresh failed: ' . $response->body());
+            throw new \RuntimeException('Token refresh failed: '.$response->body());
         }
 
         $data = $response->json();

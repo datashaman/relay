@@ -1,0 +1,16 @@
+{
+    "preset": "laravel",
+    "exclude": [
+        "bootstrap/cache",
+        "dist",
+        "node_modules",
+        "storage",
+        "vendor"
+    ],
+    "notPath": [
+        "packages/nativephp-electron/resources/js/resources",
+        "packages/nativephp-electron/resources/js/out",
+        "packages/nativephp-electron/resources/js/build",
+        "packages/nativephp-electron/resources/js/node_modules"
+    ]
+}

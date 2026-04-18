@@ -19,6 +19,7 @@ use App\Models\Run;
 use App\Models\Source;
 use App\Models\Stage;
 use App\Models\StageEvent;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class DemoDataSeeder extends Seeder
@@ -28,6 +29,7 @@ class DemoDataSeeder extends Seeder
         // Don't double-seed.
         if (Source::count() > 0) {
             $this->command?->info('Demo data already seeded, skipping.');
+
             return;
         }
 
@@ -175,7 +177,7 @@ class DemoDataSeeder extends Seeder
             ['source' => $acme, 'external_id' => '8984', 'title' => 'Regenerate typed GraphQL client from federated schema', 'labels' => ['infrastructure'], 'status' => IssueStatus::Failed, 'assignee' => 'relay-bot', 'age_hours' => 72, 'pipeline' => 'failed'],
 
             // Rejected
-            ['source' => $jira, 'external_id' => 'PAY-174', 'title' => "Investigate memory regression in Ruby → Node migration spike", 'labels' => ['Spike'], 'status' => IssueStatus::Rejected, 'assignee' => null, 'age_hours' => 200],
+            ['source' => $jira, 'external_id' => 'PAY-174', 'title' => 'Investigate memory regression in Ruby → Node migration spike', 'labels' => ['Spike'], 'status' => IssueStatus::Rejected, 'assignee' => null, 'age_hours' => 200],
         ];
 
         foreach ($issueSpecs as $idx => $spec) {
@@ -214,7 +216,7 @@ class DemoDataSeeder extends Seeder
     {
         return "Reported automatically from the intake pipeline.\n\n".
             "Context:\n- Title: {$title}\n- Observed on: production\n- Severity: medium\n\n".
-            "Next steps: triage, reproduce in a worktree, patch, verify.";
+            'Next steps: triage, reproduce in a worktree, patch, verify.';
     }
 
     private function externalUrlFor(Source $source, string $externalId): string
@@ -225,7 +227,7 @@ class DemoDataSeeder extends Seeder
         };
     }
 
-    private function buildPipelineFor(Issue $issue, string $shape, \Carbon\Carbon $issueCreatedAt): void
+    private function buildPipelineFor(Issue $issue, string $shape, Carbon $issueCreatedAt): void
     {
         $runStart = $issueCreatedAt->copy()->addMinutes(2);
 
@@ -285,7 +287,7 @@ class DemoDataSeeder extends Seeder
             'Issue filed by @dev_lead after a retry storm on 2026-04-09 caused 137 duplicate charges.',
             'Stripe supports `Idempotency-Key` as an HTTP header, TTL 24h.',
             'Current middleware stack: `api`, `throttle:120,1`, `auth:sanctum` — no idempotency middleware yet.',
-            "Callers: iOS app, Android app, web checkout — all already generate a UUID per user action.",
+            'Callers: iOS app, Android app, web checkout — all already generate a UUID per user action.',
         ];
     }
 
@@ -343,14 +345,14 @@ Scope is narrow: bounded edit in the service layer and a unit-level test to lock
 MD;
     }
 
-    private function stagesPreflightClarifying(Run $run, \Carbon\Carbon $start): void
+    private function stagesPreflightClarifying(Run $run, Carbon $start): void
     {
         $stage = $this->stage($run, StageName::Preflight, StageStatus::AwaitingApproval, 1, $start, null);
         $this->event($stage, 'started', 'preflight_agent', ['confidence' => 'low'], $start);
         $this->event($stage, 'clarification_requested', 'preflight_agent', ['questions' => 3], $start->copy()->addMinutes(1));
     }
 
-    private function stagesPreflightClarified(Run $run, \Carbon\Carbon $start): void
+    private function stagesPreflightClarified(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(6));
         $this->event($pre, 'started', 'preflight_agent', ['confidence' => 'low'], $start);
@@ -371,7 +373,7 @@ MD;
         $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'write_file', 'path' => 'app/Jobs/RetryRefundWebhook.php'], $start->copy()->addMinutes(8));
     }
 
-    private function stagesImplementRunning(Run $run, \Carbon\Carbon $start): void
+    private function stagesImplementRunning(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(3));
         $this->event($pre, 'started', 'preflight_agent', [], $start);
@@ -390,7 +392,7 @@ MD;
         $this->event($imp, 'tool_call', 'implement_agent', ['tool' => 'run_tests', 'count' => 214], $start->copy()->addMinutes(12));
     }
 
-    private function stagesVerifyRunning(Run $run, \Carbon\Carbon $start): void
+    private function stagesVerifyRunning(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(2));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(2));
@@ -408,7 +410,7 @@ MD;
         $this->event($ver, 'tool_call', 'verify_agent', ['tool' => 'run_tests', 'count' => 214], $start->copy()->addMinutes(13));
     }
 
-    private function stagesReleaseAwaiting(Run $run, \Carbon\Carbon $start): void
+    private function stagesReleaseAwaiting(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(2));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(2));
@@ -435,7 +437,7 @@ MD;
         $this->event($rel, 'approval_requested', 'release_agent', ['reason' => 'escalation rule: large diff'], $start->copy()->addMinutes(14));
     }
 
-    private function stagesStuckIteration(Run $run, \Carbon\Carbon $start): void
+    private function stagesStuckIteration(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(2));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(2));
@@ -464,7 +466,7 @@ MD;
         }
     }
 
-    private function stagesStuckTimeout(Run $run, \Carbon\Carbon $start): void
+    private function stagesStuckTimeout(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(3));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(3));
@@ -474,7 +476,7 @@ MD;
         $this->event($imp, 'stuck', 'implement_agent', ['reason' => 'no progress for 30 minutes during wasm-bundling'], $start->copy()->addMinutes(33));
     }
 
-    private function stagesStuckUncertain(Run $run, \Carbon\Carbon $start): void
+    private function stagesStuckUncertain(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(2));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(2));
@@ -488,7 +490,7 @@ MD;
         ], $start->copy()->addMinutes(11));
     }
 
-    private function stagesStuckBlocker(Run $run, \Carbon\Carbon $start): void
+    private function stagesStuckBlocker(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(2));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(2));
@@ -500,7 +502,7 @@ MD;
         ], $start->copy()->addMinutes(4));
     }
 
-    private function stagesCompleted(Run $run, \Carbon\Carbon $start): void
+    private function stagesCompleted(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(2));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(2));
@@ -523,7 +525,7 @@ MD;
         ], $start->copy()->addMinutes(18));
     }
 
-    private function stagesFailed(Run $run, \Carbon\Carbon $start): void
+    private function stagesFailed(Run $run, Carbon $start): void
     {
         $pre = $this->stage($run, StageName::Preflight, StageStatus::Completed, 1, $start, $start->copy()->addMinutes(2));
         $this->event($pre, 'completed', 'preflight_agent', [], $start->copy()->addMinutes(2));
@@ -535,7 +537,7 @@ MD;
         ], $start->copy()->addMinutes(17));
     }
 
-    private function stage(Run $run, StageName $name, StageStatus $status, int $iteration, \Carbon\Carbon $startedAt, ?\Carbon\Carbon $completedAt): Stage
+    private function stage(Run $run, StageName $name, StageStatus $status, int $iteration, Carbon $startedAt, ?Carbon $completedAt): Stage
     {
         return Stage::factory()->create([
             'run_id' => $run->id,
@@ -549,7 +551,7 @@ MD;
         ]);
     }
 
-    private function event(Stage $stage, string $type, string $actor, array $payload, \Carbon\Carbon $at): void
+    private function event(Stage $stage, string $type, string $actor, array $payload, Carbon $at): void
     {
         StageEvent::factory()->create([
             'stage_id' => $stage->id,

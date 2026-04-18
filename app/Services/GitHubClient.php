@@ -10,6 +10,7 @@ use Illuminate\Support\Sleep;
 class GitHubClient
 {
     private const BASE_URL = 'https://api.github.com';
+
     private const PER_PAGE = 30;
 
     public function __construct(
@@ -147,7 +148,7 @@ class GitHubClient
 
     private function request(string $method, string $path, array $data = []): Response
     {
-        $url = self::BASE_URL . $path;
+        $url = self::BASE_URL.$path;
 
         $this->token = $this->oauth->refreshIfExpired($this->token);
 
@@ -169,6 +170,7 @@ class GitHubClient
 
         if ($response->status() === 403 && $this->isRateLimited($response)) {
             $this->waitForRateLimit($response);
+
             return $this->request($method, $path, $data);
         }
 
