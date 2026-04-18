@@ -459,8 +459,9 @@ class PreflightAgentTest extends TestCase
         $response->assertDontSee('Skip to Doc');
         $response->assertSee('Proceed without answers');
 
-        // Confirm dialog attribute is present in rendered HTML
-        $response->assertSee('wire:confirm', false);
+        // Confirm dialog is attached to the destructive Livewire action
+        $response->assertSee('wire:click="skipToDoc"', false);
+        $response->assertSee('wire:confirm="The agent will generate a doc without your answers.', false);
 
         // Non-mutating back link is present
         $response->assertSee(route('intake.index'), false);
