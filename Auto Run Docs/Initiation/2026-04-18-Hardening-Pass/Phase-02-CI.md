@@ -30,7 +30,9 @@ Add a CI workflow so tests, lint, and (later) static analysis run automatically 
 
   **Completed (2026-04-18):** Created `.github/workflows/ci.yml` with the `test` job matching the spec. Triggers on all pushes and PRs targeting `main`. Co-exists with the pre-existing `tests.yml` (coverage workflow). Commit will follow in the final task of this phase.
 
-- [ ] Add a second job `lint` (or parallel step) that runs `./vendor/bin/pint --test` to enforce code style without modifying files. Make it independent of `test` so both jobs run in parallel. Leave a TODO comment near the job mentioning that Phase 03 will add a PHPStan job.
+- [x] Add a second job `lint` (or parallel step) that runs `./vendor/bin/pint --test` to enforce code style without modifying files. Make it independent of `test` so both jobs run in parallel. Leave a TODO comment near the job mentioning that Phase 03 will add a PHPStan job.
+
+  **Completed (2026-04-18):** Added a `lint` job to `.github/workflows/ci.yml` running in parallel with `test`. Job reuses the PHP 8.4 setup + Composer cache pattern, then runs `./vendor/bin/pint --test`. TODO comment points at Phase 03 PHPStan work. Pint preflight intentionally deferred to the later sanity-check task — if it fails there, we'll revisit adding `continue-on-error: true`.
 
 - [ ] Add a status-badge line to the top of `README.md` pointing at the new workflow (GitHub Actions badge URL format: `https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg`). Determine `<owner>/<repo>` from `git remote get-url origin`.
 
