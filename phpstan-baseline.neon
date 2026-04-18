@@ -97,32 +97,8 @@ parameters:
 			path: app/Http/Controllers/OauthController.php
 
 		-
-			message: '#^Expression in empty\(\) is always falsy\.$#'
-			identifier: empty.expr
-			count: 2
-			path: app/Http/Controllers/OauthController.php
-
-		-
-			message: '#^Offset ''projects'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/OauthController.php
-
-		-
-			message: '#^Offset ''repositories'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/OauthController.php
-
-		-
 			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:revokeJiraToken\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
 			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/OauthController.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
 			count: 1
 			path: app/Http/Controllers/OauthController.php
 
@@ -167,12 +143,6 @@ parameters:
 			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Controllers/RunProgressController.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Http/Controllers/SourceController.php
 
 		-
 			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:refreshIfExpired\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
@@ -235,92 +205,8 @@ parameters:
 			path: app/Jobs/ResolveConflictsJob.php
 
 		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Match arm comparison between string and App\\Enums\\SourceType\:\:GitHub is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Match arm comparison between string and App\\Enums\\SourceType\:\:Jira is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Offset ''jql'' on array\{\}\|string on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Offset ''only_active_sprint'' on array\{\}\|string in empty\(\) does not exist\.$#'
-			identifier: empty.offset
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Offset ''only_mine'' on array\{\}\|string in empty\(\) does not exist\.$#'
-			identifier: empty.offset
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Offset ''projects'' on array\{\}\|string on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Offset ''repositories'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Offset ''statuses'' on array\{\}\|string on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_filter is empty, call has no effect\.$#'
-			identifier: arrayFilter.empty
-			count: 2
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
 			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:refreshIfExpired\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
 			identifier: argument.type
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Variable \$projects in empty\(\) always exists and is always falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Variable \$repos in empty\(\) always exists and is always falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Variable \$statuses in empty\(\) always exists and is always falsy\.$#'
-			identifier: empty.variable
 			count: 1
 			path: app/Jobs/SyncSourceIssuesJob.php
 
@@ -475,32 +361,8 @@ parameters:
 			path: app/Services/ImplementAgent.php
 
 		-
-			message: '#^Negated boolean expression is always true\.$#'
-			identifier: booleanNot.alwaysTrue
-			count: 1
-			path: app/Services/JiraClient.php
-
-		-
-			message: '#^Offset ''cloud_id'' on string\|null on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/JiraClient.php
-
-		-
-			message: '#^Property App\\Services\\JiraClient\:\:\$baseUrl is never written, only read\.$#'
-			identifier: property.onlyRead
-			count: 1
-			path: app/Services/JiraClient.php
-
-		-
 			message: '#^Property App\\Services\\JiraClient\:\:\$source is never read, only written\.$#'
 			identifier: property.onlyWritten
-			count: 1
-			path: app/Services/JiraClient.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
 			count: 1
 			path: app/Services/JiraClient.php
 
@@ -835,21 +697,15 @@ parameters:
 			path: app/Services/WorktreeService.php
 
 		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/WorktreeService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 5
+			count: 1
 			path: database/seeders/DemoDataSeeder.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 1
 			path: database/seeders/DemoDataSeeder.php
 
 		-
@@ -865,21 +721,9 @@ parameters:
 			path: database/seeders/DemoDataSeeder.php
 
 		-
-			message: '#^Match arm comparison between string and App\\Enums\\SourceType\:\:GitHub is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Match arm comparison between string and App\\Enums\\SourceType\:\:Jira is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
 			message: '#^Match expression does not handle remaining value\: string$#'
 			identifier: match.unhandled
-			count: 2
+			count: 1
 			path: database/seeders/DemoDataSeeder.php
 
 		-
@@ -961,12 +805,6 @@ parameters:
 			path: database/seeders/DemoDataSeeder.php
 
 		-
-			message: '#^Parameter \#1 \$source of method Database\\Seeders\\DemoDataSeeder\:\:externalUrlFor\(\) expects App\\Models\\Source, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
 			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Console\\Command\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 3
@@ -975,7 +813,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 26
+			count: 22
 			path: tests/Feature/ActivityFeedTest.php
 
 		-
@@ -1003,21 +841,9 @@ parameters:
 			path: tests/Feature/CoreSchemaTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$filterRule\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 16
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issues\.$#'
-			identifier: property.notFound
-			count: 1
+			count: 8
 			path: tests/Feature/CoreSchemaTest.php
 
 		-
@@ -1030,12 +856,6 @@ parameters:
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 2
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$oauthTokens\.$#'
-			identifier: property.notFound
-			count: 1
 			path: tests/Feature/CoreSchemaTest.php
 
 		-
@@ -1100,12 +920,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$target_level\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$type\.$#'
 			identifier: property.notFound
 			count: 1
 			path: tests/Feature/CoreSchemaTest.php
@@ -1189,46 +1003,10 @@ parameters:
 			path: tests/Feature/FilterRuleServiceTest.php
 
 		-
-			message: '#^Property Tests\\Feature\\FilterRuleServiceTest\:\:\$source \(App\\Models\\Source\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/FilterRuleServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/GitHubClientTest.php
-
-		-
 			message: '#^Property Tests\\Feature\\GitHubClientTest\:\:\$token \(App\\Models\\OauthToken\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: tests/Feature/GitHubClientTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/GithubSelectReposTest.php
-
-		-
-			message: '#^Method Tests\\Feature\\GithubSelectReposTest\:\:createGithubSourceWithToken\(\) should return App\\Models\\Source but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/GithubSelectReposTest.php
-
-		-
-			message: '#^Offset ''existing'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/GithubSelectReposTest.php
-
-		-
-			message: '#^Offset ''repositories'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 3
-			path: tests/Feature/GithubSelectReposTest.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
@@ -1261,20 +1039,8 @@ parameters:
 			path: tests/Feature/IssueQueueTest.php
 
 		-
-			message: '#^Method Tests\\Feature\\IssueQueueTest\:\:createSource\(\) should return App\\Models\\Source but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/IssueQueueTest.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 1
-			path: tests/Feature/IssueSyncTest.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
 			count: 1
 			path: tests/Feature/IssueSyncTest.php
 
@@ -1285,32 +1051,8 @@ parameters:
 			path: tests/Feature/IssueSyncTest.php
 
 		-
-			message: '#^Method Tests\\Feature\\IssueSyncTest\:\:createGitHubSource\(\) should return App\\Models\\Source but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/IssueSyncTest.php
-
-		-
-			message: '#^Method Tests\\Feature\\IssueSyncTest\:\:createJiraSource\(\) should return App\\Models\\Source but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/IssueSyncTest.php
-
-		-
 			message: '#^Method Tests\\Feature\\IssueSyncTest\:\:createToken\(\) should return App\\Models\\OauthToken but returns Illuminate\\Database\\Eloquent\\Model\.$#'
 			identifier: return.type
-			count: 1
-			path: tests/Feature/IssueSyncTest.php
-
-		-
-			message: '#^Parameter \#1 \$source of job class App\\Jobs\\SyncSourceIssuesJob constructor expects App\\Models\\Source in App\\Jobs\\SyncSourceIssuesJob\:\:dispatchSync\(\), Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Feature/IssueSyncTest.php
-
-		-
-			message: '#^Parameter \#1 \$source of method Tests\\Feature\\IssueSyncTest\:\:createToken\(\) expects App\\Models\\Source, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
 			count: 1
 			path: tests/Feature/IssueSyncTest.php
 
@@ -1327,70 +1069,10 @@ parameters:
 			path: tests/Feature/IssueViewTest.php
 
 		-
-			message: '#^Method Tests\\Feature\\IssueViewTest\:\:createSource\(\) should return App\\Models\\Source but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/IssueViewTest.php
-
-		-
-			message: '#^Parameter \#3 \$source of class App\\Services\\JiraClient constructor expects App\\Models\\Source, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Feature/JiraClientTest.php
-
-		-
-			message: '#^Property Tests\\Feature\\JiraClientTest\:\:\$source \(App\\Models\\Source\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/JiraClientTest.php
-
-		-
 			message: '#^Property Tests\\Feature\\JiraClientTest\:\:\$token \(App\\Models\\OauthToken\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: tests/Feature/JiraClientTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/JiraSelectProjectsTest.php
-
-		-
-			message: '#^Method Tests\\Feature\\JiraSelectProjectsTest\:\:createJiraSource\(\) should return App\\Models\\Source but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/JiraSelectProjectsTest.php
-
-		-
-			message: '#^Offset ''cloud_id'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/JiraSelectProjectsTest.php
-
-		-
-			message: '#^Offset ''only_active_sprint'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/JiraSelectProjectsTest.php
-
-		-
-			message: '#^Offset ''only_mine'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/JiraSelectProjectsTest.php
-
-		-
-			message: '#^Offset ''projects'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/JiraSelectProjectsTest.php
-
-		-
-			message: '#^Offset ''statuses'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/JiraSelectProjectsTest.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
@@ -1425,7 +1107,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 4
+			count: 2
 			path: tests/Feature/MobileBuildTest.php
 
 		-
@@ -1435,10 +1117,22 @@ parameters:
 			path: tests/Feature/MobileBuildTest.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$access_token\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/OauthFlowTest.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1
-			path: tests/Feature/MobileSyncServiceTest.php
+			path: tests/Feature/OauthFlowTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$refresh_token\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/OauthFlowTest.php
 
 		-
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isExpired\(\)\.$#'
@@ -1447,39 +1141,21 @@ parameters:
 			path: tests/Feature/OauthFlowTest.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:oauthTokens\(\)\.$#'
-			identifier: method.notFound
-			count: 8
-			path: tests/Feature/OauthFlowTest.php
-
-		-
-			message: '#^Offset ''cloud_id'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 5
-			path: tests/Feature/OauthFlowTest.php
-
-		-
-			message: '#^Offset ''site_url'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
+			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:authenticatedRequest\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
 			count: 1
+			path: tests/Feature/OauthFlowTest.php
+
+		-
+			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:refreshIfExpired\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
 			path: tests/Feature/OauthFlowTest.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 7
-			path: tests/Feature/OauthServiceTest.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:oauthTokens\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: tests/Feature/OauthServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$source of method App\\Services\\OauthService\:\:storeToken\(\) expects App\\Models\\Source, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
+			count: 1
 			path: tests/Feature/OauthServiceTest.php
 
 		-
@@ -1496,6 +1172,12 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:refreshToken\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/OauthServiceTest.php
+
+		-
+			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:revokeJiraToken\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
 			identifier: argument.type
 			count: 2
 			path: tests/Feature/OauthServiceTest.php
@@ -1729,12 +1411,6 @@ parameters:
 			path: tests/Feature/OverviewTest.php
 
 		-
-			message: '#^Method Tests\\Feature\\OverviewTest\:\:createSource\(\) should return App\\Models\\Source but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/OverviewTest.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1857,7 +1533,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 5
+			count: 3
 			path: tests/Feature/ReleaseAgentTest.php
 
 		-
@@ -1887,7 +1563,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 22
+			count: 16
 			path: tests/Feature/RunProgressTest.php
 
 		-
@@ -1901,12 +1577,6 @@ parameters:
 			identifier: property.notFound
 			count: 15
 			path: tests/Feature/RunTimelineTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 7
-			path: tests/Feature/SourceManagementTest.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
