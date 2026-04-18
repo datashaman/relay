@@ -46,7 +46,7 @@ class GitHubWebhookManager
                     'reason' => null,
                 ];
             } catch (RequestException $e) {
-                $status = $e->response?->status();
+                $status = $e->response->status();
                 $isPermissionError = in_array($status, [401, 403], true);
                 $isRepoConstraint = in_array($status, [404, 422], true);
 
@@ -62,7 +62,7 @@ class GitHubWebhookManager
                         : ($isRepoConstraint ? 'manual' : 'error'),
                     'hook_id' => null,
                     'updated_at' => now()->toIso8601String(),
-                    'reason' => $this->truncateReason($e->response?->json('message') ?? $e->getMessage()),
+                    'reason' => $this->truncateReason($e->response->json('message') ?? $e->getMessage()),
                 ];
             } catch (\Throwable $e) {
                 $otherErrors++;
