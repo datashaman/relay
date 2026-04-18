@@ -65,7 +65,13 @@ class IssueController extends Controller
                 ->with('error', 'Only queued issues can be rejected.');
         }
 
-        $issue->update(['status' => IssueStatus::Rejected]);
+        // Clear raw_status so the row is distinguishable from sync-driven
+        // rejections. markReopened() treats null raw_status as "user rejected"
+        // and refuses to resurrect the issue on upstream reopen.
+        $issue->update([
+            'status' => IssueStatus::Rejected,
+            'raw_status' => null,
+        ]);
 
         return redirect()->route('intake.index')
             ->with('success', "Issue \"{$issue->title}\" rejected.");

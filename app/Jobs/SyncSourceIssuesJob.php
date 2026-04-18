@@ -60,6 +60,11 @@ class SyncSourceIssuesJob implements ShouldQueue
                     continue;
                 }
 
+                // Open-path issues go through upsertIssue, which reconciles any
+                // prior sync-driven rejection back to Queued using the same row
+                // it already fetches — sources without discrete reopen webhook
+                // events (e.g. Jira) get reopens reconciled here without a
+                // separate DB round-trip.
                 unset($issueData['state'], $issueData['state_reason']);
                 $intake->upsertIssue($this->source, $issueData);
             }
@@ -137,7 +142,11 @@ class SyncSourceIssuesJob implements ShouldQueue
     private function buildJiraJql(): string
     {
         $config = $this->source->config ?? [];
-        $base = $config['jql'] ?? 'status != Done';
+        // Default is a time-bounded clause (not a status filter) so the sync
+        // sees Done/Closed/Resolved transitions and can reconcile them back
+        // to the local queue. Users can override with a narrower JQL via
+        // source config if they prefer.
+        $base = $config['jql'] ?? 'updated >= -30d';
 
         $clauses = [];
 

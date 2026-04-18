@@ -299,6 +299,144 @@ class IssueSyncTest extends TestCase
         $this->assertEquals('closed:completed', $issue->raw_status);
     }
 
+    public function test_jira_sync_rejects_queued_issues_closed_upstream(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'Will be closed',
+            'status' => IssueStatus::Queued,
+        ]);
+
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'TEST-1',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'Will be closed',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'Done'],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'TEST-1')->first();
+        $this->assertEquals(IssueStatus::Rejected, $issue->status);
+        $this->assertEquals('closed:Done', $issue->raw_status);
+    }
+
+    public function test_jira_sync_preserves_accepted_when_closed_upstream(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'In flight',
+            'status' => IssueStatus::Accepted,
+        ]);
+
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'TEST-1',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'In flight',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'Done'],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'TEST-1')->first();
+        $this->assertEquals(IssueStatus::Accepted, $issue->status, 'local pipeline state must win over upstream close');
+        $this->assertEquals('closed:Done', $issue->raw_status);
+    }
+
+    public function test_jira_sync_reopens_sync_rejected_issue(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'Previously closed',
+            'status' => IssueStatus::Rejected,
+            'raw_status' => 'closed:Done',
+        ]);
+
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'TEST-1',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'Previously closed',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'To Do'],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'TEST-1')->first();
+        $this->assertEquals(IssueStatus::Queued, $issue->status);
+        // upsertIssue runs after markReopened, so raw_status reflects the current Jira status
+        $this->assertEquals('To Do', $issue->raw_status);
+    }
+
+    public function test_jira_sync_does_not_reopen_user_rejected_issue(): void
+    {
+        $source = $this->createJiraSource();
+        $this->createToken($source);
+
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'User rejected',
+            'status' => IssueStatus::Rejected,
+            'raw_status' => null,
+        ]);
+
+        $this->fakeJiraIssues([
+            [
+                'id' => '10001',
+                'key' => 'TEST-1',
+                'self' => 'https://jira.example.com/issue/10001',
+                'fields' => [
+                    'summary' => 'User rejected',
+                    'description' => null,
+                    'assignee' => null,
+                    'labels' => [],
+                    'status' => ['name' => 'To Do'],
+                ],
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'TEST-1')->first();
+        $this->assertEquals(IssueStatus::Rejected, $issue->status, 'user-driven rejection must not resurrect on upstream reopen');
+    }
+
     public function test_jira_sync_creates_issues(): void
     {
         $source = $this->createJiraSource();
@@ -412,7 +550,7 @@ class IssueSyncTest extends TestCase
                 && str_contains($url, 'status in ("In Review","Backlog")')
                 && str_contains($url, 'assignee = currentUser()')
                 && str_contains($url, 'sprint in openSprints()')
-                && str_contains($url, 'status != Done');
+                && str_contains($url, 'updated >= -30d');
         });
     }
 

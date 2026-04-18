@@ -152,6 +152,7 @@ class JiraClient
     public static function mapToIssueAttributes(array $jiraIssue): array
     {
         $fields = $jiraIssue['fields'] ?? [];
+        $statusName = $fields['status']['name'] ?? null;
         $component = self::pickComponent($fields['components'] ?? [], $jiraIssue['key'] ?? $jiraIssue['id'] ?? null);
 
         return [
@@ -161,8 +162,10 @@ class JiraClient
             'external_url' => $jiraIssue['self'] ?? '',
             'assignee' => $fields['assignee']['displayName'] ?? null,
             'labels' => $fields['labels'] ?? [],
-            'status' => self::mapStatus($fields['status']['name'] ?? null),
-            'raw_status' => $fields['status']['name'] ?? null,
+            'status' => self::mapStatus($statusName),
+            'raw_status' => $statusName,
+            'state' => self::mapState($statusName),
+            'state_reason' => $statusName,
             'component_external_id' => $component['id'] ?? null,
             'component_name' => $component['name'] ?? null,
         ];
@@ -221,6 +224,15 @@ class JiraClient
             in_array($lower, ['in progress', 'in review']) => 'accepted',
             default => 'incoming',
         };
+    }
+
+    private static function mapState(?string $jiraStatus): string
+    {
+        if (! $jiraStatus) {
+            return 'open';
+        }
+
+        return in_array(strtolower($jiraStatus), ['done', 'closed', 'resolved']) ? 'closed' : 'open';
     }
 
     private function request(string $method, string $path, array $data = []): Response
