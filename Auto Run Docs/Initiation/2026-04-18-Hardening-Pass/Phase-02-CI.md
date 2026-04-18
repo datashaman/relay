@@ -12,7 +12,7 @@ Add a CI workflow so tests, lint, and (later) static analysis run automatically 
 
   **Findings (2026-04-18):**
   - `composer.json` requires `php: ^8.4`; Laravel 13, Pint 1.27, PHPUnit 12.5.
-  - No `.nvmrc` present. `package.json` declares no engines; existing workflow pins Node 20. Use `node-version: '20'` for the new `ci.yml`.
+  - No `.nvmrc` present. `package.json` declares no engines; existing workflow pins Node 24. Use `node-version: '24'` for the new `ci.yml`.
   - `phpunit.xml` pins `DB_CONNECTION=sqlite` and `DB_DATABASE=:memory:` via env block, so tests do not need a file-backed DB; however the Phase-02 task instructs CI to create `database/database.sqlite` and run `php artisan migrate --force` before `php artisan test` (harmless: the migrate uses `.env` which is seeded from `.env.example` where `DB_CONNECTION=sqlite` without `DB_DATABASE`, defaulting to `database/database.sqlite`). Tests themselves still use the in-memory DB from phpunit.xml.
   - Required env: `APP_KEY` (generated via `php artisan key:generate`); `.env.example` already contains a complete `DB_CONNECTION=sqlite` default plus empty AI provider keys (safe for CI — no tests require live API calls per Phase 01 verification).
   - `.github/workflows/` already contains **`tests.yml`** (a pre-existing coverage-focused workflow). Phase-02 says to create `ci.yml` — it will co-exist alongside `tests.yml`. Flag for follow-up: once `ci.yml` stabilises, the older `tests.yml` may be redundant (not in scope for this phase).
