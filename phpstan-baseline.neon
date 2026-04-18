@@ -1,100 +1,10 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Events/RunStuck.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Events/StageTransitioned.php
-
-		-
 			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
 			identifier: argument.type
 			count: 2
 			path: app/Http/Controllers/EscalationRuleController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Http/Controllers/IssueViewController.php
-
-		-
-			message: '#^Property App\\Http\\Controllers\\IssueViewController\:\:\$orchestrator is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: app/Http/Controllers/IssueViewController.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\RunStatus\:\:Stuck will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: app/Http/Controllers/IssueViewController.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\StageStatus\:\:AwaitingApproval will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 2
-			path: app/Http/Controllers/IssueViewController.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between string and App\\Enums\\StageStatus\:\:Failed will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: app/Http/Controllers/IssueViewController.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 4
-			path: app/Http/Controllers/IssueViewController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$events\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Http/Controllers/RunProgressController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/RunProgressController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$iteration\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/RunProgressController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Http/Controllers/RunProgressController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/RunProgressController.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Http/Controllers/RunProgressController.php
-
-		-
-			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
-			count: 1
-			path: app/Http/Controllers/RunProgressController.php
 
 		-
 			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:refreshIfExpired\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
@@ -103,26 +13,8 @@ parameters:
 			path: app/Http/Controllers/SourceController.php
 
 		-
-			message: '#^Match arm comparison between string and App\\Enums\\StageName\:\:Implement is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: app/Jobs/ExecuteStageJob.php
-
-		-
-			message: '#^Match arm comparison between string and App\\Enums\\StageName\:\:Preflight is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: app/Jobs/ExecuteStageJob.php
-
-		-
-			message: '#^Match arm comparison between string and App\\Enums\\StageName\:\:Release is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: app/Jobs/ExecuteStageJob.php
-
-		-
-			message: '#^Match arm comparison between string and App\\Enums\\StageName\:\:Verify is always false\.$#'
-			identifier: match.alwaysFalse
+			message: '#^Match arm comparison between App\\Enums\\StageName\:\:Release and App\\Enums\\StageName\:\:Release is always true\.$#'
+			identifier: match.alwaysTrue
 			count: 1
 			path: app/Jobs/ExecuteStageJob.php
 
@@ -134,12 +26,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/ResolveConflictsJob.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$repository\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Jobs/ResolveConflictsJob.php
@@ -157,22 +43,16 @@ parameters:
 			path: app/Jobs/ResolveConflictsJob.php
 
 		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Issue\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ResolveConflictsJob.php
+
+		-
 			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:refreshIfExpired\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Jobs/SyncSourceIssuesJob.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Listeners/SendApprovalNotification.php
-
-		-
-			message: '#^Parameter \#2 \$stage of method App\\Services\\EscalationRuleService\:\:resolveWithEscalation\(\) expects App\\Enums\\StageName, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Listeners/SendApprovalNotification.php
 
 		-
 			message: '#^Cannot call method isPast\(\) on string\.$#'
@@ -283,36 +163,6 @@ parameters:
 			path: app/Services/FilterRuleService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/ImplementAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/ImplementAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$worktree_path\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/ImplementAgent.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 4
-			path: app/Services/ImplementAgent.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:event\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 3
-			path: app/Services/ImplementAgent.php
-
-		-
 			message: '#^Property App\\Services\\JiraClient\:\:\$source is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -325,20 +175,14 @@ parameters:
 			path: app/Services/MergeConflictDetector.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$repository\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/MergeConflictDetector.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/MergeConflictDetector.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between string and null will always evaluate to false\.$#'
+			message: '#^Strict comparison using \=\=\= between App\\Enums\\RunStatus and null will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/MergeConflictDetector.php
+
+		-
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Issue\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Services/MergeConflictDetector.php
 
@@ -373,15 +217,9 @@ parameters:
 			path: app/Services/OauthService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Services/OrchestratorService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$iteration\.$#'
 			identifier: property.notFound
-			count: 3
+			count: 2
 			path: app/Services/OrchestratorService.php
 
 		-
@@ -391,232 +229,10 @@ parameters:
 			path: app/Services/OrchestratorService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$repository_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 7
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Cannot call method diffInMilliseconds\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$current of method App\\Services\\OrchestratorService\:\:nextStageName\(\) expects App\\Enums\\StageName, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$current of method App\\Services\\OrchestratorService\:\:previousStageName\(\) expects App\\Enums\\StageName, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$run of event class App\\Events\\RunStuck constructor expects App\\Models\\Run in App\\Events\\RunStuck\:\:dispatch\(\), Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$run of method App\\Services\\OrchestratorService\:\:completeRun\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$run of method App\\Services\\OrchestratorService\:\:createStage\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 3
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:event\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageCompleted\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageFailed\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageStarted\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#2 \$name of method App\\Services\\OrchestratorService\:\:createStage\(\) expects App\\Enums\\StageName, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Parameter \#2 \$stage of method App\\Services\\EscalationRuleService\:\:resolveWithEscalation\(\) expects App\\Enums\\StageName, string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$clarification_answers\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$iteration\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$preflight_doc\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$worktree_path\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 6
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:event\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 4
-			path: app/Services/PreflightAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/PushNotificationService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/PushNotificationService.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Services/PushNotificationService.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Services/PushNotificationService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$branch\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/ReleaseAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/ReleaseAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/ReleaseAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$worktree_path\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/ReleaseAgent.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 6
-			path: app/Services/ReleaseAgent.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:event\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 4
-			path: app/Services/ReleaseAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/VerifyAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/VerifyAgent.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$worktree_path\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/VerifyAgent.php
-
-		-
-			message: '#^Cannot access property \$value on string\.$#'
-			identifier: property.nonObject
-			count: 6
-			path: app/Services/VerifyAgent.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:event\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 5
-			path: app/Services/VerifyAgent.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$access_token\.$#'
@@ -631,25 +247,13 @@ parameters:
 			path: app/Services/WorktreeService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$source\.$#'
-			identifier: property.notFound
+			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Issue\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Services/WorktreeService.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$source\.$#'
-			identifier: property.notFound
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
 			identifier: property.notFound
 			count: 1
 			path: database/seeders/DemoDataSeeder.php
@@ -895,18 +499,6 @@ parameters:
 			path: tests/Feature/EscalationRuleEngineTest.php
 
 		-
-			message: '#^Offset ''forced_level'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 2
-			path: tests/Feature/EscalationRuleEngineTest.php
-
-		-
-			message: '#^Offset ''matched_rules'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 4
-			path: tests/Feature/EscalationRuleEngineTest.php
-
-		-
 			message: '#^Parameter \#1 \$issue of method App\\Services\\EscalationRuleService\:\:evaluateRules\(\) expects App\\Models\\Issue, Illuminate\\Database\\Eloquent\\Model given\.$#'
 			identifier: argument.type
 			count: 18
@@ -923,6 +515,18 @@ parameters:
 			identifier: argument.type
 			count: 3
 			path: tests/Feature/EscalationRuleEngineTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Feature/ExecuteStageJobTest.php
+
+		-
+			message: '#^Method Tests\\Feature\\ExecuteStageJobTest\:\:runningStage\(\) should return App\\Models\\Stage but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Feature/ExecuteStageJobTest.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
@@ -1005,12 +609,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 1
-			path: tests/Feature/MergeConflictDetectorTest.php
-
-		-
-			message: '#^Offset ''files'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
 			count: 1
 			path: tests/Feature/MergeConflictDetectorTest.php
 
@@ -1192,54 +790,6 @@ parameters:
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:stages\(\)\.$#'
 			identifier: method.notFound
 			count: 11
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''autonomy_level'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 2
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''cap'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''confidence'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''failure_report'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 2
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''guidance'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''iteration'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''reason'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Offset ''stuck_state'' does not exist on string\.$#'
-			identifier: offsetAccess.notFound
-			count: 2
 			path: tests/Feature/OrchestratorServiceTest.php
 
 		-
@@ -1474,12 +1024,6 @@ parameters:
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 3
-			path: tests/Feature/ResolveConflictsJobTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$preflight_doc\.$#'
-			identifier: property.notFound
-			count: 1
 			path: tests/Feature/ResolveConflictsJobTest.php
 
 		-
