@@ -41,10 +41,11 @@ Audit the existing Diataxis structure (`docs/tutorials`, `docs/how-to`, `docs/re
   - All new pages use appropriate Diataxis front-matter `type` and cross-link generously.
   - Notes: `docs/tutorials/first-run.md` already exists, so added `docs/tutorials/configure-custom-ai-provider.md` as the 2nd tutorial — walks the `AiProviderManager` cascade (global env default → stage-scoped `ProviderConfig` → workspace-scoped `ProviderConfig`) with `tinker` recipes and a `pipeline` log grep for verification. Uses `type: tutorial` front matter and `[[Wiki-Link]]` cross-refs to `[[first-run]]`, `[[add-ai-provider]]`, `[[configuration]]`, the four per-provider reference pages, `[[architecture]]`, and `[[ai-provider-errors]]`. Explanation coverage confirmed sufficient — autonomy, filter/escalation engines, pipeline philosophy all live bundled in `docs/explanation/architecture.md` (the audit marked this as acceptable per Phase-05 brief). `docs/reference/_audit.md` tutorial row flipped from ❌ to ✅ and the phase-summary bullet updated to note the page shipped.
 
-- [ ] Update the top-level `docs/README.md` (and root `README.md` if needed) so the new pages are discoverable:
+- [x] Update the top-level `docs/README.md` (and root `README.md` if needed) so the new pages are discoverable:
   - Add a reference index listing every page in `docs/reference/` grouped by category (agents, providers, services).
   - Add a troubleshooting section linking to the new how-to pages.
   - Keep changes to the root `README.md` minimal — just ensure the docs link points at the right starting page.
+  - Notes: `docs/README.md` rewritten with grouped Reference sub-sections (Agents, AI providers, Orchestration services, Operational reference) covering every page under `docs/reference/` including the audit matrix, plus a Troubleshooting sub-section under How-to guides linking the four Phase-05 pages. Tutorials list now includes `configure-custom-ai-provider.md`. Root `README.md` Documentation section trimmed to point at `docs/README.md` as the canonical entry point and call out the troubleshooting section and Reference index.
 
 - [ ] Final verification:
   - Re-open `docs/reference/_audit.md` and confirm every previously-missing cell is now covered or explicitly marked "intentionally omitted" with a reason.
