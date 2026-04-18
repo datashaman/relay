@@ -685,13 +685,13 @@ parameters:
 			path: app/Services/PreflightAgent.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Services/PreflightAgent.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Services/PreflightAgent.php
@@ -1735,6 +1735,36 @@ parameters:
 			path: tests/Feature/OverviewTest.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: tests/Feature/PipelineObservabilityTest.php
+
+		-
+			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
+			identifier: generator.valueType
+			count: 1
+			path: tests/Feature/PipelineObservabilityTest.php
+
+		-
+			message: '#^Parameter \#1 \$issue of method App\\Services\\OrchestratorService\:\:startRun\(\) expects App\\Models\\Issue, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Feature/PipelineObservabilityTest.php
+
+		-
+			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:complete\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Feature/PipelineObservabilityTest.php
+
+		-
+			message: '#^Parameter \#1 \$stage of method App\\Services\\PreflightAgent\:\:execute\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Feature/PipelineObservabilityTest.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$clarification_answers\.$#'
 			identifier: property.notFound
 			count: 2
@@ -1955,3 +1985,45 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Services/FilterRuleServiceTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
+
+		-
+			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:event\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
+
+		-
+			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageCompleted\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
+
+		-
+			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageFailed\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
+
+		-
+			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageStarted\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
