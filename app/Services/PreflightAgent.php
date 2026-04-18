@@ -406,52 +406,62 @@ PROMPT;
         }
 
         $subdirs = ['app', 'config', 'routes', 'database/migrations'];
-        $filePaths = [];
-
-        foreach ($subdirs as $subdir) {
-            $fullPath = $worktreePath.DIRECTORY_SEPARATOR.$subdir;
-            if (! is_dir($fullPath)) {
-                continue;
-            }
-
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS),
-                \RecursiveIteratorIterator::LEAVES_ONLY
-            );
-
-            foreach ($iterator as $fileInfo) {
-                if (! $fileInfo->isFile()) {
-                    continue;
-                }
-
-                $filePaths[] = ltrim(
-                    str_replace($worktreePath, '', $fileInfo->getPathname()),
-                    DIRECTORY_SEPARATOR
-                );
-            }
-        }
-
-        sort($filePaths);
-
         $maxFiles = 2000;
         $maxBytes = 6000;
         $lines = [];
         $byteCount = 0;
-        $omitted = 0;
+        $truncated = false;
 
-        foreach ($filePaths as $index => $path) {
-            if (count($lines) >= $maxFiles || $byteCount >= $maxBytes) {
-                $omitted = count($filePaths) - $index;
+        foreach ($subdirs as $subdir) {
+            if ($truncated) {
                 break;
             }
 
-            $lines[] = $path;
-            $byteCount += strlen($path) + 1;
+            $fullPath = $worktreePath.DIRECTORY_SEPARATOR.$subdir;
+            if (! is_dir($fullPath) || ! is_readable($fullPath)) {
+                continue;
+            }
+
+            $subdirFiles = [];
+            try {
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::LEAVES_ONLY
+                );
+
+                foreach ($iterator as $fileInfo) {
+                    if (! $fileInfo->isFile()) {
+                        continue;
+                    }
+
+                    $subdirFiles[] = ltrim(
+                        str_replace($worktreePath, '', $fileInfo->getPathname()),
+                        DIRECTORY_SEPARATOR
+                    );
+                }
+            } catch (\UnexpectedValueException) {
+                // Subtree became unreadable mid-walk; skip it silently and keep
+                // whatever we already collected.
+                continue;
+            }
+
+            sort($subdirFiles);
+
+            foreach ($subdirFiles as $path) {
+                $nextLineBytes = strlen($path) + 1;
+                if (count($lines) >= $maxFiles || $byteCount + $nextLineBytes > $maxBytes) {
+                    $truncated = true;
+                    break;
+                }
+
+                $lines[] = $path;
+                $byteCount += $nextLineBytes;
+            }
         }
 
         $output = implode("\n", $lines);
-        if ($omitted > 0) {
-            $output .= "\n... ({$omitted} more files omitted)";
+        if ($truncated) {
+            $output .= "\n... (truncated at file/byte cap)";
         }
 
         return $output;

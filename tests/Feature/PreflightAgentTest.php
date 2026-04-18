@@ -178,6 +178,67 @@ class PreflightAgentTest extends TestCase
         $this->app->instance(AiProviderManager::class, $manager);
     }
 
+    /**
+     * Install a capturing provider that records the messages passed to chat()
+     * and returns a canned "clear" assessment. The returned instance exposes
+     * the captured messages on its public `capturedMessages` property.
+     */
+    private function bindCapturingProvider(): object
+    {
+        $mock = new class implements AiProvider
+        {
+            public ?array $capturedMessages = null;
+
+            public function chat(array $messages, array $tools = [], array $options = []): array
+            {
+                // Only record the first call so tests can assert on the assess
+                // prompt even when a subsequent doc-generation call happens.
+                if ($this->capturedMessages === null) {
+                    $this->capturedMessages = $messages;
+                }
+
+                return [
+                    'content' => null,
+                    'tool_calls' => [
+                        ['id' => 'c1', 'name' => 'assess_issue', 'arguments' => ['confidence' => 'clear', 'known_facts' => []]],
+                    ],
+                    'usage' => ['input_tokens' => 10, 'output_tokens' => 10],
+                    'raw' => [],
+                ];
+            }
+
+            public function stream(array $messages, array $tools = [], array $options = []): \Generator
+            {
+                yield [];
+            }
+        };
+
+        Queue::fake();
+        $manager = $this->createMock(AiProviderManager::class);
+        $manager->method('resolve')->willReturn($mock);
+        $this->app->instance(AiProviderManager::class, $manager);
+
+        return $mock;
+    }
+
+    private function removeDirectory(string $dir): void
+    {
+        if (! is_dir($dir)) {
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $entry) {
+            $entry->isDir() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
+        }
+
+        rmdir($dir);
+    }
+
     // === PreflightAgent Tests ===
 
     public function test_clear_issue_completes_stage_and_stores_known_facts(): void
@@ -403,89 +464,29 @@ class PreflightAgentTest extends TestCase
 
         $run->update(['worktree_path' => $worktreeDir]);
 
-        $capturedMessages = null;
-        $mock = new class($capturedMessages) implements AiProvider
-        {
-            public function __construct(private &$captured) {}
+        try {
+            $mock = $this->bindCapturingProvider();
 
-            public function chat(array $messages, array $tools = [], array $options = []): array
-            {
-                $this->captured = $messages;
+            app(PreflightAgent::class)->execute($stage, []);
 
-                return [
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'c1', 'name' => 'assess_issue', 'arguments' => ['confidence' => 'clear', 'known_facts' => []]],
-                    ],
-                    'usage' => ['input_tokens' => 10, 'output_tokens' => 10],
-                    'raw' => [],
-                ];
-            }
-
-            public function stream(array $messages, array $tools = [], array $options = []): \Generator
-            {
-                yield [];
-            }
-        };
-
-        Queue::fake();
-        $manager = $this->createMock(AiProviderManager::class);
-        $manager->method('resolve')->willReturn($mock);
-        $this->app->instance(AiProviderManager::class, $manager);
-
-        app(PreflightAgent::class)->execute($stage, []);
-
-        $userMessage = collect($capturedMessages)->firstWhere('role', 'user')['content'];
-        $this->assertStringContainsString('## Repository file listing', $userMessage);
-        $this->assertStringContainsString('ProcessGitHubWebhookJob.php', $userMessage);
-        $this->assertStringContainsString('ProcessJiraWebhookJob.php', $userMessage);
-
-        // cleanup
-        array_map('unlink', glob($worktreeDir.'/app/Jobs/*'));
-        rmdir($worktreeDir.'/app/Jobs');
-        rmdir($worktreeDir.'/app');
-        array_map('unlink', glob($worktreeDir.'/config/*'));
-        rmdir($worktreeDir.'/config');
-        rmdir($worktreeDir);
+            $userMessage = collect($mock->capturedMessages)->firstWhere('role', 'user')['content'];
+            $this->assertStringContainsString('## Repository file listing', $userMessage);
+            $this->assertStringContainsString('ProcessGitHubWebhookJob.php', $userMessage);
+            $this->assertStringContainsString('ProcessJiraWebhookJob.php', $userMessage);
+        } finally {
+            $this->removeDirectory($worktreeDir);
+        }
     }
 
     public function test_repo_file_listing_omitted_when_no_worktree_path(): void
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        $capturedMessages = null;
-        $mock = new class($capturedMessages) implements AiProvider
-        {
-            public function __construct(private &$captured) {}
-
-            public function chat(array $messages, array $tools = [], array $options = []): array
-            {
-                $this->captured = $messages;
-
-                return [
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'c1', 'name' => 'assess_issue', 'arguments' => ['confidence' => 'clear', 'known_facts' => []]],
-                    ],
-                    'usage' => ['input_tokens' => 10, 'output_tokens' => 10],
-                    'raw' => [],
-                ];
-            }
-
-            public function stream(array $messages, array $tools = [], array $options = []): \Generator
-            {
-                yield [];
-            }
-        };
-
-        Queue::fake();
-        $manager = $this->createMock(AiProviderManager::class);
-        $manager->method('resolve')->willReturn($mock);
-        $this->app->instance(AiProviderManager::class, $manager);
+        $mock = $this->bindCapturingProvider();
 
         app(PreflightAgent::class)->execute($stage, []);
 
-        $userMessage = collect($capturedMessages)->firstWhere('role', 'user')['content'];
+        $userMessage = collect($mock->capturedMessages)->firstWhere('role', 'user')['content'];
         $this->assertStringNotContainsString('## Repository file listing', $userMessage);
     }
 
@@ -495,39 +496,11 @@ class PreflightAgentTest extends TestCase
 
         $run->update(['worktree_path' => '/nonexistent/path/that/does/not/exist']);
 
-        $capturedMessages = null;
-        $mock = new class($capturedMessages) implements AiProvider
-        {
-            public function __construct(private &$captured) {}
-
-            public function chat(array $messages, array $tools = [], array $options = []): array
-            {
-                $this->captured = $messages;
-
-                return [
-                    'content' => null,
-                    'tool_calls' => [
-                        ['id' => 'c1', 'name' => 'assess_issue', 'arguments' => ['confidence' => 'clear', 'known_facts' => []]],
-                    ],
-                    'usage' => ['input_tokens' => 10, 'output_tokens' => 10],
-                    'raw' => [],
-                ];
-            }
-
-            public function stream(array $messages, array $tools = [], array $options = []): \Generator
-            {
-                yield [];
-            }
-        };
-
-        Queue::fake();
-        $manager = $this->createMock(AiProviderManager::class);
-        $manager->method('resolve')->willReturn($mock);
-        $this->app->instance(AiProviderManager::class, $manager);
+        $mock = $this->bindCapturingProvider();
 
         app(PreflightAgent::class)->execute($stage, []);
 
-        $userMessage = collect($capturedMessages)->firstWhere('role', 'user')['content'];
+        $userMessage = collect($mock->capturedMessages)->firstWhere('role', 'user')['content'];
         $this->assertStringNotContainsString('## Repository file listing', $userMessage);
     }
 
