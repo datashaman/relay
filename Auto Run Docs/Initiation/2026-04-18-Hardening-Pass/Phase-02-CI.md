@@ -34,7 +34,9 @@ Add a CI workflow so tests, lint, and (later) static analysis run automatically 
 
   **Completed (2026-04-18):** Added a `lint` job to `.github/workflows/ci.yml` running in parallel with `test`. Job reuses the PHP 8.4 setup + Composer cache pattern, then runs `./vendor/bin/pint --test`. TODO comment points at Phase 03 PHPStan work. Pint preflight intentionally deferred to the later sanity-check task — if it fails there, we'll revisit adding `continue-on-error: true`.
 
-- [ ] Add a status-badge line to the top of `README.md` pointing at the new workflow (GitHub Actions badge URL format: `https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg`). Determine `<owner>/<repo>` from `git remote get-url origin`.
+- [x] Add a status-badge line to the top of `README.md` pointing at the new workflow (GitHub Actions badge URL format: `https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg`). Determine `<owner>/<repo>` from `git remote get-url origin`.
+
+  **Completed (2026-04-18):** Origin is `git@github.com:datashaman/relay.git` → owner/repo is `datashaman/relay`. Inserted a linked CI badge immediately below the `# Relay` heading pointing at `.github/workflows/ci.yml`.
 
 - [ ] Sanity-check the workflow locally where possible:
   - Run `composer install` and `php artisan test` on a clean checkout-like state to confirm the steps succeed.
