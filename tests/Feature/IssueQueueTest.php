@@ -7,7 +7,6 @@ use App\Enums\SourceType;
 use App\Jobs\SyncSourceIssuesJob;
 use App\Models\Issue;
 use App\Models\Source;
-use App\Services\FilterRuleService;
 use App\Services\OauthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
