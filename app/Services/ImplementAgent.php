@@ -7,6 +7,7 @@ use App\Events\DiffUpdated;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\AiProviders\AiProviderManager;
+use App\Support\Logging\PipelineLogger;
 use Illuminate\Support\Facades\Process;
 
 class ImplementAgent
@@ -170,6 +171,12 @@ PROMPT;
             'has_failure_context' => isset($context['failure_report']),
         ]);
 
+        PipelineLogger::event($run, 'implement.execute_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'has_failure_context' => isset($context['failure_report']),
+        ]);
+
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
             $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
 
@@ -187,6 +194,12 @@ PROMPT;
                     $this->recordEvent($stage, 'implement_complete', 'implement_agent', [
                         'summary' => $toolCall['arguments']['summary'] ?? '',
                         'files_changed' => $toolCall['arguments']['files_changed'] ?? [],
+                    ]);
+
+                    PipelineLogger::event($run, 'implement.complete', [
+                        'stage' => $stage->name->value,
+                        'iteration' => $stage->iteration,
+                        'files_changed_count' => count($toolCall['arguments']['files_changed'] ?? []),
                     ]);
 
                     $this->broadcastDiff($stage, $worktreePath);
@@ -215,6 +228,13 @@ PROMPT;
         $this->recordEvent($stage, 'implement_loop_limit', 'implement_agent', [
             'max_loops' => self::MAX_TOOL_LOOPS,
         ]);
+
+        PipelineLogger::event($run, 'implement.loop_limit', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'max_loops' => self::MAX_TOOL_LOOPS,
+        ]);
+
         $this->orchestrator->fail($stage, 'Implement agent exceeded maximum tool call loops.');
     }
 

@@ -7,6 +7,7 @@ use App\Events\TestResultUpdated;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\AiProviders\AiProviderManager;
+use App\Support\Logging\PipelineLogger;
 use Illuminate\Support\Facades\Process;
 
 class VerifyAgent
@@ -181,6 +182,11 @@ PROMPT;
             'iteration' => $stage->iteration,
         ]);
 
+        PipelineLogger::event($run, 'verify.execute_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+        ]);
+
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
             $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
 
@@ -216,6 +222,13 @@ PROMPT;
         $this->recordEvent($stage, 'verify_loop_limit', 'verify_agent', [
             'max_loops' => self::MAX_TOOL_LOOPS,
         ]);
+
+        PipelineLogger::event($run, 'verify.loop_limit', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'max_loops' => self::MAX_TOOL_LOOPS,
+        ]);
+
         $this->orchestrator->fail($stage, 'Verify agent exceeded maximum tool call loops.');
     }
 
@@ -251,6 +264,13 @@ PROMPT;
             'summary' => $summary,
             'failure_count' => count($failures),
             'failures' => $failures,
+        ]);
+
+        PipelineLogger::event($stage->run, 'verify.complete', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'passed' => $passed,
+            'failure_count' => count($failures),
         ]);
 
         TestResultUpdated::dispatch($stage, $summary, $passed ? 'passed' : 'failed');
@@ -328,6 +348,13 @@ PROMPT;
             'status' => $status,
         ]);
 
+        PipelineLogger::event($stage->run, 'verify.test_results', [
+            'stage' => $stage->name->value,
+            'runner' => $runner,
+            'exit_code' => $result->exitCode(),
+            'status' => $status,
+        ]);
+
         TestResultUpdated::dispatch($stage, $output, $status);
 
         if (! $result->successful()) {
@@ -363,6 +390,13 @@ PROMPT;
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         $this->recordEvent($stage, 'static_analysis_results', 'verify_agent', [
+            'analyzer' => $analyzer,
+            'exit_code' => $result->exitCode(),
+            'status' => $result->successful() ? 'passed' : 'failed',
+        ]);
+
+        PipelineLogger::event($stage->run, 'verify.static_analysis_results', [
+            'stage' => $stage->name->value,
             'analyzer' => $analyzer,
             'exit_code' => $result->exitCode(),
             'status' => $result->successful() ? 'passed' : 'failed',

@@ -25,13 +25,21 @@ class PipelineLogger
         ], $context));
     }
 
-    public static function stageFailed(Run $run, string $stage, Throwable $exception, array $context = []): void
+    public static function stageFailed(Run $run, string $stage, ?Throwable $exception = null, array $context = []): void
     {
-        self::emit('error', 'stage_failed', array_merge(self::runContext($run), [
-            'stage' => $stage,
-            'exception_class' => $exception::class,
-            'exception_message' => $exception->getMessage(),
-        ], $context));
+        $base = array_merge(self::runContext($run), ['stage' => $stage]);
+
+        if ($exception !== null) {
+            $base['exception_class'] = $exception::class;
+            $base['exception_message'] = $exception->getMessage();
+        }
+
+        self::emit('error', 'stage_failed', array_merge($base, $context));
+    }
+
+    public static function event(Run $run, string $event, array $context = []): void
+    {
+        self::emit('info', $event, array_merge(self::runContext($run), $context));
     }
 
     public static function aiCall(string $provider, string $model, array $usage, array $context = []): void

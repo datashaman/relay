@@ -16,6 +16,8 @@ use App\Models\Repository;
 use App\Models\Run;
 use App\Models\Stage;
 use App\Models\StageEvent;
+use App\Support\Logging\PipelineLogger;
+use Illuminate\Support\Carbon;
 
 class OrchestratorService
 {
@@ -54,10 +56,16 @@ class OrchestratorService
         try {
             $this->worktreeService->createWorktree($run, $repository);
         } catch (\Throwable $e) {
-            $this->failRunImmediately($run, $issue, 'Worktree setup failed: '.$e->getMessage());
+            $this->failRunImmediately($run, $issue, 'Worktree setup failed: '.$e->getMessage(), $e);
 
             return $run;
         }
+
+        PipelineLogger::event($run, 'run_started', [
+            'stage' => StageName::Preflight->value,
+            'repository_id' => $repository->id,
+            'repository' => $repository->name,
+        ]);
 
         $firstStage = $this->createStage($run, StageName::Preflight);
 
@@ -66,7 +74,7 @@ class OrchestratorService
         return $run;
     }
 
-    private function failRunImmediately(Run $run, Issue $issue, string $reason): void
+    private function failRunImmediately(Run $run, Issue $issue, string $reason, ?\Throwable $exception = null): void
     {
         $stage = $this->createStage($run, StageName::Preflight);
         $stage->update(['status' => StageStatus::Failed, 'completed_at' => now()]);
@@ -74,6 +82,10 @@ class OrchestratorService
 
         $run->update(['status' => RunStatus::Failed, 'completed_at' => now()]);
         $issue->update(['status' => IssueStatus::Failed]);
+
+        PipelineLogger::stageFailed($run, StageName::Preflight->value, $exception, [
+            'reason' => $reason,
+        ]);
     }
 
     public function startStage(Stage $stage, array $context = []): void
@@ -103,15 +115,25 @@ class OrchestratorService
 
     public function bounce(Stage $stage, array $failureReport = []): void
     {
+        $completedAt = now();
+        $durationMs = $this->elapsedMillis($stage, $completedAt);
+
         $stage->update([
             'status' => StageStatus::Bounced,
-            'completed_at' => now(),
+            'completed_at' => $completedAt,
         ]);
 
         $this->recordEvent($stage, 'bounced', 'system', [
             'failure_report' => $failureReport,
         ]);
         $this->broadcastTransition($stage);
+
+        PipelineLogger::event($stage->run, 'stage_bounced', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'duration_ms' => $durationMs,
+            'failure_count' => count($failureReport),
+        ]);
 
         $run = $stage->run;
         $previousName = $this->previousStageName($stage->name);
@@ -149,13 +171,20 @@ class OrchestratorService
 
     public function complete(Stage $stage, array $context = []): void
     {
+        $completedAt = now();
+        $durationMs = $this->elapsedMillis($stage, $completedAt);
+
         $stage->update([
             'status' => StageStatus::Completed,
-            'completed_at' => now(),
+            'completed_at' => $completedAt,
         ]);
 
         $this->recordEvent($stage, 'completed', 'system');
         $this->broadcastTransition($stage);
+
+        PipelineLogger::stageCompleted($stage->run, $stage->name->value, $durationMs, [
+            'iteration' => $stage->iteration,
+        ]);
 
         $nextName = $this->nextStageName($stage->name);
 
@@ -196,6 +225,12 @@ class OrchestratorService
             $context,
         ));
         $this->broadcastTransition($stage);
+
+        PipelineLogger::stageFailed($run, $stage->name->value, null, [
+            'iteration' => $stage->iteration,
+            'reason' => 'stuck',
+            'stuck_state' => $stuckState->value,
+        ]);
 
         RunStuck::dispatch($run->fresh());
     }
@@ -275,6 +310,12 @@ class OrchestratorService
             ]);
             $this->broadcastTransition($stage);
 
+            PipelineLogger::event($run, 'stage_awaiting_approval', [
+                'stage' => $stage->name->value,
+                'iteration' => $stage->iteration,
+                'autonomy_level' => $effectiveLevel->value,
+            ]);
+
             return;
         }
 
@@ -287,6 +328,12 @@ class OrchestratorService
             'autonomy_level' => $effectiveLevel->value,
         ]);
         $this->broadcastTransition($stage);
+
+        PipelineLogger::stageStarted($run, $stage->name->value, [
+            'iteration' => $stage->iteration,
+            'autonomy_level' => $effectiveLevel->value,
+            'repository_id' => $run->repository_id,
+        ]);
 
         ExecuteStageJob::dispatch($stage, $context);
     }
@@ -301,9 +348,12 @@ class OrchestratorService
 
     private function failStage(Stage $stage, ?string $reason = null): void
     {
+        $completedAt = now();
+        $durationMs = $this->elapsedMillis($stage, $completedAt);
+
         $stage->update([
             'status' => StageStatus::Failed,
-            'completed_at' => now(),
+            'completed_at' => $completedAt,
         ]);
 
         $this->recordEvent($stage, 'failed', 'system', array_filter([
@@ -314,20 +364,47 @@ class OrchestratorService
         $run = $stage->run;
         $run->update([
             'status' => RunStatus::Failed,
-            'completed_at' => now(),
+            'completed_at' => $completedAt,
         ]);
 
         $run->issue->update(['status' => IssueStatus::Failed]);
+
+        PipelineLogger::stageFailed($run, $stage->name->value, null, array_filter([
+            'iteration' => $stage->iteration,
+            'duration_ms' => $durationMs,
+            'reason' => $reason,
+        ], static fn ($value) => $value !== null));
     }
 
     private function completeRun(Run $run): void
     {
+        $completedAt = now();
+
         $run->update([
             'status' => RunStatus::Completed,
-            'completed_at' => now(),
+            'completed_at' => $completedAt,
         ]);
 
         $run->issue->update(['status' => IssueStatus::Completed]);
+
+        $startedAt = $run->started_at;
+        $durationMs = $startedAt ? (int) abs($startedAt->diffInMilliseconds($completedAt)) : 0;
+
+        PipelineLogger::event($run, 'run_completed', [
+            'duration_ms' => $durationMs,
+            'iteration' => $run->iteration,
+        ]);
+    }
+
+    private function elapsedMillis(Stage $stage, Carbon $completedAt): int
+    {
+        $startedAt = $stage->started_at;
+
+        if (! $startedAt) {
+            return 0;
+        }
+
+        return (int) abs($startedAt->diffInMilliseconds($completedAt));
     }
 
     private function createStage(Run $run, StageName $name, int $iteration = 1): Stage

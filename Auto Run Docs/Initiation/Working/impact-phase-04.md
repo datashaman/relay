@@ -124,3 +124,13 @@ instrumenting.
 - [x] Ran `gitnexus_context` on `OrchestratorService`
 - [x] Ran `gitnexus_impact` upstream — MEDIUM risk, no HIGH/CRITICAL
 - [x] Notes saved to `Auto Run Docs/Initiation/Working/impact-phase-04.md`
+
+## Phase-04 Task 3 Impact Re-check
+
+`gitnexus_impact({target: "transitionStage", direction: "upstream"})` returns
+**CRITICAL** (7 direct callers, 5 affected processes, 28+ transitive tests). This
+reflects the centrality of `transitionStage` as the orchestrator's choke point —
+not added risk from this change. We are **only adding `PipelineLogger::*` calls**;
+no method signatures or control flow change, so the d=1 callers and tests remain
+unaffected at the API level. Proceed with instrumentation; rely on the existing
+`OrchestratorServiceTest` suite as the regression guardrail.

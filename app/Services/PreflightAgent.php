@@ -6,6 +6,7 @@ use App\Enums\StageName;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\AiProviders\AiProviderManager;
+use App\Support\Logging\PipelineLogger;
 
 class PreflightAgent
 {
@@ -149,6 +150,12 @@ PROMPT;
         $run = $stage->run;
         $issue = $run->issue;
 
+        PipelineLogger::event($run, 'preflight.execute_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'has_clarification_answers' => $run->clarification_answers !== null,
+        ]);
+
         if ($run->clarification_answers !== null || ($context['skip_to_doc'] ?? false)) {
             $this->generateAndStoreDoc($stage);
 
@@ -174,6 +181,13 @@ PROMPT;
             'questions_count' => count($assessment['questions'] ?? []),
         ]);
 
+        PipelineLogger::event($run, 'preflight.assessment_complete', [
+            'stage' => $stage->name->value,
+            'confidence' => $assessment['confidence'],
+            'known_facts_count' => count($assessment['known_facts']),
+            'questions_count' => count($assessment['questions'] ?? []),
+        ]);
+
         if ($assessment['confidence'] === 'clear') {
             $this->generateAndStoreDoc($stage);
 
@@ -186,6 +200,11 @@ PROMPT;
 
         $this->recordEvent($stage, 'clarification_needed', 'preflight_agent', [
             'questions' => $assessment['questions'] ?? [],
+        ]);
+
+        PipelineLogger::event($run, 'preflight.clarification_needed', [
+            'stage' => $stage->name->value,
+            'questions_count' => count($assessment['questions'] ?? []),
         ]);
 
         $this->orchestrator->pause($stage);
@@ -222,6 +241,12 @@ PROMPT;
         }
 
         $this->recordEvent($stage, 'doc_generated', 'preflight_agent', [
+            'sections' => array_keys($docData),
+            'version' => count($run->preflight_doc_history ?? []) + 1,
+        ]);
+
+        PipelineLogger::event($run, 'preflight.doc_generated', [
+            'stage' => $stage->name->value,
             'sections' => array_keys($docData),
             'version' => count($run->preflight_doc_history ?? []) + 1,
         ]);

@@ -7,6 +7,7 @@ use App\Events\ReleaseProgressUpdated;
 use App\Models\Stage;
 use App\Models\StageEvent;
 use App\Services\AiProviders\AiProviderManager;
+use App\Support\Logging\PipelineLogger;
 use Illuminate\Support\Facades\Process;
 
 class ReleaseAgent
@@ -214,6 +215,12 @@ PROMPT;
             'branch' => $run->branch,
         ]);
 
+        PipelineLogger::event($run, 'release.execute_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'branch' => $run->branch,
+        ]);
+
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
             $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
 
@@ -249,6 +256,13 @@ PROMPT;
         $this->recordEvent($stage, 'release_loop_limit', 'release_agent', [
             'max_loops' => self::MAX_TOOL_LOOPS,
         ]);
+
+        PipelineLogger::event($run, 'release.loop_limit', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'max_loops' => self::MAX_TOOL_LOOPS,
+        ]);
+
         $this->orchestrator->fail($stage, 'Release agent exceeded maximum tool call loops.');
     }
 
@@ -304,6 +318,12 @@ PROMPT;
         $this->recordEvent($stage, 'release_complete', 'release_agent', [
             'pr_url' => $prUrl,
             'summary' => $summary,
+        ]);
+
+        PipelineLogger::event($stage->run, 'release.complete', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+            'pr_url' => $prUrl,
         ]);
 
         ReleaseProgressUpdated::dispatch($stage, 'complete', $summary);
@@ -433,6 +453,12 @@ PROMPT;
             'title' => $title,
         ]);
 
+        PipelineLogger::event($run, 'release.pr_created', [
+            'stage' => $stage->name->value,
+            'pr_url' => $prUrl,
+            'pr_number' => $pr['number'] ?? null,
+        ]);
+
         ReleaseProgressUpdated::dispatch($stage, 'pr_created', $prUrl);
 
         return "Pull request created: {$prUrl}";
@@ -473,6 +499,12 @@ PROMPT;
 
         $this->recordEvent($stage, 'deploy_triggered', 'release_agent', [
             'hook' => $hook,
+            'exit_code' => $result->exitCode(),
+            'success' => $result->successful(),
+        ]);
+
+        PipelineLogger::event($stage->run, 'release.deploy_triggered', [
+            'stage' => $stage->name->value,
             'exit_code' => $result->exitCode(),
             'success' => $result->successful(),
         ]);
