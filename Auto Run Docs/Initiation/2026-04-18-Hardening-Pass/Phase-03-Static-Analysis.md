@@ -41,10 +41,15 @@ Add Laravel Pint (already a dev dep) configuration and introduce PHPStan with La
   - Generated `phpstan-baseline.neon` with all 721 entries and added it to `phpstan.neon` via `includes: [vendor/larastan/larastan/extension.neon, phpstan-baseline.neon]`.
   - `composer phpstan` now reports `[OK] No errors`.
 
-- [ ] Update CI to run both tools:
+- [x] Update CI to run both tools:
   - Add/extend a `static-analysis` job in `.github/workflows/ci.yml` that runs `composer install`, then `./vendor/bin/pint --test` and `composer phpstan`.
   - Remove the `continue-on-error` / TODO comment from the Pint job added in Phase 02 now that style is clean.
   - Ensure the job runs in parallel with `test` and `lint`.
+
+  **Notes (2026-04-18):**
+  - Consolidated the old `lint` job into a single `static-analysis` job that runs `composer install`, then `./vendor/bin/pint --test`, then `composer phpstan`. Dropped the Phase 02 `continue-on-error: true` and TODO comments — style is clean and PHPStan is baselined, so the job now blocks CI on regressions.
+  - Job has no `needs`, so it runs in parallel with `test` on every push / PR.
+  - Verified locally before committing: `composer phpstan` → `[OK] No errors`; `./vendor/bin/pint --test` → `{"result":"pass"}`.
 
 - [ ] Verify end-to-end:
   - Run `php artisan test` to confirm formatting changes did not break runtime behaviour.
