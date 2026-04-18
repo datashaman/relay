@@ -18,6 +18,7 @@
         </include>
     </source>
     <php>
+        <env name="APP_BASE_PATH" value="/Users/marlinf/Projects/datashaman/relay/.claude/worktrees/agent-afc48b6d"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

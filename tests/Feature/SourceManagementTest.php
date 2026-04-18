@@ -172,9 +172,10 @@ class SourceManagementTest extends TestCase
 
     public function test_disconnect_requires_confirmation_gate(): void
     {
-        Source::factory()->create(['type' => 'github']);
+        $source = Source::factory()->create(['type' => 'github']);
 
-        $response = $this->get('/intake');
+        // Disconnect has moved to the per-source detail page.
+        $response = $this->get(route('intake.sources.show', $source));
 
         $response->assertStatus(200);
         $response->assertSee('Disconnect this source', false);

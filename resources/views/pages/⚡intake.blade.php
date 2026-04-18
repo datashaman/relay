@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\FrameworkSource;
 use App\Enums\IssueStatus;
 use App\Enums\RunStatus;
 use App\Jobs\SyncSourceIssuesJob;
@@ -8,7 +7,6 @@ use App\Models\Issue;
 use App\Models\OauthToken;
 use App\Models\Repository;
 use App\Models\Source;
-use App\Services\FrameworkDetector;
 use App\Services\GitHubClient;
 use App\Services\JiraClient;
 use App\Services\OauthService;
@@ -41,79 +39,8 @@ class extends Component
     /** source id → flash message for the last sync-now call */
     public array $syncResults = [];
 
-    /** "sourceId-repoFullName" → currently-editing flag */
-    public array $editingFramework = [];
-
     /** Whether to show archived issues in the queue. */
     public bool $showArchived = false;
-
-    public function startEditFramework(int $sourceId, string $repoFullName): void
-    {
-        $this->editingFramework[$sourceId.'-'.$repoFullName] = true;
-    }
-
-    public function cancelEditFramework(int $sourceId, string $repoFullName): void
-    {
-        unset($this->editingFramework[$sourceId.'-'.$repoFullName]);
-    }
-
-    public function saveFramework(int $sourceId, string $repoFullName, string $framework): void
-    {
-        $source = Source::findOrFail($sourceId);
-
-        if ($source->type->value !== 'github') {
-            return;
-        }
-
-        $repos = $source->config['repositories'] ?? [];
-        if (! in_array($repoFullName, $repos, true)) {
-            return;
-        }
-
-        if (! in_array($framework, FrameworkDetector::ALLOWED, true)) {
-            session()->flash('error', 'Unknown framework slug.');
-
-            return;
-        }
-
-        $repository = Repository::firstOrCreate(['name' => $repoFullName]);
-        $repository->forceFill([
-            'framework' => $framework,
-            'framework_source' => FrameworkSource::Manual,
-        ])->save();
-
-        unset($this->editingFramework[$sourceId.'-'.$repoFullName]);
-    }
-
-    public function togglePause(int $sourceId): void
-    {
-        $source = Source::findOrFail($sourceId);
-        $source->update(['is_intake_paused' => ! $source->is_intake_paused]);
-    }
-
-    public function togglePauseRepo(int $sourceId, string $repoFullName): void
-    {
-        $source = Source::findOrFail($sourceId);
-
-        if ($source->type->value !== 'github') {
-            return;
-        }
-
-        $repos = $source->config['repositories'] ?? [];
-        if (! in_array($repoFullName, $repos, true)) {
-            return;
-        }
-
-        $paused = $source->paused_repositories ?? [];
-
-        if (in_array($repoFullName, $paused, true)) {
-            $paused = array_values(array_diff($paused, [$repoFullName]));
-        } else {
-            $paused[] = $repoFullName;
-        }
-
-        $source->update(['paused_repositories' => $paused]);
-    }
 
     public function syncNow(int $sourceId): void
     {
@@ -229,11 +156,16 @@ class extends Component
 
         $sources->each->ensureWebhookSecret();
 
-        $repoNames = $sources->flatMap(fn (Source $s) => $s->type->value === 'github'
-            ? ($s->config['repositories'] ?? [])
-            : [])->unique()->values()->all();
+        $sourceIds = $sources->pluck('id')->all();
 
-        $repositoriesByName = Repository::whereIn('name', $repoNames)->get()->keyBy('name');
+        /** @var array<int, int> $sourcesQueuedCounts */
+        $sourcesQueuedCounts = Issue::active()
+            ->where('status', IssueStatus::Queued)
+            ->whereIn('source_id', $sourceIds)
+            ->selectRaw('source_id, count(*) as queued_count')
+            ->groupBy('source_id')
+            ->pluck('queued_count', 'source_id')
+            ->toArray();
 
         $incomingQuery = Issue::with(['source', 'component.repositories', 'repository'])
             ->orderByDesc('created_at')
@@ -249,8 +181,7 @@ class extends Component
             'sources' => $sources,
             'pausedCount' => $sources->where('is_intake_paused', true)->count(),
             'connectedCount' => $sources->where('is_active', true)->count(),
-            'repositoriesByName' => $repositoriesByName,
-            'frameworkOptions' => FrameworkDetector::ALLOWED,
+            'sourcesQueuedCounts' => $sourcesQueuedCounts,
             'incoming' => $incomingQuery->get(),
             'pendingCount' => Issue::active()->where('status', IssueStatus::Queued)->count(),
         ];
@@ -304,7 +235,7 @@ class extends Component
                 </p>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="space-y-2">
             @foreach ($sources as $source)
                 @php
                     $isConnected = $source->is_active;
@@ -314,486 +245,90 @@ class extends Component
                         : 'bg-primary-container/30 text-primary';
                     $testFlash = $testResults[$source->id] ?? null;
                     $syncFlash = $syncResults[$source->id] ?? null;
+
+                    // Health pill: green = active + no sync error + webhook ok; amber = sync error or partial webhook failure; red = disconnected
+                    $selectedRepos = $source->config['repositories'] ?? [];
+                    $managedWebhookStates = $source->config['managed_webhooks'] ?? [];
+                    $repoStates = collect($selectedRepos)->mapWithKeys(fn ($repo) => [$repo => $managedWebhookStates[$repo]['state'] ?? null]);
+                    $webhookBad = $repoStates->filter(fn ($s) => in_array($s, ['needs_permission', 'error'], true))->isNotEmpty();
+                    $jiraWebhookMeta = $source->config['managed_jira_webhook'] ?? null;
+                    if ($source->type->value === 'jira') {
+                        $webhookBad = in_array($jiraWebhookMeta['state'] ?? null, ['needs_permission', 'error'], true);
+                    }
+
+                    if (! $isConnected) {
+                        $healthPillClass = 'bg-error-container/30 text-error';
+                        $healthLabel = 'Disconnected';
+                    } elseif ($source->sync_error || $webhookBad) {
+                        $healthPillClass = 'bg-stage-stuck/20 text-stage-stuck';
+                        $healthLabel = 'Degraded';
+                    } else {
+                        $healthPillClass = 'bg-secondary-container/30 text-secondary';
+                        $healthLabel = 'Healthy';
+                    }
+
+                    $scopeCount = $source->type->value === 'github'
+                        ? count($source->config['repositories'] ?? [])
+                        : count($source->config['projects'] ?? []);
+                    $scopeLabel = $source->type->value === 'github'
+                        ? \Illuminate\Support\Str::plural('repo', $scopeCount)
+                        : \Illuminate\Support\Str::plural('project', $scopeCount);
+                    $queuedCount = $sourcesQueuedCounts[$source->id] ?? 0;
+
+                    $statusParts = [];
+                    if ($source->last_synced_at) {
+                        $statusParts[] = 'synced ' . $source->last_synced_at->diffForHumans(null, true) . ' ago';
+                    }
+                    $statusParts[] = $scopeCount . ' ' . $scopeLabel;
+                    $statusParts[] = $queuedCount . ' queued';
+                    $statusLine = implode(' · ', $statusParts);
                 @endphp
                 <div class="bg-surface-container-low rounded-xl p-4" wire:key="source-{{ $source->id }}">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-1.5 flex-wrap mb-1">
-                                <span class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 {{ $typePillClass }} font-label text-[10px] uppercase tracking-wider">
-                                    <x-source-icon :type="$source->type->value" class="w-3 h-3" />
-                                    {{ $source->type->value }}
-                                </span>
-                                @if ($isConnected)
-                                    <span class="inline-flex items-center rounded bg-secondary-container/30 text-secondary px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
-                                        Connected
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center rounded bg-surface-container-high text-outline px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
-                                        Disconnected
-                                    </span>
-                                @endif
-                                @if ($isPaused)
-                                    <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
-                                        Paused
-                                    </span>
-                                @endif
-                                @if ($source->sync_error)
-                                    <span class="inline-flex items-center rounded bg-error-container/30 text-error px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
-                                        Sync Error
-                                    </span>
-                                @endif
-                            </div>
-                            <h3 class="text-sm font-semibold text-on-surface leading-tight">
-                                {{ $source->external_account }}
-                            </h3>
-                            @if ($source->last_synced_at)
-                                <p class="font-label text-[10px] text-outline mt-0.5 whitespace-nowrap">
-                                    synced {{ $source->last_synced_at->diffForHumans(null, true) }} ago
-                                </p>
-                            @endif
-                            @if ($source->sync_error)
-                                <div class="mt-2 rounded-md bg-error-container/20 border-l-2 border-error px-2 py-1.5">
-                                    <p class="text-xs text-error leading-snug">{{ $source->sync_error }}</p>
-                                    @if ($source->next_retry_at)
-                                        <p class="font-label text-[10px] text-outline uppercase tracking-wider mt-1">
-                                            Retry {{ $source->next_retry_at->diffForHumans() }}
-                                        </p>
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        {{-- Type badge --}}
+                        <span class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 {{ $typePillClass }} font-label text-[10px] uppercase tracking-wider">
+                            <x-source-icon :type="$source->type->value" class="w-3 h-3" />
+                            {{ $source->type->value }}
+                        </span>
 
-                        @if ($isConnected)
-                            <button type="button" wire:click="togglePause({{ $source->id }})"
-                                    class="rounded-md px-3 py-1.5 font-label text-[10px] uppercase tracking-wider {{ $isPaused ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest' }}">
-                                {{ $isPaused ? 'Resume' : 'Pause' }}
-                            </button>
-                        @endif
-                    </div>
+                        {{-- Source name --}}
+                        <span class="text-sm font-semibold text-on-surface">{{ $source->external_account }}</span>
 
-                    {{-- Repositories (GitHub only) --}}
-                    @if ($source->type->value === 'github')
-                        @php
-                            $repos = $source->config['repositories'] ?? [];
-                            $pausedRepos = $source->paused_repositories ?? [];
-                        @endphp
-                        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
-                            <div class="flex items-center justify-between">
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Repositories</span>
-                                <a href="{{ route('github.select-repos', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
-                                    {{ empty($repos) ? 'Choose' : 'Edit' }} →
-                                </a>
-                            </div>
-                            @if (empty($repos))
-                                <p class="font-label text-[10px] text-stage-stuck uppercase tracking-wider">
-                                    None selected · sync will fail until you pick repos
-                                </p>
-                            @else
-                                <ul class="divide-y divide-outline-variant/20">
-                                    @foreach ($repos as $repoName)
-                                        @php
-                                            $repoPaused = in_array($repoName, $pausedRepos, true);
-                                            $repoModel = $repositoriesByName[$repoName] ?? null;
-                                            $editKey = $source->id.'-'.$repoName;
-                                            $isEditingFramework = ! empty($editingFramework[$editKey]);
-                                        @endphp
-                                        <li wire:key="repo-{{ $source->id }}-{{ $repoName }}"
-                                            class="flex flex-col gap-1 py-1.5">
-                                            <div class="flex items-center justify-between gap-2">
-                                                <div class="flex items-center gap-1.5 min-w-0">
-                                                    <span class="font-mono text-[11px] text-on-surface-variant truncate">{{ $repoName }}</span>
-                                                    @if ($repoPaused)
-                                                        <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
-                                                            Paused
-                                                        </span>
-                                                    @else
-                                                        <span class="inline-flex items-center rounded bg-secondary-container/30 text-secondary px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
-                                                            Active
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                                <button type="button"
-                                                        wire:click="togglePauseRepo({{ $source->id }}, '{{ $repoName }}')"
-                                                        class="shrink-0 rounded px-2 py-0.5 font-label text-[10px] uppercase tracking-wider {{ $repoPaused ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest' }}">
-                                                    {{ $repoPaused ? 'Resume' : 'Pause' }}
-                                                </button>
-                                            </div>
-                                            <div class="flex items-center gap-1.5">
-                                                @if ($isEditingFramework)
-                                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Stack</span>
-                                                    <select wire:change="saveFramework({{ $source->id }}, '{{ $repoName }}', $event.target.value)"
-                                                            class="bg-surface-container-high text-on-surface rounded px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider"
-                                                            data-testid="framework-select-{{ $source->id }}-{{ $repoName }}">
-                                                        <option value="">— choose —</option>
-                                                        @foreach ($frameworkOptions as $option)
-                                                            <option value="{{ $option }}" @if ($repoModel?->framework === $option) selected @endif>{{ $option }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    <button type="button"
-                                                            wire:click="cancelEditFramework({{ $source->id }}, '{{ $repoName }}')"
-                                                            class="font-label text-[10px] text-outline uppercase tracking-wider hover:underline">Cancel</button>
-                                                @else
-                                                    <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider shrink-0">
-                                                        Stack: {{ $repoModel?->framework ?? '—' }}
-                                                    </span>
-                                                    @if ($repoModel?->framework_source)
-                                                        <span class="font-label text-[9px] text-outline uppercase tracking-wider">
-                                                            ({{ $repoModel->framework_source->value }})
-                                                        </span>
-                                                    @endif
-                                                    <button type="button"
-                                                            wire:click="startEditFramework({{ $source->id }}, '{{ $repoName }}')"
-                                                            class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline"
-                                                            aria-label="Edit stack for {{ $repoName }}">
-                                                        Edit
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                        </div>
-                    @endif
-
-                    {{-- Components → repositories map (Jira only) --}}
-                    @if ($source->type->value === 'jira')
-                        @php
-                            $componentCount = $source->components()->count();
-                            $componentsWithRepos = $source->components()->has('repositories')->count();
-                        @endphp
-                        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
-                            <div class="flex items-center justify-between">
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Components → Repos</span>
-                                <a href="{{ route('components.index', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
-                                    Map →
-                                </a>
-                            </div>
-                            @if ($componentCount === 0)
-                                <p class="font-label text-[10px] text-outline uppercase tracking-wider">
-                                    None yet · discovered on next sync
-                                </p>
-                            @else
-                                <p class="font-label text-[10px] {{ $componentsWithRepos < $componentCount ? 'text-stage-stuck' : 'text-outline' }} uppercase tracking-wider">
-                                    {{ $componentsWithRepos }} / {{ $componentCount }} mapped
-                                </p>
-                            @endif
-                        </div>
-                    @endif
-
-                    {{-- Projects + filters (Jira only) --}}
-                    @if ($source->type->value === 'jira')
-                        @php
-                            $jiraProjects = $source->config['projects'] ?? [];
-                            $onlyMine = ! empty($source->config['only_mine']);
-                            $onlyActiveSprint = ! empty($source->config['only_active_sprint']);
-                        @endphp
-                        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
-                            <div class="flex items-center justify-between">
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Projects &amp; filters</span>
-                                <a href="{{ route('jira.select-projects', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
-                                    {{ empty($jiraProjects) && ! $onlyMine && ! $onlyActiveSprint ? 'Choose' : 'Edit' }} →
-                                </a>
-                            </div>
-                            @if (empty($jiraProjects))
-                                <p class="font-label text-[10px] text-stage-stuck uppercase tracking-wider">
-                                    No projects selected · sync will pull from all accessible projects
-                                </p>
-                            @else
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    @foreach ($jiraProjects as $projectKey)
-                                        <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[10px] tracking-wider font-mono">
-                                            {{ $projectKey }}
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @endif
-                            @if ($onlyMine || $onlyActiveSprint)
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    @if ($onlyMine)
-                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">My issues</span>
-                                    @endif
-                                    @if ($onlyActiveSprint)
-                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">Active sprint</span>
-                                    @endif
-                                </div>
-                            @endif
-                            @php $jiraStatuses = $source->config['statuses'] ?? []; @endphp
-                            @if (! empty($jiraStatuses))
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Lanes:</span>
-                                    @foreach ($jiraStatuses as $statusName)
-                                        <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">{{ $statusName }}</span>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
-                    @endif
-
-                    {{-- Webhook health --}}
-                    @php
-                        $webhookUrl = $source->type->value === 'github'
-                            ? route('webhooks.github', $source)
-                            : route('webhooks.jira', [$source, $source->webhook_secret]);
-
-                        $selectedRepos = $source->config['repositories'] ?? [];
-                        $managedWebhookStates = $source->config['managed_webhooks'] ?? [];
-                        $repoStates = collect($selectedRepos)->mapWithKeys(fn ($repo) => [$repo => $managedWebhookStates[$repo]['state'] ?? null]);
-                        $needsPermissionRepos = $repoStates->filter(fn ($state) => $state === 'needs_permission')->keys()->values();
-                        $manualRepos = $repoStates->filter(fn ($state) => $state === 'manual')->keys()->values();
-                        $errorRepos = $repoStates->filter(fn ($state) => $state === 'error')->keys()->values();
-                        $managedRepos = $repoStates->filter(fn ($state) => $state === 'managed')->keys()->values();
-
-                        $webhookState = 'manual';
-
-                        if ($source->type->value === 'github') {
-                            if (empty($selectedRepos)) {
-                                $webhookState = 'unconfigured';
-                            } elseif ($needsPermissionRepos->isNotEmpty()) {
-                                $webhookState = 'needs_permission';
-                            } elseif ($errorRepos->isNotEmpty()) {
-                                $webhookState = 'error';
-                            } elseif ($managedRepos->count() === count($selectedRepos)) {
-                                $webhookState = 'managed';
-                            }
-                        }
-
-                        $jiraProjects = $source->config['projects'] ?? [];
-                        $jiraWebhookMeta = $source->config['managed_jira_webhook'] ?? null;
-                        $jiraManualUrl = $source->type->value === 'jira'
-                            ? route('webhooks.jira', [$source, $source->webhook_secret])
-                            : null;
-
-                        if ($source->type->value === 'jira') {
-                            if (empty($jiraProjects)) {
-                                $webhookState = 'unconfigured';
-                            } elseif (($jiraWebhookMeta['state'] ?? null) === 'managed') {
-                                $webhookState = 'managed';
-                            } elseif (($jiraWebhookMeta['state'] ?? null) === 'needs_permission') {
-                                $webhookState = 'needs_permission';
-                            } elseif (($jiraWebhookMeta['state'] ?? null) === 'error') {
-                                $webhookState = 'error';
-                            } else {
-                                $webhookState = 'manual';
-                            }
-                        }
-                    @endphp
-                    <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
-                        <div class="flex items-center justify-between gap-2">
-                            <div class="flex items-center gap-2">
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Webhook</span>
-                                @php
-                                    $stateStyles = [
-                                        'managed' => 'bg-secondary-container text-on-secondary-container',
-                                        'needs_permission' => 'bg-error-container text-on-error-container',
-                                        'error' => 'bg-error-container text-on-error-container',
-                                        'manual' => 'bg-surface-container-high text-on-surface-variant',
-                                        'unconfigured' => 'bg-surface-container-high text-on-surface-variant',
-                                    ][$webhookState] ?? 'bg-surface-container-high text-on-surface-variant';
-
-                                    $stateLabels = [
-                                        'managed' => 'Managed',
-                                        'needs_permission' => 'Needs Permission',
-                                        'error' => 'Error',
-                                        'manual' => 'Manual Fallback',
-                                        'unconfigured' => 'Not Configured',
-                                    ];
-                                @endphp
-                                <span class="inline-flex items-center rounded px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider {{ $stateStyles }}">
-                                    {{ $stateLabels[$webhookState] ?? 'Manual' }}
-                                </span>
-                            </div>
-                            @if ($source->webhook_last_delivery_at)
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">
-                                    Last delivery {{ $source->webhook_last_delivery_at->diffForHumans(null, true) }} ago
-                                </span>
-                            @else
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Never delivered</span>
-                            @endif
-                        </div>
-
-                        @if ($source->type->value === 'github')
-                            @if ($webhookState === 'managed')
-                                <p class="text-xs text-secondary leading-snug">
-                                    Relay is managing webhook setup for {{ $managedRepos->count() }} {{ \Illuminate\Support\Str::plural('repository', $managedRepos->count()) }}.
-                                </p>
-                            @elseif ($webhookState === 'needs_permission')
-                                <p class="text-xs text-error leading-snug">
-                                    Relay could not manage {{ $needsPermissionRepos->count() }} {{ \Illuminate\Support\Str::plural('repository', $needsPermissionRepos->count()) }} due to missing GitHub webhook permissions. Reconnect GitHub with webhook admin scope.
-                                </p>
-                            @elseif ($webhookState === 'error')
-                                <p class="text-xs text-error leading-snug">
-                                    Relay could not finish webhook setup for one or more repositories. Check repository access and retry sync.
-                                </p>
-                            @elseif ($webhookState === 'unconfigured')
-                                <p class="text-xs text-on-surface-variant leading-snug">
-                                    Pick repositories first and Relay will attempt webhook provisioning automatically.
-                                </p>
-                            @else
-                                <p class="text-xs text-on-surface-variant leading-snug">
-                                    Relay is in manual fallback mode for one or more repositories.
-                                </p>
-                            @endif
-
-                            @if ($needsPermissionRepos->isNotEmpty() || $errorRepos->isNotEmpty() || $manualRepos->isNotEmpty())
-                                <ul class="space-y-1">
-                                    @foreach ($selectedRepos as $repoFullName)
-                                        @php
-                                            $repoState = $managedWebhookStates[$repoFullName]['state'] ?? 'manual';
-                                            $repoReason = $managedWebhookStates[$repoFullName]['reason'] ?? null;
-                                        @endphp
-                                        @if (in_array($repoState, ['needs_permission', 'error', 'manual'], true))
-                                            <li class="text-[11px] text-on-surface-variant">
-                                                <span class="font-mono">{{ $repoFullName }}</span>
-                                                <span class="uppercase text-[9px] tracking-wider">({{ str_replace('_', ' ', $repoState) }})</span>
-                                                @if ($repoReason)
-                                                    <span> — {{ $repoReason }}</span>
-                                                @endif
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ul>
-                            @endif
-
-                            @if ($webhookState !== 'managed')
-                                <details class="rounded-md bg-surface-container-high px-2 py-1.5">
-                                    <summary class="cursor-pointer font-label text-[10px] text-outline uppercase tracking-wider">
-                                        Manual setup fallback
-                                    </summary>
-                                    <div class="mt-2 space-y-1.5">
-                                        <input type="text" readonly
-                                               value="{{ $webhookUrl }}"
-                                               class="w-full bg-surface-container-highest text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
-                                               onclick="this.select()">
-                                        <input type="text" readonly
-                                               value="{{ $source->webhook_secret }}"
-                                               class="w-full bg-surface-container-highest text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
-                                               onclick="this.select()">
-                                    </div>
-                                </details>
-                            @endif
-                        @else
-                            @if ($webhookState === 'managed')
-                                <p class="text-xs text-secondary leading-snug">
-                                    Relay is managing a dynamic Jira webhook for {{ count($jiraProjects) }} {{ \Illuminate\Support\Str::plural('project', count($jiraProjects)) }}.
-                                </p>
-                            @elseif ($webhookState === 'needs_permission')
-                                <p class="text-xs text-error leading-snug">
-                                    Relay could not manage the Jira webhook due to missing permissions. Reconnect Jira with webhook management scopes.
-                                </p>
-                            @elseif ($webhookState === 'error')
-                                <p class="text-xs text-error leading-snug">
-                                    Relay could not finish Jira webhook setup. Check the error below and retry sync.
-                                </p>
-                            @elseif ($webhookState === 'unconfigured')
-                                <p class="text-xs text-on-surface-variant leading-snug">
-                                    Pick projects first and Relay will provision a dynamic webhook automatically.
-                                </p>
-                            @else
-                                <p class="text-xs text-on-surface-variant leading-snug">
-                                    Relay is in manual fallback mode for Jira. Paste the URL below into Jira's system webhook settings.
-                                </p>
-                            @endif
-
-                            @if (($jiraWebhookMeta['reason'] ?? null) && $webhookState !== 'managed')
-                                <p class="text-[11px] text-on-surface-variant leading-snug">
-                                    {{ $jiraWebhookMeta['reason'] }}
-                                </p>
-                            @endif
-
-                            @if ($webhookState !== 'managed')
-                                <details class="rounded-md bg-surface-container-high px-2 py-1.5">
-                                    <summary class="cursor-pointer font-label text-[10px] text-outline uppercase tracking-wider">
-                                        Manual setup fallback
-                                    </summary>
-                                    <div class="mt-2 space-y-1.5">
-                                        <input type="text" readonly
-                                               value="{{ $jiraManualUrl }}"
-                                               class="w-full bg-surface-container-highest text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
-                                               onclick="this.select()">
-                                    </div>
-                                </details>
-                            @endif
+                        @if ($isPaused)
+                            <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">
+                                Paused
+                            </span>
                         @endif
 
-                        @if ($source->webhook_last_error)
-                            <div class="rounded-md bg-error-container/20 border-l-2 border-error px-2 py-1.5">
-                                <p class="text-xs text-error leading-snug">{{ $source->webhook_last_error }}</p>
-                            </div>
-                        @endif
-                    </div>
+                        {{-- Health pill --}}
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider {{ $healthPillClass }}">
+                            {{ $healthLabel }}
+                        </span>
 
-                    {{-- Filter rules summary --}}
-                    @php $rule = $source->filterRule; @endphp
-                    <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <span class="font-label text-[10px] text-outline uppercase tracking-wider">Intake Rules</span>
-                            <a href="{{ route('intake.rules.edit', $source) }}" class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline">
-                                {{ $rule && ($rule->include_labels || $rule->exclude_labels || $rule->auto_accept_labels || $rule->unassigned_only) ? 'Edit' : 'Add' }} →
+                        {{-- Status line --}}
+                        <span class="font-label text-[10px] text-outline uppercase tracking-widest">
+                            {{ $statusLine }}
+                        </span>
+
+                        {{-- Actions --}}
+                        <div class="flex items-center gap-3 ml-auto leading-none">
+                            @if ($isConnected)
+                                <button type="button" wire:click="syncNow({{ $source->id }})"
+                                        class="font-label text-[10px] uppercase tracking-widest leading-none {{ $syncFlash ? ($syncFlash['ok'] ? 'text-secondary' : 'text-error') : 'text-secondary' }} hover:underline">
+                                    <span wire:loading.remove wire:target="syncNow({{ $source->id }})">{{ $syncFlash['label'] ?? 'Sync Now' }}</span>
+                                    <span wire:loading wire:target="syncNow({{ $source->id }})">Syncing…</span>
+                                </button>
+                                <button type="button" wire:click="testConnection({{ $source->id }})"
+                                        class="font-label text-[10px] uppercase tracking-widest leading-none {{ $testFlash ? ($testFlash['ok'] ? 'text-secondary' : 'text-error') : 'text-primary' }} hover:underline">
+                                    <span wire:loading.remove wire:target="testConnection({{ $source->id }})">{{ $testFlash['label'] ?? 'Test' }}</span>
+                                    <span wire:loading wire:target="testConnection({{ $source->id }})">Testing…</span>
+                                </button>
+                            @endif
+                            <a href="{{ route('intake.sources.show', $source) }}"
+                               class="font-label text-[10px] uppercase tracking-widest leading-none text-primary hover:underline">
+                                Manage →
                             </a>
                         </div>
-
-                        @php
-                            $hasAny = $rule && ($rule->include_labels || $rule->exclude_labels || $rule->auto_accept_labels || $rule->unassigned_only);
-                        @endphp
-                        @if ($hasAny)
-                            @if (! empty($rule->include_labels))
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Include</span>
-                                    @foreach ($rule->include_labels as $label)
-                                        <span class="inline-flex items-center rounded bg-stage-verify/20 text-stage-verify px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">{{ $label }}</span>
-                                    @endforeach
-                                </div>
-                            @endif
-                            @if (! empty($rule->exclude_labels))
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Exclude</span>
-                                    @foreach ($rule->exclude_labels as $label)
-                                        <span class="inline-flex items-center rounded bg-error-container/30 text-error px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">{{ $label }}</span>
-                                    @endforeach
-                                </div>
-                            @endif
-                            @if (! empty($rule->auto_accept_labels))
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Auto-Accept</span>
-                                    @foreach ($rule->auto_accept_labels as $label)
-                                        <span class="inline-flex items-center rounded bg-primary-container/30 text-primary px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider">{{ $label }}</span>
-                                    @endforeach
-                                </div>
-                            @endif
-                            @if ($rule->unassigned_only)
-                                <p class="font-label text-[10px] text-outline uppercase tracking-wider">
-                                    Unassigned only
-                                </p>
-                            @endif
-                        @else
-                            <p class="font-label text-[10px] text-outline uppercase tracking-wider">
-                                No intake rules · all issues accepted
-                            </p>
-                        @endif
-                    </div>
-
-                    {{-- Source actions --}}
-                    <div class="flex items-center gap-3 mt-3 pt-2 border-t border-outline-variant/20 leading-none">
-                        @if ($isConnected)
-                            <button type="button" wire:click="syncNow({{ $source->id }})"
-                                    class="font-label text-[10px] uppercase tracking-widest leading-none {{ $syncFlash ? ($syncFlash['ok'] ? 'text-secondary' : 'text-error') : 'text-secondary' }} hover:underline">
-                                <span wire:loading.remove wire:target="syncNow({{ $source->id }})">{{ $syncFlash['label'] ?? 'Sync Now' }}</span>
-                                <span wire:loading wire:target="syncNow({{ $source->id }})">Syncing…</span>
-                            </button>
-                            <button type="button" wire:click="testConnection({{ $source->id }})"
-                                    class="font-label text-[10px] uppercase tracking-widest leading-none {{ $testFlash ? ($testFlash['ok'] ? 'text-secondary' : 'text-error') : 'text-primary' }} hover:underline">
-                                <span wire:loading.remove wire:target="testConnection({{ $source->id }})">{{ $testFlash['label'] ?? 'Test' }}</span>
-                                <span wire:loading wire:target="testConnection({{ $source->id }})">Testing…</span>
-                            </button>
-                        @endif
-                        <form method="POST" action="{{ route('oauth.disconnect', $source->type->value) }}" class="contents ml-auto"
-                              onsubmit="return confirm('Disconnect this source? This revokes access and removes associated data.')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="font-label text-[10px] uppercase tracking-widest leading-none text-error hover:underline">
-                                Disconnect
-                            </button>
-                        </form>
                     </div>
                 </div>
             @endforeach
