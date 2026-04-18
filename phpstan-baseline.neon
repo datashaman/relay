@@ -91,18 +91,6 @@ parameters:
 			path: app/Http/Controllers/IssueViewController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$access_token\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/OauthController.php
-
-		-
-			message: '#^Parameter \#1 \$token of method App\\Services\\OauthService\:\:revokeJiraToken\(\) expects App\\Models\\OauthToken, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/OauthController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$events\.$#'
 			identifier: property.notFound
 			count: 4
@@ -1619,12 +1607,6 @@ parameters:
 			identifier: method.notFound
 			count: 5
 			path: tests/TestCase.php
-
-		-
-			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/ExampleTest.php
 
 		-
 			message: '#^Parameter \#1 \$app of static method Illuminate\\Support\\Facades\\Facade\:\:setFacadeApplication\(\) expects Illuminate\\Contracts\\Foundation\\Application\|null, Illuminate\\Container\\Container given\.$#'

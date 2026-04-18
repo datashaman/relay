@@ -22,6 +22,7 @@ On the app's **Permissions** page, add the **Jira platform** (Jira API). For eac
 | `read:jira-work` | Read issues, projects, comments |
 | `write:jira-work` | Create comments, update issue state on release |
 | `read:jira-user` | Resolve assignees and reporters |
+| `manage:jira-webhook` | Auto-provision, refresh, and delete dynamic webhooks |
 | `offline_access` | Refresh tokens so long-running runs don't re-prompt |
 
 These match the scopes requested in `config/services.php` — they must be enabled on the Atlassian app or the OAuth flow will fail with an insufficient-scope error.
@@ -64,6 +65,25 @@ The selected site is persisted on the source. To change it later, disconnect and
 ## 8. Test the connection
 
 From the intake page, click **Test connection** on the Jira source. A green badge confirms the token and site are valid. Click **Sync now** to pull issues into the intake queue.
+
+## Webhooks (managed vs manual)
+
+Relay provisions a single **dynamic webhook** per Jira source via the Jira REST API (`POST /rest/api/3/webhook`). This happens automatically after you pick projects and on every sync.
+
+- The JQL filter is built from your selected projects (`project in ("KEY1", "KEY2", ...)`).
+- Events subscribed: `jira:issue_created`, `jira:issue_updated`, `jira:issue_deleted`.
+- Deliveries hit `POST /webhooks/jira/dynamic/{source}` signed with a JWT (HS256 using your `JIRA_CLIENT_SECRET`) — Relay validates the signature, issuer, and expiry before processing.
+- Dynamic webhooks expire after **30 days**. The scheduled task `jira:refresh-webhooks` runs daily and extends them via `PUT /rest/api/3/webhook/refresh`.
+- **Limit**: Jira allows a maximum of **5 dynamic webhooks per OAuth app per user per site**. Relay uses one per source, so you can safely connect up to 5 sources under the same OAuth app.
+
+The source card on `/intake` shows one of four states:
+
+- **Managed** — Relay is running a dynamic webhook and the JQL matches your projects.
+- **Needs Permission** — the token lacks webhook-management scopes; reconnect Jira.
+- **Error** — provisioning failed; check the error message under the card.
+- **Manual Fallback** — auto-provisioning is not active; expand **Manual setup fallback** and paste the URL into **System → Webhooks** in Jira (Jira site admin only). Manual-mode webhooks authenticate via the URL-embedded secret, not JWT.
+
+Note that Relay requires a publicly reachable `APP_URL` (e.g. via an HTTPS tunnel) so Jira can deliver webhooks — `localhost`/`.test` hosts will not receive deliveries.
 
 ## 9. Map components to repositories
 

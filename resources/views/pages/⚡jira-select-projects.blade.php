@@ -2,6 +2,7 @@
 
 use App\Models\Source;
 use App\Services\JiraClient;
+use App\Services\JiraWebhookManager;
 use App\Services\OauthService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -37,7 +38,7 @@ class extends Component {
         $this->onlyActiveSprint = (bool) ($this->source->config['only_active_sprint'] ?? false);
     }
 
-    public function save()
+    public function save(OauthService $oauth, JiraWebhookManager $webhooks)
     {
         $this->source->update([
             'config' => array_merge($this->source->config ?? [], [
@@ -47,6 +48,13 @@ class extends Component {
                 'only_active_sprint' => $this->onlyActiveSprint,
             ]),
         ]);
+
+        $token = $this->source->oauthTokens()->where('provider', 'jira')->first();
+
+        if ($token) {
+            $this->source->refresh();
+            $webhooks->provisionForSource($this->source, $oauth->refreshIfExpired($token), $oauth);
+        }
 
         session()->flash('success', 'Jira filters saved for '.$this->source->external_account.'.');
 

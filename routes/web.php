@@ -4,6 +4,7 @@ use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\GitHubWebhookController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueViewController;
+use App\Http\Controllers\JiraDynamicWebhookController;
 use App\Http\Controllers\JiraWebhookController;
 use App\Http\Controllers\OauthController;
 use App\Http\Controllers\RunProgressController;
@@ -70,4 +71,5 @@ Route::livewire('/runs/{run}/timeline', 'pages::run-timeline')->name('runs.timel
 Route::livewire('/activity', 'pages::activity')->name('activity.index');
 
 Route::post('/webhooks/github/{source}', GitHubWebhookController::class)->name('webhooks.github');
+Route::post('/webhooks/jira/dynamic/{source}', JiraDynamicWebhookController::class)->name('webhooks.jira.dynamic');
 Route::post('/webhooks/jira/{source}/{token}', JiraWebhookController::class)->name('webhooks.jira');

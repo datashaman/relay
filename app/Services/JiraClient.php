@@ -109,6 +109,28 @@ class JiraClient
         ])->json();
     }
 
+    public function createWebhooks(string $url, array $webhooks): array
+    {
+        return $this->request('post', '/webhook', [
+            'url' => $url,
+            'webhooks' => $webhooks,
+        ])->json();
+    }
+
+    public function refreshWebhooks(array $webhookIds): array
+    {
+        return $this->request('put', '/webhook/refresh', [
+            'webhookIds' => array_values(array_map('intval', $webhookIds)),
+        ])->json();
+    }
+
+    public function deleteWebhooks(array $webhookIds): void
+    {
+        $this->request('delete', '/webhook', [
+            'webhookIds' => array_values(array_map('intval', $webhookIds)),
+        ]);
+    }
+
     public function addComment(string $issueIdOrKey, string $body): array
     {
         return $this->request('post', "/issue/{$issueIdOrKey}/comment", [

@@ -50,7 +50,7 @@ return [
         'redirect_uri' => env('JIRA_REDIRECT_URI', 'http://localhost:8000/oauth/jira/callback'),
         'authorize_url' => 'https://auth.atlassian.com/authorize',
         'token_url' => 'https://auth.atlassian.com/oauth/token',
-        'scopes' => ['read:jira-work', 'write:jira-work', 'read:jira-user', 'offline_access'],
+        'scopes' => ['read:jira-work', 'write:jira-work', 'read:jira-user', 'manage:jira-webhook', 'offline_access'],
     ],
 
 ];

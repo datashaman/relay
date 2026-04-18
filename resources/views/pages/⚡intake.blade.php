@@ -417,33 +417,51 @@ class extends Component {
                                 $webhookState = 'managed';
                             }
                         }
+
+                        $jiraProjects = $source->config['projects'] ?? [];
+                        $jiraWebhookMeta = $source->config['managed_jira_webhook'] ?? null;
+                        $jiraManualUrl = $source->type->value === 'jira'
+                            ? route('webhooks.jira', [$source, $source->webhook_secret])
+                            : null;
+
+                        if ($source->type->value === 'jira') {
+                            if (empty($jiraProjects)) {
+                                $webhookState = 'unconfigured';
+                            } elseif (($jiraWebhookMeta['state'] ?? null) === 'managed') {
+                                $webhookState = 'managed';
+                            } elseif (($jiraWebhookMeta['state'] ?? null) === 'needs_permission') {
+                                $webhookState = 'needs_permission';
+                            } elseif (($jiraWebhookMeta['state'] ?? null) === 'error') {
+                                $webhookState = 'error';
+                            } else {
+                                $webhookState = 'manual';
+                            }
+                        }
                     @endphp
                     <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="font-label text-[10px] text-outline uppercase tracking-wider">Webhook</span>
-                                @if ($source->type->value === 'github')
-                                    @php
-                                        $stateStyles = [
-                                            'managed' => 'bg-secondary-container text-on-secondary-container',
-                                            'needs_permission' => 'bg-error-container text-on-error-container',
-                                            'error' => 'bg-error-container text-on-error-container',
-                                            'manual' => 'bg-surface-container-high text-on-surface-variant',
-                                            'unconfigured' => 'bg-surface-container-high text-on-surface-variant',
-                                        ][$webhookState] ?? 'bg-surface-container-high text-on-surface-variant';
+                                @php
+                                    $stateStyles = [
+                                        'managed' => 'bg-secondary-container text-on-secondary-container',
+                                        'needs_permission' => 'bg-error-container text-on-error-container',
+                                        'error' => 'bg-error-container text-on-error-container',
+                                        'manual' => 'bg-surface-container-high text-on-surface-variant',
+                                        'unconfigured' => 'bg-surface-container-high text-on-surface-variant',
+                                    ][$webhookState] ?? 'bg-surface-container-high text-on-surface-variant';
 
-                                        $stateLabels = [
-                                            'managed' => 'Managed',
-                                            'needs_permission' => 'Needs Permission',
-                                            'error' => 'Error',
-                                            'manual' => 'Manual Fallback',
-                                            'unconfigured' => 'Not Configured',
-                                        ];
-                                    @endphp
-                                    <span class="inline-flex items-center rounded px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider {{ $stateStyles }}">
-                                        {{ $stateLabels[$webhookState] ?? 'Manual' }}
-                                    </span>
-                                @endif
+                                    $stateLabels = [
+                                        'managed' => 'Managed',
+                                        'needs_permission' => 'Needs Permission',
+                                        'error' => 'Error',
+                                        'manual' => 'Manual Fallback',
+                                        'unconfigured' => 'Not Configured',
+                                    ];
+                                @endphp
+                                <span class="inline-flex items-center rounded px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider {{ $stateStyles }}">
+                                    {{ $stateLabels[$webhookState] ?? 'Manual' }}
+                                </span>
                             </div>
                             @if ($source->webhook_last_delivery_at)
                                 <span class="font-label text-[10px] text-outline uppercase tracking-wider">
@@ -515,12 +533,47 @@ class extends Component {
                                 </details>
                             @endif
                         @else
-                            <div class="flex items-center gap-2">
-                                <input type="text" readonly
-                                       value="{{ $webhookUrl }}"
-                                       class="flex-1 min-w-0 bg-surface-container-high text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
-                                       onclick="this.select()">
-                            </div>
+                            @if ($webhookState === 'managed')
+                                <p class="text-xs text-secondary leading-snug">
+                                    Relay is managing a dynamic Jira webhook for {{ count($jiraProjects) }} {{ \Illuminate\Support\Str::plural('project', count($jiraProjects)) }}.
+                                </p>
+                            @elseif ($webhookState === 'needs_permission')
+                                <p class="text-xs text-error leading-snug">
+                                    Relay could not manage the Jira webhook due to missing permissions. Reconnect Jira with webhook management scopes.
+                                </p>
+                            @elseif ($webhookState === 'error')
+                                <p class="text-xs text-error leading-snug">
+                                    Relay could not finish Jira webhook setup. Check the error below and retry sync.
+                                </p>
+                            @elseif ($webhookState === 'unconfigured')
+                                <p class="text-xs text-on-surface-variant leading-snug">
+                                    Pick projects first and Relay will provision a dynamic webhook automatically.
+                                </p>
+                            @else
+                                <p class="text-xs text-on-surface-variant leading-snug">
+                                    Relay is in manual fallback mode for Jira. Paste the URL below into Jira's system webhook settings.
+                                </p>
+                            @endif
+
+                            @if (($jiraWebhookMeta['reason'] ?? null) && $webhookState !== 'managed')
+                                <p class="text-[11px] text-on-surface-variant leading-snug">
+                                    {{ $jiraWebhookMeta['reason'] }}
+                                </p>
+                            @endif
+
+                            @if ($webhookState !== 'managed')
+                                <details class="rounded-md bg-surface-container-high px-2 py-1.5">
+                                    <summary class="cursor-pointer font-label text-[10px] text-outline uppercase tracking-wider">
+                                        Manual setup fallback
+                                    </summary>
+                                    <div class="mt-2 space-y-1.5">
+                                        <input type="text" readonly
+                                               value="{{ $jiraManualUrl }}"
+                                               class="w-full bg-surface-container-highest text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
+                                               onclick="this.select()">
+                                    </div>
+                                </details>
+                            @endif
                         @endif
 
                         @if ($source->webhook_last_error)

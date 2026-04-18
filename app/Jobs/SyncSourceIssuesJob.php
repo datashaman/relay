@@ -10,6 +10,7 @@ use App\Services\GitHubClient;
 use App\Services\GitHubWebhookManager;
 use App\Services\IssueIntakeService;
 use App\Services\JiraClient;
+use App\Services\JiraWebhookManager;
 use App\Services\OauthService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,9 +26,10 @@ class SyncSourceIssuesJob implements ShouldQueue
         public Source $source,
     ) {}
 
-    public function handle(OauthService $oauth, IssueIntakeService $intake, ?GitHubWebhookManager $webhookManager = null): void
+    public function handle(OauthService $oauth, IssueIntakeService $intake, ?GitHubWebhookManager $webhookManager = null, ?JiraWebhookManager $jiraWebhookManager = null): void
     {
         $webhookManager ??= app(GitHubWebhookManager::class);
+        $jiraWebhookManager ??= app(JiraWebhookManager::class);
 
         if ($this->isIntakePaused()) {
             return;
@@ -48,7 +50,7 @@ class SyncSourceIssuesJob implements ShouldQueue
 
             $rawIssues = match ($this->source->type) {
                 SourceType::GitHub => $this->fetchGitHubIssues($token, $oauth, $webhookManager),
-                SourceType::Jira => $this->fetchJiraIssues($token, $oauth, $intake),
+                SourceType::Jira => $this->fetchJiraIssues($token, $oauth, $intake, $jiraWebhookManager),
             };
 
             foreach ($rawIssues as $issueData) {
@@ -104,9 +106,12 @@ class SyncSourceIssuesJob implements ShouldQueue
         return $mapped;
     }
 
-    private function fetchJiraIssues($token, OauthService $oauth, IssueIntakeService $intake): array
+    private function fetchJiraIssues($token, OauthService $oauth, IssueIntakeService $intake, JiraWebhookManager $webhookManager): array
     {
         $client = new JiraClient($token, $oauth, $this->source);
+
+        $webhookManager->provisionForSource($this->source, $token, $oauth);
+
         $jql = $this->buildJiraJql();
         $issues = $client->allIssues($jql);
 

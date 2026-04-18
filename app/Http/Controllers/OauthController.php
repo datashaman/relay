@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OauthToken;
 use App\Models\Source;
+use App\Services\JiraWebhookManager;
 use App\Services\MobileOauthService;
 use App\Services\OauthService;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +16,7 @@ class OauthController extends Controller
     public function __construct(
         private OauthService $oauth,
         private MobileOauthService $mobileOauth,
+        private JiraWebhookManager $jiraWebhooks,
     ) {}
 
     public function redirect(string $provider): RedirectResponse
@@ -81,11 +84,22 @@ class OauthController extends Controller
             return redirect()->route('intake.index')->with('error', 'No '.ucfirst($provider).' connection found.');
         }
 
-        $token = $source->oauthTokens()->where('provider', $provider)->first();
+        $token = OauthToken::query()
+            ->where('source_id', $source->id)
+            ->where('provider', $provider)
+            ->first();
 
         $revocationError = null;
 
         if ($token) {
+            if ($provider === 'jira') {
+                try {
+                    $this->jiraWebhooks->deprovisionForSource($source, $this->oauth->refreshIfExpired($token), $this->oauth);
+                } catch (\Throwable) {
+                    // best effort
+                }
+            }
+
             try {
                 if ($provider === 'github') {
                     $this->oauth->revokeGitHubToken($token->access_token);
