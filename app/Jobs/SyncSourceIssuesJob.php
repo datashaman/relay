@@ -6,6 +6,7 @@ use App\Enums\IssueStatus;
 use App\Enums\SourceType;
 use App\Models\Repository;
 use App\Models\Source;
+use App\Services\FrameworkDetector;
 use App\Services\GitHubClient;
 use App\Services\GitHubWebhookManager;
 use App\Services\IssueIntakeService;
@@ -26,10 +27,11 @@ class SyncSourceIssuesJob implements ShouldQueue
         public Source $source,
     ) {}
 
-    public function handle(OauthService $oauth, IssueIntakeService $intake, ?GitHubWebhookManager $webhookManager = null, ?JiraWebhookManager $jiraWebhookManager = null): void
+    public function handle(OauthService $oauth, IssueIntakeService $intake, ?GitHubWebhookManager $webhookManager = null, ?JiraWebhookManager $jiraWebhookManager = null, ?FrameworkDetector $frameworkDetector = null): void
     {
         $webhookManager ??= app(GitHubWebhookManager::class);
         $jiraWebhookManager ??= app(JiraWebhookManager::class);
+        $frameworkDetector ??= app(FrameworkDetector::class);
 
         if ($this->isIntakePaused()) {
             return;
@@ -49,7 +51,7 @@ class SyncSourceIssuesJob implements ShouldQueue
             $token = $oauth->refreshIfExpired($token);
 
             $rawIssues = match ($this->source->type) {
-                SourceType::GitHub => $this->fetchGitHubIssues($token, $oauth, $webhookManager),
+                SourceType::GitHub => $this->fetchGitHubIssues($token, $oauth, $webhookManager, $frameworkDetector),
                 SourceType::Jira => $this->fetchJiraIssues($token, $oauth, $intake, $jiraWebhookManager),
             };
 
@@ -79,7 +81,7 @@ class SyncSourceIssuesJob implements ShouldQueue
         }
     }
 
-    private function fetchGitHubIssues($token, OauthService $oauth, GitHubWebhookManager $webhookManager): array
+    private function fetchGitHubIssues($token, OauthService $oauth, GitHubWebhookManager $webhookManager, FrameworkDetector $frameworkDetector): array
     {
         $client = new GitHubClient($token, $oauth);
         $repos = $this->source->config['repositories'] ?? [];
@@ -101,6 +103,8 @@ class SyncSourceIssuesJob implements ShouldQueue
             $repository = Repository::firstOrCreate(
                 ['name' => $repoFullName],
             );
+
+            $frameworkDetector->detect($client, $repository, $owner, $repo);
 
             $issues = $client->allIssues($owner, $repo);
 

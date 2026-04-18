@@ -1,11 +1,13 @@
 <?php
 
+use App\Enums\FrameworkSource;
 use App\Enums\IssueStatus;
 use App\Jobs\SyncSourceIssuesJob;
 use App\Models\Issue;
 use App\Models\OauthToken;
 use App\Models\Repository;
 use App\Models\Source;
+use App\Services\FrameworkDetector;
 use App\Services\GitHubClient;
 use App\Services\JiraClient;
 use App\Services\OauthService;
@@ -24,6 +26,47 @@ class extends Component
 
     /** source id → flash message for the last sync-now call */
     public array $syncResults = [];
+
+    /** "sourceId-repoFullName" → currently-editing flag */
+    public array $editingFramework = [];
+
+    public function startEditFramework(int $sourceId, string $repoFullName): void
+    {
+        $this->editingFramework[$sourceId.'-'.$repoFullName] = true;
+    }
+
+    public function cancelEditFramework(int $sourceId, string $repoFullName): void
+    {
+        unset($this->editingFramework[$sourceId.'-'.$repoFullName]);
+    }
+
+    public function saveFramework(int $sourceId, string $repoFullName, string $framework): void
+    {
+        $source = Source::findOrFail($sourceId);
+
+        if ($source->type->value !== 'github') {
+            return;
+        }
+
+        $repos = $source->config['repositories'] ?? [];
+        if (! in_array($repoFullName, $repos, true)) {
+            return;
+        }
+
+        if (! in_array($framework, FrameworkDetector::ALLOWED, true)) {
+            session()->flash('error', 'Unknown framework slug.');
+
+            return;
+        }
+
+        $repository = Repository::firstOrCreate(['name' => $repoFullName]);
+        $repository->forceFill([
+            'framework' => $framework,
+            'framework_source' => FrameworkSource::Manual,
+        ])->save();
+
+        unset($this->editingFramework[$sourceId.'-'.$repoFullName]);
+    }
 
     public function togglePause(int $sourceId): void
     {
@@ -148,10 +191,18 @@ class extends Component
 
         $sources->each->ensureWebhookSecret();
 
+        $repoNames = $sources->flatMap(fn (Source $s) => $s->type->value === 'github'
+            ? ($s->config['repositories'] ?? [])
+            : [])->unique()->values()->all();
+
+        $repositoriesByName = Repository::whereIn('name', $repoNames)->get()->keyBy('name');
+
         return [
             'sources' => $sources,
             'pausedCount' => $sources->where('is_intake_paused', true)->count(),
             'connectedCount' => $sources->where('is_active', true)->count(),
+            'repositoriesByName' => $repositoriesByName,
+            'frameworkOptions' => FrameworkDetector::ALLOWED,
             'incoming' => Issue::with(['source', 'component.repositories', 'repository'])
                 ->where('status', IssueStatus::Queued)
                 ->orderByDesc('created_at')
@@ -296,26 +347,64 @@ class extends Component
                             @else
                                 <ul class="divide-y divide-outline-variant/20">
                                     @foreach ($repos as $repoName)
-                                        @php $repoPaused = in_array($repoName, $pausedRepos, true); @endphp
+                                        @php
+                                            $repoPaused = in_array($repoName, $pausedRepos, true);
+                                            $repoModel = $repositoriesByName[$repoName] ?? null;
+                                            $editKey = $source->id.'-'.$repoName;
+                                            $isEditingFramework = ! empty($editingFramework[$editKey]);
+                                        @endphp
                                         <li wire:key="repo-{{ $source->id }}-{{ $repoName }}"
-                                            class="flex items-center justify-between gap-2 py-1.5">
-                                            <div class="flex items-center gap-1.5 min-w-0">
-                                                <span class="font-mono text-[11px] text-on-surface-variant truncate">{{ $repoName }}</span>
-                                                @if ($repoPaused)
-                                                    <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
-                                                        Paused
-                                                    </span>
+                                            class="flex flex-col gap-1 py-1.5">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="flex items-center gap-1.5 min-w-0">
+                                                    <span class="font-mono text-[11px] text-on-surface-variant truncate">{{ $repoName }}</span>
+                                                    @if ($repoPaused)
+                                                        <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
+                                                            Paused
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center rounded bg-secondary-container/30 text-secondary px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
+                                                            Active
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <button type="button"
+                                                        wire:click="togglePauseRepo({{ $source->id }}, '{{ $repoName }}')"
+                                                        class="shrink-0 rounded px-2 py-0.5 font-label text-[10px] uppercase tracking-wider {{ $repoPaused ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest' }}">
+                                                    {{ $repoPaused ? 'Resume' : 'Pause' }}
+                                                </button>
+                                            </div>
+                                            <div class="flex items-center gap-1.5">
+                                                @if ($isEditingFramework)
+                                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider">Stack</span>
+                                                    <select wire:change="saveFramework({{ $source->id }}, '{{ $repoName }}', $event.target.value)"
+                                                            class="bg-surface-container-high text-on-surface rounded px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider"
+                                                            data-testid="framework-select-{{ $source->id }}-{{ $repoName }}">
+                                                        <option value="">— choose —</option>
+                                                        @foreach ($frameworkOptions as $option)
+                                                            <option value="{{ $option }}" @if ($repoModel?->framework === $option) selected @endif>{{ $option }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <button type="button"
+                                                            wire:click="cancelEditFramework({{ $source->id }}, '{{ $repoName }}')"
+                                                            class="font-label text-[10px] text-outline uppercase tracking-wider hover:underline">Cancel</button>
                                                 @else
-                                                    <span class="inline-flex items-center rounded bg-secondary-container/30 text-secondary px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider shrink-0">
-                                                        Active
+                                                    <span class="inline-flex items-center rounded bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 font-label text-[10px] uppercase tracking-wider shrink-0">
+                                                        Stack: {{ $repoModel?->framework ?? '—' }}
                                                     </span>
+                                                    @if ($repoModel?->framework_source)
+                                                        <span class="font-label text-[9px] text-outline uppercase tracking-wider">
+                                                            ({{ $repoModel->framework_source->value }})
+                                                        </span>
+                                                    @endif
+                                                    <button type="button"
+                                                            wire:click="startEditFramework({{ $source->id }}, '{{ $repoName }}')"
+                                                            class="font-label text-[10px] text-primary uppercase tracking-wider hover:underline"
+                                                            aria-label="Edit stack for {{ $repoName }}">
+                                                        Edit
+                                                    </button>
                                                 @endif
                                             </div>
-                                            <button type="button"
-                                                    wire:click="togglePauseRepo({{ $source->id }}, '{{ $repoName }}')"
-                                                    class="shrink-0 rounded px-2 py-0.5 font-label text-[10px] uppercase tracking-wider {{ $repoPaused ? 'bg-primary text-on-primary hover:bg-primary/90' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest' }}">
-                                                {{ $repoPaused ? 'Resume' : 'Pause' }}
-                                            </button>
                                         </li>
                                     @endforeach
                                 </ul>

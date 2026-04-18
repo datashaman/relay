@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FrameworkSource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -19,6 +20,12 @@ class Repository extends Model
         'setup_script',
         'teardown_script',
         'run_script',
+        'framework',
+        'framework_source',
+    ];
+
+    protected $casts = [
+        'framework_source' => FrameworkSource::class,
     ];
 
     public function issues(): HasMany
