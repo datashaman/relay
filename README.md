@@ -1,5 +1,7 @@
 # Relay
 
+[![CI](https://github.com/datashaman/relay/actions/workflows/ci.yml/badge.svg)](https://github.com/datashaman/relay/actions/workflows/ci.yml)
+
 An agentic issue pipeline that moves issues through four stages — **Preflight → Implement → Verify → Release** — each handled by a focused agent with a bounded tool set. Human-in-the-loop is configurable at workspace, stage, and issue scopes.
 
 Relay ships as a local-first native app built on Laravel 13 / PHP 8.4 with NativePHP for desktop (macOS, Windows, Linux) and mobile (iOS, Android). No cloud backend required.
