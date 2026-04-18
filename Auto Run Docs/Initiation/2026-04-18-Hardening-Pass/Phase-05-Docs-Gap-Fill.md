@@ -35,10 +35,11 @@ Audit the existing Diataxis structure (`docs/tutorials`, `docs/how-to`, `docs/re
   - Each file uses `type: how-to` front matter and cross-links to the relevant reference pages.
   - Notes: four pages created under `docs/how-to/troubleshooting/`. Each uses `type: how-to` front matter and `[[Wiki-Link]]` cross-references to the Phase-05 reference pages (agents, providers, orchestrator, merge detector) and to `stuck-states`. `docs/reference/_audit.md` section "Troubleshooting (how-to category)" flipped from ❌ to ✅ for all four entries.
 
-- [ ] Fill missing explanation and tutorial coverage if the audit surfaced gaps:
+- [x] Fill missing explanation and tutorial coverage if the audit surfaced gaps:
   - In `docs/explanation/`, ensure a page exists covering the autonomy model, the filter/escalation rule engines, and the overall pipeline philosophy. Add any that are missing.
   - In `docs/tutorials/`, confirm there is a "first run" tutorial that walks a user from zero to a completed pipeline run. If absent, add `first-run.md`. If present, add a brief tutorial for configuring a custom AI provider as a second entry point.
   - All new pages use appropriate Diataxis front-matter `type` and cross-link generously.
+  - Notes: `docs/tutorials/first-run.md` already exists, so added `docs/tutorials/configure-custom-ai-provider.md` as the 2nd tutorial — walks the `AiProviderManager` cascade (global env default → stage-scoped `ProviderConfig` → workspace-scoped `ProviderConfig`) with `tinker` recipes and a `pipeline` log grep for verification. Uses `type: tutorial` front matter and `[[Wiki-Link]]` cross-refs to `[[first-run]]`, `[[add-ai-provider]]`, `[[configuration]]`, the four per-provider reference pages, `[[architecture]]`, and `[[ai-provider-errors]]`. Explanation coverage confirmed sufficient — autonomy, filter/escalation engines, pipeline philosophy all live bundled in `docs/explanation/architecture.md` (the audit marked this as acceptable per Phase-05 brief). `docs/reference/_audit.md` tutorial row flipped from ❌ to ✅ and the phase-summary bullet updated to note the page shipped.
 
 - [ ] Update the top-level `docs/README.md` (and root `README.md` if needed) so the new pages are discoverable:
   - Add a reference index listing every page in `docs/reference/` grouped by category (agents, providers, services).

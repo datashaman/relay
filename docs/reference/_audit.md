@@ -105,7 +105,7 @@ Phase 05 explicitly asks that the autonomy model, the filter/escalation engines,
 | Topic | File | Status |
 | --- | --- | --- |
 | First run (zero → PR) | `tutorials/first-run.md` | ✅ |
-| Configure a custom AI provider | ❌ `tutorials/configure-custom-ai-provider.md` | Phase 05 asks for a 2nd tutorial since the first-run tutorial already exists. |
+| Configure a custom AI provider | ✅ `tutorials/configure-custom-ai-provider.md` | Walks the `AiProviderManager` cascade: global env default → stage-scoped `ProviderConfig` → workspace-scoped `ProviderConfig`. Cross-links `[[first-run]]`, `[[add-ai-provider]]`, `[[configuration]]`, per-provider refs, and `[[ai-provider-errors]]`. |
 
 ## 3. Execution flows worth referencing (GitNexus)
 
@@ -125,7 +125,7 @@ When writing reference pages, link directly to the file/line anchors in `app/Ser
    - Added 4 AI-provider pages under `reference/ai-providers/`.
    - Added 6 orchestration/service pages at `reference/` root (`orchestrator`, `autonomy-resolver`, `filter-rules`, `escalation-rules`, `merge-conflict-detector`, `worktree-service`).
 2. **How-to troubleshooting (4 pages):** index + ai-provider-errors + stage-failures + merge-conflicts.
-3. **Tutorials (1 page):** `configure-custom-ai-provider.md`.
+3. **Tutorials (1 page — ✅ done in this phase):** added `configure-custom-ai-provider.md`. Explanation coverage remains bundled in `explanation/architecture.md` (autonomy model, filter/escalation engines, pipeline philosophy) per Phase-05 brief — no new explanation pages needed.
 4. **Index updates:** `docs/README.md` grouped reference index + troubleshooting section. Minimal touch to root `README.md`.
 5. **Intentionally omitted (➖):** `GitHubClient`, `JiraClient`, `OauthService`, `MobileOauthService`, `MobileSyncService`, `PushNotificationService`, `AiProviderManager` — each is either already fully covered by its user-facing how-to, or it is internal wiring with no user-facing surface. Revisit if a future task surfaces a user-visible failure mode.
 
