@@ -17,10 +17,16 @@ Add Laravel Pint (already a dev dep) configuration and introduce PHPStan with La
   - After `./vendor/bin/pint`, the diff is formatting-only: `concat_space` (remove spaces around `.`), `no_unused_imports`, `ordered_imports`, `fully_qualified_strict_types`, `braces_position`, `single_line_empty_body`, `new_with_parentheses`, etc. Spot-checked several files — no semantic changes, so no file was reverted or excluded.
   - `./vendor/bin/pint --test` now returns `{"result":"pass"}`; `php artisan test` → 755 passed (1731 assertions).
 
-- [ ] Install and configure PHPStan + Larastan:
+- [x] Install and configure PHPStan + Larastan:
   - `composer require --dev larastan/larastan` (pulls in phpstan).
   - Create `phpstan.neon` at the repo root extending the Larastan config, level `5` as a starting bar, with `paths: [app, config, database, routes, tests]`, excluding `database/migrations` and `storage`.
   - Add a `phpstan` script to `composer.json` under `scripts`: `"phpstan": "./vendor/bin/phpstan analyse --memory-limit=1G"`.
+
+  **Notes (2026-04-18):**
+  - `composer require --dev larastan/larastan` installed `larastan/larastan v3.9.6` and `phpstan/phpstan 2.1.50` (plus `iamcal/sql-parser` transient dep). Composer reported one unrelated security advisory — not in scope for this task.
+  - Created `phpstan.neon` at the repo root: includes `vendor/larastan/larastan/extension.neon`, level 5, paths `[app, config, database, routes, tests]`, `excludePaths: [database/migrations, storage]`.
+  - Added `"phpstan": "./vendor/bin/phpstan analyse --memory-limit=1G"` to the `scripts` block in `composer.json`; `composer validate` passes.
+  - Initial triage run, baseline generation, and CI wiring are deferred to subsequent tasks in this phase.
 
 - [ ] Do an initial triage run and fix or baseline:
   - Run `composer phpstan` and capture the error list in `Auto Run Docs/Initiation/Working/phpstan-initial.txt`.
