@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\OauthToken;
 use App\Models\Source;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
 
 class GitHubWebhookManager
@@ -44,7 +45,7 @@ class GitHubWebhookManager
                     'updated_at' => now()->toIso8601String(),
                     'reason' => null,
                 ];
-            } catch (\Illuminate\Http\Client\RequestException $e) {
+            } catch (RequestException $e) {
                 $status = $e->response?->status();
                 $isPermissionError = in_array($status, [401, 403], true);
                 $isRepoConstraint = in_array($status, [404, 422], true);
