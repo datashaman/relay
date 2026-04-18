@@ -82,7 +82,7 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Check code style with Pint
-        run: ./vendor/bin/pint --test
+        run: composer lint:check
 
       - name: Run PHPStan
         run: composer phpstan
