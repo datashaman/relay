@@ -19,13 +19,14 @@ This guide shows you how to register a GitHub OAuth app and connect it to Relay 
 
 ## 2. Configure scopes
 
-The authorization request uses three scopes automatically (declared in `config/services.php`):
+The authorization request uses four scopes automatically (declared in `config/services.php`):
 
 | Scope | Needed for |
 | --- | --- |
 | `repo` | Read issues, push branches, open pull requests on private repos |
 | `read:org` | Enumerate organisations you belong to |
 | `workflow` | Update `.github/workflows/*` when the Implement agent touches CI files |
+| `admin:repo_hook` | Create/update Relay intake webhooks on selected repositories |
 
 You do not configure scopes on the GitHub app page — they are requested at authorization time.
 
@@ -50,7 +51,14 @@ Restart `composer dev` (or at least `php artisan serve`) after editing `.env`.
 
 From the intake page, click **Test connection** on the GitHub source. A green badge confirms the token works.
 
-Click **Sync now** to pull open issues into the intake queue.
+Click **Sync now** to pull open issues into the intake queue. Relay also attempts to create or update the intake webhook for selected repositories automatically, and shows status (`Managed`, `Needs Permission`, `Manual Fallback`, or `Error`) on the source card.
+
+## Migration and backward compatibility
+
+- Existing manually configured repository webhooks continue to work without migration.
+- Relay now tries managed webhook provisioning first; if GitHub rejects webhook management due to permissions or admin constraints, the Intake UI keeps a manual fallback section with URL + secret.
+- Re-running repository selection or sync is safe and idempotent: Relay updates matching hooks instead of creating duplicates.
+
 
 ## Troubleshooting
 

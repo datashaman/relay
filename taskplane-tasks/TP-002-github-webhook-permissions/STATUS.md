@@ -1,10 +1,10 @@
 # TP-002: GitHub webhook management via app permissions — Status
 
 **Current Step:** Step 3: Verification & docs
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 **Last Updated:** 2026-04-18
 **Review Level:** 2
-**Review Counter:** 3
+**Review Counter:** 4
 **Iteration:** 1
 **Size:** M
 
@@ -40,12 +40,12 @@
 ---
 
 ### Step 3: Verification & docs
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Add/adjust tests for webhook creation, update/reuse, and permission failures
-- [ ] Verify end-to-end intake hookup flow no longer requires manual copy/paste in normal case
-- [ ] Update operator-facing docs to describe the new automatic flow and required permissions
-- [ ] Summarize migration/back-compat behavior in docs/release notes
+- [x] Add/adjust tests for webhook creation, update/reuse, and permission failures
+- [x] Verify end-to-end intake hookup flow no longer requires manual copy/paste in normal case
+- [x] Update operator-facing docs to describe the new automatic flow and required permissions
+- [x] Summarize migration/back-compat behavior in docs/release notes
 
 ---
 
@@ -93,6 +93,12 @@
 - 2026-04-18: Intake UI now renders GitHub webhook lifecycle states (`managed`, `needs_permission`, `error`, `manual`, `unconfigured`) with repo-level guidance, and source JSON endpoints now include a structured `webhook` status payload for GitHub sources.
 - 2026-04-18: Webhook provisioning failures now distinguish permission failures (401/403 → `needs_permission`) from repository/admin constraints (404/422 → `manual`) so users get actionable reconnect/admin guidance instead of opaque errors.
 - 2026-04-18: Existing manual webhook flow is preserved as explicit fallback in intake via collapsible manual setup details (URL + secret) whenever managed mode is unavailable.
-| 2026-04-18 08:55 | Review R001 | plan Step 1: APPROVE |
-| 2026-04-18 09:02 | Review R002 | code Step 1: APPROVE |
-| 2026-04-18 09:04 | Review R003 | plan Step 2: APPROVE |
+- 2026-04-18: Added `GitHubWebhookManagerTest` coverage for webhook create, update/reuse (idempotency), and permission-failure state mapping.
+- 2026-04-18: Verified normal-case intake flow via `GithubSelectReposTest::test_managed_webhook_path_hides_manual_copy_paste_in_normal_case` — successful managed provisioning now lands on intake without manual copy/paste fallback prompts.
+- 2026-04-18: Updated operator docs (`README.md`, `docs/tutorials/first-run.md`) to document required GitHub webhook scopes and new automatic webhook provisioning behavior + fallback messaging.
+- 2026-04-18: Added migration/back-compat guidance in `docs/how-to/connect-github.md` covering managed-first behavior, manual fallback continuity, and idempotent re-runs.
+- 2026-04-18: Full verification complete (`composer test`): 797 passed, 0 failed.
+- 2026-04-18 08:55: Review R001 plan Step 1 approved.
+- 2026-04-18 09:02: Review R002 code Step 1 approved.
+- 2026-04-18 09:04: Review R003 plan Step 2 approved.
+- 2026-04-18 09:08: Review R004 code Step 2 approved.

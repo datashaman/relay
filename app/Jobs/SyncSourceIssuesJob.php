@@ -25,8 +25,10 @@ class SyncSourceIssuesJob implements ShouldQueue
         public Source $source,
     ) {}
 
-    public function handle(OauthService $oauth, IssueIntakeService $intake, GitHubWebhookManager $webhookManager): void
+    public function handle(OauthService $oauth, IssueIntakeService $intake, ?GitHubWebhookManager $webhookManager = null): void
     {
+        $webhookManager ??= app(GitHubWebhookManager::class);
+
         if ($this->isIntakePaused()) {
             return;
         }
