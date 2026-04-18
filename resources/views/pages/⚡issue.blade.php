@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\IssueStatus;
+use App\Enums\RunStatus;
 use App\Models\Issue;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -16,12 +17,25 @@ class extends Component
         return $this->issue->title ?: 'Issues';
     }
 
+    public function archiveIssue(string $reason = ''): void
+    {
+        if ($this->issue->runs()->whereIn('status', [RunStatus::Pending, RunStatus::Running, RunStatus::Stuck])->exists()) {
+            session()->flash('error', 'Cancel the in-flight run before archiving this issue.');
+
+            return;
+        }
+
+        $this->issue->archive($reason !== '' ? $reason : null);
+        $this->redirect(route('intake.index'), navigate: true);
+    }
+
     public function with(): array
     {
         $issues = Issue::with([
             'runs' => fn ($q) => $q->latest('id')->limit(1),
             'runs.stages' => fn ($q) => $q->latest('id')->limit(1),
         ])
+            ->active()
             ->whereIn('status', [
                 IssueStatus::Accepted,
                 IssueStatus::InProgress,
@@ -525,6 +539,15 @@ class extends Component
                                 <span><kbd class="px-1 py-0.5 bg-surface-container-high rounded text-xs">J</kbd> Next</span>
                                 <span><kbd class="px-1 py-0.5 bg-surface-container-high rounded text-xs">K</kbd> Previous</span>
                             </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-outline-variant/40">
+                            <button type="button"
+                                    x-data
+                                    x-on:click="$wire.archiveIssue(prompt('Archive reason (optional):') ?? '')"
+                                    class="w-full rounded-md bg-surface-container-high text-on-surface-variant px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest text-center">
+                                Archive Issue
+                            </button>
                         </div>
                     </div>
                 @endif

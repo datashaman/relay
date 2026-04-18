@@ -21,6 +21,10 @@ class IssueIntakeService
             ->first();
 
         if ($existing) {
+            if ($existing->archived_at !== null) {
+                $existing->unarchive();
+            }
+
             $this->reconcileReopenOnFetchedRow($existing, $source->id);
             $hadChanges = $this->updateExistingIssue($existing, $issueData);
 
@@ -50,6 +54,10 @@ class IssueIntakeService
             return null;
         }
 
+        if ($issue->archived_at !== null) {
+            $issue->unarchive();
+        }
+
         $rawStatus = $stateReason !== null ? 'closed:'.$stateReason : 'closed';
 
         $transitioned = Issue::where('id', $issue->id)
@@ -75,6 +83,10 @@ class IssueIntakeService
 
         if (! $issue) {
             return null;
+        }
+
+        if ($issue->archived_at !== null) {
+            $issue->unarchive();
         }
 
         $this->reconcileReopenOnFetchedRow($issue, $source->id);
@@ -122,6 +134,10 @@ class IssueIntakeService
 
         if (! $issue) {
             return null;
+        }
+
+        if ($issue->archived_at !== null) {
+            $issue->unarchive();
         }
 
         $rejected = Issue::where('id', $issue->id)
