@@ -258,7 +258,7 @@ PROMPT;
             ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
         ];
 
-        $userContent = "# Preflight Document\n\n" . ($run->preflight_doc ?? 'No preflight document available.') . "\n\n";
+        $userContent = "# Preflight Document\n\n".($run->preflight_doc ?? 'No preflight document available.')."\n\n";
 
         $diffResult = Process::path($worktreePath)
             ->timeout(30)
@@ -277,18 +277,18 @@ PROMPT;
         }
 
         $changelogPath = config('relay.changelog_path', 'CHANGELOG.md');
-        $hasChangelog = file_exists($worktreePath . '/' . $changelogPath);
-        $userContent .= '- **Changelog:** ' . ($hasChangelog ? $changelogPath : 'none detected') . "\n";
+        $hasChangelog = file_exists($worktreePath.'/'.$changelogPath);
+        $userContent .= '- **Changelog:** '.($hasChangelog ? $changelogPath : 'none detected')."\n";
 
         $hasDeployHook = ! empty(config('relay.deploy_hook'));
-        $userContent .= '- **Deploy hook:** ' . ($hasDeployHook ? 'configured' : 'not configured') . "\n\n";
+        $userContent .= '- **Deploy hook:** '.($hasDeployHook ? 'configured' : 'not configured')."\n\n";
 
-        $userContent .= "Please commit the changes, push the branch, and create a pull request. ";
+        $userContent .= 'Please commit the changes, push the branch, and create a pull request. ';
         if ($hasChangelog) {
-            $userContent .= "Update the changelog. ";
+            $userContent .= 'Update the changelog. ';
         }
         if ($hasDeployHook) {
-            $userContent .= "Trigger deploy after creating the PR. ";
+            $userContent .= 'Trigger deploy after creating the PR. ';
         }
 
         $messages[] = ['role' => 'user', 'content' => $userContent];
@@ -324,7 +324,7 @@ PROMPT;
             'git_diff' => $this->toolGitDiff($worktreePath),
             'git_log' => $this->toolGitLog($arguments, $worktreePath),
             'run_shell' => $this->toolRunShell($arguments, $worktreePath),
-            default => 'Error: Unknown tool "' . $name . '".',
+            default => 'Error: Unknown tool "'.$name.'".',
         };
     }
 
@@ -340,7 +340,7 @@ PROMPT;
             ->run(['git', 'add', '-A']);
 
         if (! $addResult->successful()) {
-            return 'Error: Failed to stage changes: ' . $addResult->errorOutput();
+            return 'Error: Failed to stage changes: '.$addResult->errorOutput();
         }
 
         $commitResult = Process::path($worktreePath)
@@ -348,12 +348,12 @@ PROMPT;
             ->run(['git', 'commit', '-m', $message]);
 
         if (! $commitResult->successful()) {
-            return 'Error: Failed to commit: ' . $commitResult->errorOutput();
+            return 'Error: Failed to commit: '.$commitResult->errorOutput();
         }
 
         ReleaseProgressUpdated::dispatch($stage, 'committed', $message);
 
-        return 'Changes committed: ' . $this->truncate($commitResult->output(), 500);
+        return 'Changes committed: '.$this->truncate($commitResult->output(), 500);
     }
 
     private function toolGitPush(array $arguments, string $worktreePath, Stage $stage, mixed $run): string
@@ -373,12 +373,12 @@ PROMPT;
             ->run($cmd);
 
         if (! $result->successful()) {
-            return 'Error: Failed to push: ' . $result->errorOutput();
+            return 'Error: Failed to push: '.$result->errorOutput();
         }
 
         ReleaseProgressUpdated::dispatch($stage, 'pushed', "Pushed branch {$branch} to origin");
 
-        return "Pushed branch {$branch} to origin.\n" . $result->output() . $result->errorOutput();
+        return "Pushed branch {$branch} to origin.\n".$result->output().$result->errorOutput();
     }
 
     private function toolCreatePr(array $arguments, Stage $stage, mixed $run): string
@@ -422,7 +422,7 @@ PROMPT;
         try {
             $pr = $client->createPullRequest($owner, $repo, $title, $run->branch, $base, $body);
         } catch (\Throwable $e) {
-            return 'Error: Failed to create PR: ' . $e->getMessage();
+            return 'Error: Failed to create PR: '.$e->getMessage();
         }
 
         $prUrl = $pr['html_url'] ?? '';
@@ -446,10 +446,10 @@ PROMPT;
         }
 
         $changelogPath = config('relay.changelog_path', 'CHANGELOG.md');
-        $fullPath = $worktreePath . '/' . $changelogPath;
+        $fullPath = $worktreePath.'/'.$changelogPath;
 
         $existing = file_exists($fullPath) ? file_get_contents($fullPath) : '';
-        $newContent = $entry . "\n\n" . $existing;
+        $newContent = $entry."\n\n".$existing;
 
         file_put_contents($fullPath, $newContent);
 
@@ -469,7 +469,7 @@ PROMPT;
         $result = Process::timeout(30)
             ->run(['sh', '-c', $hook]);
 
-        $output = $this->truncate($result->output() . $result->errorOutput(), self::OUTPUT_MAX_BYTES);
+        $output = $this->truncate($result->output().$result->errorOutput(), self::OUTPUT_MAX_BYTES);
 
         $this->recordEvent($stage, 'deploy_triggered', 'release_agent', [
             'hook' => $hook,
@@ -494,7 +494,7 @@ PROMPT;
         }
 
         if (! file_exists($path)) {
-            return 'Error: File not found: ' . ($arguments['path'] ?? '');
+            return 'Error: File not found: '.($arguments['path'] ?? '');
         }
 
         return $this->truncate(file_get_contents($path), self::OUTPUT_MAX_BYTES);
@@ -508,7 +508,7 @@ PROMPT;
         }
 
         if (! is_dir($path)) {
-            return 'Error: Directory not found: ' . ($arguments['path'] ?? '');
+            return 'Error: Directory not found: '.($arguments['path'] ?? '');
         }
 
         $entries = scandir($path);
@@ -517,8 +517,8 @@ PROMPT;
             if ($entry === '.' || $entry === '..') {
                 continue;
             }
-            $full = $path . '/' . $entry;
-            $lines[] = is_dir($full) ? $entry . '/' : $entry;
+            $full = $path.'/'.$entry;
+            $lines[] = is_dir($full) ? $entry.'/' : $entry;
         }
 
         return implode("\n", $lines) ?: '(empty directory)';
@@ -536,10 +536,10 @@ PROMPT;
 
         $output = '';
         if ($result->output()) {
-            $output .= "Unstaged:\n" . $result->output();
+            $output .= "Unstaged:\n".$result->output();
         }
         if ($staged->output()) {
-            $output .= "\nStaged:\n" . $staged->output();
+            $output .= "\nStaged:\n".$staged->output();
         }
 
         return $this->truncate($output, self::OUTPUT_MAX_BYTES) ?: '(no changes)';
@@ -572,7 +572,7 @@ PROMPT;
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', $command]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         if (! $result->successful()) {
@@ -586,7 +586,7 @@ PROMPT;
     {
         $relative = ltrim($relative, '/');
 
-        $combined = $worktreePath . '/' . $relative;
+        $combined = $worktreePath.'/'.$relative;
 
         $resolved = realpath(dirname($combined));
         if ($resolved === false) {
@@ -594,9 +594,9 @@ PROMPT;
             if ($resolved === false) {
                 return null;
             }
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         } else {
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         }
 
         $realWorktree = realpath($worktreePath);
@@ -641,7 +641,7 @@ PROMPT;
             return $text;
         }
 
-        return substr($text, 0, $maxBytes) . "\n... (truncated at {$maxBytes} bytes)";
+        return substr($text, 0, $maxBytes)."\n... (truncated at {$maxBytes} bytes)";
     }
 
     private function truncateArguments(array $arguments): array
@@ -649,7 +649,7 @@ PROMPT;
         $truncated = [];
         foreach ($arguments as $key => $value) {
             if (is_string($value) && strlen($value) > 200) {
-                $truncated[$key] = substr($value, 0, 200) . '...';
+                $truncated[$key] = substr($value, 0, 200).'...';
             } else {
                 $truncated[$key] = $value;
             }

@@ -13,7 +13,7 @@ class RepositoryFactory extends Factory
     {
         return [
             'name' => fake()->slug(2),
-            'path' => '/tmp/repos/' . fake()->slug(2),
+            'path' => '/tmp/repos/'.fake()->slug(2),
             'default_branch' => 'main',
             'worktree_root' => '/tmp/worktrees',
             'setup_script' => null,

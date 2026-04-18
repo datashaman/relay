@@ -77,10 +77,12 @@ class ResolveConflictsJobTest extends TestCase
                 // Return conflicted files on first call, none after agent resolves them.
                 static $call = 0;
                 $call++;
+
                 return $call === 1
                     ? Process::result(output: "src/foo.php\n", exitCode: 0)
                     : Process::result(output: '', exitCode: 0);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 
@@ -121,6 +123,7 @@ class ResolveConflictsJobTest extends TestCase
             if (($process->command[1] ?? null) === 'diff' && in_array('--diff-filter=U', $process->command, true)) {
                 return Process::result(output: '', exitCode: 0);
             }
+
             return Process::result(output: '', exitCode: 0);
         });
 

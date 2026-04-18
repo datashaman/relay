@@ -32,11 +32,11 @@ class AiProviderManagerTest extends TestCase
     {
         parent::setUp();
 
-        $this->container = new Container();
-        $this->container->instance('config', new Repository());
+        $this->container = new Container;
+        $this->container->instance('config', new Repository);
         Container::setInstance($this->container);
 
-        $this->manager = new AiProviderManager();
+        $this->manager = new AiProviderManager;
     }
 
     protected function tearDown(): void

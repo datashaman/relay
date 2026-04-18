@@ -8,6 +8,7 @@ use App\Services\OauthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class OauthFlowTest extends TestCase
@@ -116,7 +117,7 @@ class OauthFlowTest extends TestCase
 
         $response = $this->get("/oauth/github/callback?code=auth-code&state={$state}");
 
-        $source = \App\Models\Source::where('type', 'github')->first();
+        $source = Source::where('type', 'github')->first();
         $response->assertRedirect(route('github.select-repos', $source));
         $response->assertSessionHas('success');
 
@@ -499,7 +500,7 @@ class OauthFlowTest extends TestCase
             ],
         ], now()->addMinutes(10));
 
-        \Livewire\Livewire::test('pages::jira-select-site')
+        Livewire::test('pages::jira-select-site')
             ->call('selectSite', 'cloud-2')
             ->assertRedirect('/sources/1/projects');
 
@@ -521,14 +522,14 @@ class OauthFlowTest extends TestCase
             ],
         ], now()->addMinutes(10));
 
-        \Livewire\Livewire::test('pages::jira-select-site')
+        Livewire::test('pages::jira-select-site')
             ->call('selectSite', 'nonexistent')
             ->assertRedirect('/intake');
     }
 
     public function test_jira_select_site_expired_pending_returns_error(): void
     {
-        \Livewire\Livewire::test('pages::jira-select-site')
+        Livewire::test('pages::jira-select-site')
             ->call('selectSite', 'cloud-1')
             ->assertRedirect('/intake');
     }
@@ -543,14 +544,14 @@ class OauthFlowTest extends TestCase
             ],
         ], now()->addMinutes(10));
 
-        \Livewire\Livewire::test('pages::jira-select-site')
+        Livewire::test('pages::jira-select-site')
             ->assertSee('Site One')
             ->assertSee('Site Two');
     }
 
     public function test_jira_select_site_page_shows_no_pending_message(): void
     {
-        \Livewire\Livewire::test('pages::jira-select-site')
+        Livewire::test('pages::jira-select-site')
             ->assertSee('No pending Jira authorization');
     }
 

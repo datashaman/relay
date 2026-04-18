@@ -25,7 +25,7 @@ class GeminiProviderTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        self::$container = new Container();
+        self::$container = new Container;
         Facade::setFacadeApplication(self::$container);
     }
 
@@ -39,7 +39,7 @@ class GeminiProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        self::$container->instance(HttpFactory::class, new HttpFactory());
+        self::$container->instance(HttpFactory::class, new HttpFactory);
         Facade::clearResolvedInstance(HttpFactory::class);
     }
 

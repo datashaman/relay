@@ -63,14 +63,15 @@ class ResolveConflictsJob implements ShouldQueue
                 ->timeout(60)
                 ->run(['git', 'fetch', 'origin', $targetBranch]);
             if (! $fetch->successful()) {
-                $this->fail($stage, $run, 'Failed to fetch target branch: ' . trim($fetch->errorOutput()));
+                $this->fail($stage, $run, 'Failed to fetch target branch: '.trim($fetch->errorOutput()));
+
                 return;
             }
 
             // Start the merge we expect to conflict.
             $merge = Process::path($worktreePath)
                 ->timeout(60)
-                ->run(['git', 'merge', '--no-commit', '--no-ff', 'origin/' . $targetBranch]);
+                ->run(['git', 'merge', '--no-commit', '--no-ff', 'origin/'.$targetBranch]);
 
             $conflictFiles = $this->listConflictFiles($worktreePath);
 
@@ -79,6 +80,7 @@ class ResolveConflictsJob implements ShouldQueue
                 $this->commitMerge($worktreePath, $targetBranch);
                 $this->pushBranch($worktreePath, $run->branch);
                 $this->markResolved($run, $stage, $conflictFiles, $orchestrator);
+
                 return;
             }
 
@@ -98,7 +100,8 @@ class ResolveConflictsJob implements ShouldQueue
             $remaining = $this->listConflictFiles($worktreePath);
             if (! empty($remaining)) {
                 $this->abortInProgressMerge($worktreePath);
-                $this->fail($stage, $run, 'AI left unresolved conflicts: ' . implode(', ', $remaining));
+                $this->fail($stage, $run, 'AI left unresolved conflicts: '.implode(', ', $remaining));
+
                 return;
             }
 
@@ -107,7 +110,7 @@ class ResolveConflictsJob implements ShouldQueue
             $this->markResolved($run, $stage, $conflictFiles, $orchestrator);
         } catch (\Throwable $e) {
             $this->abortInProgressMerge($worktreePath);
-            $this->fail($stage, $run, 'Conflict resolution threw: ' . $e->getMessage());
+            $this->fail($stage, $run, 'Conflict resolution threw: '.$e->getMessage());
         }
     }
 
@@ -126,7 +129,7 @@ class ResolveConflictsJob implements ShouldQueue
 
     private function buildConflictDoc(string $targetBranch, array $files): string
     {
-        $list = empty($files) ? '(no files listed)' : "- " . implode("\n- ", $files);
+        $list = empty($files) ? '(no files listed)' : '- '.implode("\n- ", $files);
 
         return <<<DOC
 # Resolve Merge Conflicts

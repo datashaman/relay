@@ -6,9 +6,9 @@ use App\Enums\AutonomyLevel;
 use App\Enums\AutonomyScope;
 use App\Enums\IssueStatus;
 use App\Enums\RunStatus;
+use App\Enums\SourceType;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
-use App\Enums\SourceType;
 use App\Enums\StuckState;
 use App\Models\AutonomyConfig;
 use App\Models\EscalationRule;
@@ -21,6 +21,8 @@ use App\Models\Run;
 use App\Models\Source;
 use App\Models\Stage;
 use App\Models\StageEvent;
+use Database\Seeders\DefaultAutonomyConfigSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -147,7 +149,7 @@ class CoreSchemaTest extends TestCase
             'external_id' => 'EXT-123',
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         Issue::factory()->create([
             'source_id' => $source->id,
             'external_id' => 'EXT-123',
@@ -156,7 +158,7 @@ class CoreSchemaTest extends TestCase
 
     public function test_default_autonomy_seeder(): void
     {
-        $this->seed(\Database\Seeders\DefaultAutonomyConfigSeeder::class);
+        $this->seed(DefaultAutonomyConfigSeeder::class);
 
         $config = AutonomyConfig::where('scope', AutonomyScope::Global)
             ->whereNull('scope_id')

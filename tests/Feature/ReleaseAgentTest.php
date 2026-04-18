@@ -33,7 +33,7 @@ class ReleaseAgentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->worktreePath = sys_get_temp_dir() . '/relay-test-release-' . uniqid();
+        $this->worktreePath = sys_get_temp_dir().'/relay-test-release-'.uniqid();
         mkdir($this->worktreePath, 0755, true);
     }
 
@@ -52,7 +52,7 @@ class ReleaseAgentTest extends TestCase
             if ($item === '.' || $item === '..') {
                 continue;
             }
-            $path = $dir . '/' . $item;
+            $path = $dir.'/'.$item;
             if (is_dir($path)) {
                 $this->removeDirectory($path);
             } else {
@@ -320,7 +320,7 @@ class ReleaseAgentTest extends TestCase
             '*' => Process::result(''),
         ]);
 
-        file_put_contents($this->worktreePath . '/CHANGELOG.md', "# Changelog\n\n## Previous\n- Old entry\n");
+        file_put_contents($this->worktreePath.'/CHANGELOG.md', "# Changelog\n\n## Previous\n- Old entry\n");
 
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
@@ -349,7 +349,7 @@ class ReleaseAgentTest extends TestCase
 
         app(ReleaseAgent::class)->execute($stage, []);
 
-        $content = file_get_contents($this->worktreePath . '/CHANGELOG.md');
+        $content = file_get_contents($this->worktreePath.'/CHANGELOG.md');
         $this->assertStringContainsString('Add user profile page', $content);
         $this->assertStringContainsString('Old entry', $content);
     }

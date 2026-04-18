@@ -36,8 +36,8 @@ class FilterRuleServiceTest extends TestCase
         // resolves the 'validator' binding through the Facade root. Bootstrap
         // just enough container so the facade works without a full Laravel app.
         if (Facade::getFacadeApplication() === null) {
-            $container = new Container();
-            $translator = new Translator(new ArrayLoader(), 'en');
+            $container = new Container;
+            $translator = new Translator(new ArrayLoader, 'en');
             $container->instance('validator', new ValidationFactory($translator, $container));
             Facade::setFacadeApplication($container);
         }
@@ -46,7 +46,7 @@ class FilterRuleServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new FilterRuleService();
+        $this->service = new FilterRuleService;
     }
 
     private function makeRule(array $attributes = []): FilterRule

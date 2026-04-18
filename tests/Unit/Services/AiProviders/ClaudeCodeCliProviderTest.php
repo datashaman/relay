@@ -27,7 +27,7 @@ class ClaudeCodeCliProviderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->provider = new ClaudeCodeCliProvider();
+        $this->provider = new ClaudeCodeCliProvider;
     }
 
     public function test_implements_ai_provider_contract(): void
@@ -214,7 +214,7 @@ class ClaudeCodeCliProviderTest extends TestCase
 
     public function test_extract_json_handles_unfenced_embedded_object(): void
     {
-        $text = "All set! {\"status\":\"ok\"} cheers";
+        $text = 'All set! {"status":"ok"} cheers';
         $this->assertSame(['status' => 'ok'], $this->invoke('extractJson', [$text]));
     }
 

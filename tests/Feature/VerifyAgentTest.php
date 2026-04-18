@@ -29,7 +29,7 @@ class VerifyAgentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->worktreePath = sys_get_temp_dir() . '/relay-test-verify-' . uniqid();
+        $this->worktreePath = sys_get_temp_dir().'/relay-test-verify-'.uniqid();
         mkdir($this->worktreePath, 0755, true);
     }
 
@@ -48,7 +48,7 @@ class VerifyAgentTest extends TestCase
             if ($item === '.' || $item === '..') {
                 continue;
             }
-            $path = $dir . '/' . $item;
+            $path = $dir.'/'.$item;
             if (is_dir($path)) {
                 $this->removeDirectory($path);
             } else {
@@ -151,8 +151,8 @@ class VerifyAgentTest extends TestCase
             '*' => Process::result('OK (5 tests, 10 assertions)'),
         ]);
 
-        mkdir($this->worktreePath . '/vendor/bin', 0755, true);
-        touch($this->worktreePath . '/vendor/bin/pest');
+        mkdir($this->worktreePath.'/vendor/bin', 0755, true);
+        touch($this->worktreePath.'/vendor/bin/pest');
 
         [$issue, $run, $stage] = $this->setupRunWithStage();
         $this->bindMultiCallProvider($this->mockTestsPassAndComplete());
@@ -171,8 +171,8 @@ class VerifyAgentTest extends TestCase
             '*' => Process::result('FAILURES! Tests: 5, Assertions: 8, Failures: 2', '', 1),
         ]);
 
-        mkdir($this->worktreePath . '/vendor/bin', 0755, true);
-        touch($this->worktreePath . '/vendor/bin/phpunit');
+        mkdir($this->worktreePath.'/vendor/bin', 0755, true);
+        touch($this->worktreePath.'/vendor/bin/phpunit');
 
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
@@ -230,8 +230,8 @@ class VerifyAgentTest extends TestCase
             '*' => Process::result('OK (3 tests)'),
         ]);
 
-        mkdir($this->worktreePath . '/vendor/bin', 0755, true);
-        touch($this->worktreePath . '/vendor/bin/pest');
+        mkdir($this->worktreePath.'/vendor/bin', 0755, true);
+        touch($this->worktreePath.'/vendor/bin/pest');
 
         [$issue, $run, $stage] = $this->setupRunWithStage();
         $this->bindMultiCallProvider($this->mockTestsPassAndComplete());
@@ -378,8 +378,8 @@ class VerifyAgentTest extends TestCase
             '*' => Process::result('OK (5 tests, 10 assertions)'),
         ]);
 
-        mkdir($this->worktreePath . '/vendor/bin', 0755, true);
-        touch($this->worktreePath . '/vendor/bin/pest');
+        mkdir($this->worktreePath.'/vendor/bin', 0755, true);
+        touch($this->worktreePath.'/vendor/bin/pest');
 
         [$issue, $run, $stage] = $this->setupRunWithStage();
         $this->bindMultiCallProvider($this->mockTestsPassAndComplete());
@@ -393,16 +393,16 @@ class VerifyAgentTest extends TestCase
 
     public function test_verify_agent_detects_test_runners(): void
     {
-        mkdir($this->worktreePath . '/vendor/bin', 0755, true);
-        touch($this->worktreePath . '/vendor/bin/pest');
+        mkdir($this->worktreePath.'/vendor/bin', 0755, true);
+        touch($this->worktreePath.'/vendor/bin/pest');
 
         $agent = app(VerifyAgent::class);
         $method = new \ReflectionMethod($agent, 'detectTestRunner');
 
         $this->assertEquals('vendor/bin/pest', $method->invoke($agent, $this->worktreePath));
 
-        unlink($this->worktreePath . '/vendor/bin/pest');
-        touch($this->worktreePath . '/vendor/bin/phpunit');
+        unlink($this->worktreePath.'/vendor/bin/pest');
+        touch($this->worktreePath.'/vendor/bin/phpunit');
 
         $this->assertEquals('vendor/bin/phpunit', $method->invoke($agent, $this->worktreePath));
     }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Contracts\AiProvider;
 use App\Enums\StageName;
 use App\Models\Stage;
 use App\Models\StageEvent;
@@ -238,10 +237,10 @@ PROMPT;
 
         $content = "# Issue: {$issue->title}\n\n";
         if ($issue->body) {
-            $content .= $issue->body . "\n\n";
+            $content .= $issue->body."\n\n";
         }
         if (! empty($issue->labels)) {
-            $content .= 'Labels: ' . implode(', ', $issue->labels) . "\n";
+            $content .= 'Labels: '.implode(', ', $issue->labels)."\n";
         }
         if ($issue->assignee) {
             $content .= "Assignee: {$issue->assignee}\n";
@@ -303,7 +302,7 @@ PROMPT;
 
         $doc .= "## Acceptance Criteria\n\n";
         foreach ($data['acceptance_criteria'] as $i => $criterion) {
-            $doc .= ($i + 1) . ". {$criterion}\n";
+            $doc .= ($i + 1).". {$criterion}\n";
         }
         $doc .= "\n";
 
@@ -318,7 +317,7 @@ PROMPT;
         $scope = $data['scope_assessment'];
         $doc .= "## Scope Assessment\n\n";
         $doc .= "- **Size**: {$scope['size']}\n";
-        $doc .= '- **Risk Flags**: ' . (! empty($scope['risk_flags']) ? implode(', ', $scope['risk_flags']) : 'None') . "\n";
+        $doc .= '- **Risk Flags**: '.(! empty($scope['risk_flags']) ? implode(', ', $scope['risk_flags']) : 'None')."\n";
         $doc .= "- **Suggested Autonomy**: {$scope['suggested_autonomy']}\n";
 
         return $doc;
@@ -332,10 +331,10 @@ PROMPT;
 
         $issueContent = "# Issue: {$issue->title}\n\n";
         if ($issue->body) {
-            $issueContent .= $issue->body . "\n\n";
+            $issueContent .= $issue->body."\n\n";
         }
         if (! empty($issue->labels)) {
-            $issueContent .= 'Labels: ' . implode(', ', $issue->labels) . "\n";
+            $issueContent .= 'Labels: '.implode(', ', $issue->labels)."\n";
         }
         if ($issue->assignee) {
             $issueContent .= "Assignee: {$issue->assignee}\n";

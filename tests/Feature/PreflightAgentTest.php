@@ -15,6 +15,7 @@ use App\Services\AiProviders\AiProviderManager;
 use App\Services\PreflightAgent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class PreflightAgentTest extends TestCase
@@ -459,7 +460,7 @@ class PreflightAgentTest extends TestCase
             ],
         ]);
 
-        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
             ->set('answers.q1', 'Admin')
             ->set('answers.q2', 'Must use React')
             ->call('submitAnswers')
@@ -488,7 +489,7 @@ class PreflightAgentTest extends TestCase
             ],
         ]);
 
-        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
             ->set('answers.q1', 'My answer')
             ->set('answers.q2', '')
             ->call('submitAnswers');
@@ -502,7 +503,7 @@ class PreflightAgentTest extends TestCase
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
             ->assertRedirect(route('intake.index'));
     }
 
@@ -518,7 +519,7 @@ class PreflightAgentTest extends TestCase
             ],
         ]);
 
-        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
             ->call('skipToDoc')
             ->assertRedirect(route('intake.index'));
 
@@ -534,7 +535,7 @@ class PreflightAgentTest extends TestCase
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();
 
-        \Livewire\Livewire::test('pages::preflight-clarification', ['run' => $run])
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
             ->assertRedirect(route('intake.index'));
     }
 

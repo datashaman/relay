@@ -4,9 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\IssueStatus;
 use App\Enums\RunStatus;
+use App\Enums\SourceType;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
-use App\Enums\SourceType;
+use App\Enums\StuckState;
 use App\Models\Issue;
 use App\Models\Run;
 use App\Models\Source;
@@ -137,7 +138,7 @@ class RunProgressTest extends TestCase
         $run = Run::factory()->create([
             'issue_id' => $issue->id,
             'status' => RunStatus::Stuck,
-            'stuck_state' => \App\Enums\StuckState::IterationCap,
+            'stuck_state' => StuckState::IterationCap,
         ]);
         Stage::factory()->create([
             'run_id' => $run->id,

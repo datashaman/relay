@@ -31,7 +31,7 @@ class MergeConflictDetectorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->detector = new MergeConflictDetector();
+        $this->detector = new MergeConflictDetector;
     }
 
     public function test_outcome_constants_have_stable_string_values(): void
@@ -56,7 +56,7 @@ class MergeConflictDetectorTest extends TestCase
     #[DataProvider('probeableStatusProvider')]
     public function test_is_probeable_for_each_run_status(?RunStatus $status, bool $expected): void
     {
-        $run = new Run();
+        $run = new Run;
         $run->setAttribute('status', $status);
 
         $method = new ReflectionMethod(MergeConflictDetector::class, 'isProbeable');

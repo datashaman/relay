@@ -72,7 +72,7 @@ class FilterRuleService
 
         if (! empty($overlap)) {
             throw ValidationException::withMessages([
-                'exclude_labels' => 'Labels cannot appear in both include and exclude: ' . implode(', ', $overlap),
+                'exclude_labels' => 'Labels cannot appear in both include and exclude: '.implode(', ', $overlap),
             ]);
         }
     }

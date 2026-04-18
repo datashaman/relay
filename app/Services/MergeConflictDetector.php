@@ -67,14 +67,14 @@ class MergeConflictDetector
         if (! $fetchResult->successful()) {
             return [
                 'outcome' => self::OUTCOME_ERROR,
-                'reason' => 'fetch_failed: ' . trim($fetchResult->errorOutput()),
+                'reason' => 'fetch_failed: '.trim($fetchResult->errorOutput()),
             ];
         }
 
         try {
             $mergeResult = Process::path($worktreePath)
                 ->timeout(self::SHELL_TIMEOUT)
-                ->run(['git', 'merge', '--no-commit', '--no-ff', 'origin/' . $targetBranch]);
+                ->run(['git', 'merge', '--no-commit', '--no-ff', 'origin/'.$targetBranch]);
 
             if ($mergeResult->successful()) {
                 $this->clearConflicts($run);
@@ -88,7 +88,7 @@ class MergeConflictDetector
                 // Merge failed but no conflict files — treat as error (e.g. branch missing).
                 return [
                     'outcome' => self::OUTCOME_ERROR,
-                    'reason' => 'merge_failed: ' . trim($mergeResult->errorOutput()),
+                    'reason' => 'merge_failed: '.trim($mergeResult->errorOutput()),
                 ];
             }
 

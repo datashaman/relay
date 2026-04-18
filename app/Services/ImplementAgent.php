@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Contracts\AiProvider;
 use App\Enums\StageName;
 use App\Events\DiffUpdated;
 use App\Models\Stage;
@@ -225,7 +224,7 @@ PROMPT;
             ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
         ];
 
-        $userContent = "# Preflight Document\n\n" . ($run->preflight_doc ?? 'No preflight document available.') . "\n\n";
+        $userContent = "# Preflight Document\n\n".($run->preflight_doc ?? 'No preflight document available.')."\n\n";
 
         if (! empty($context['failure_report'])) {
             $userContent .= "# Previous Verification Failure\n\n";
@@ -235,13 +234,13 @@ PROMPT;
                     $userContent .= "- {$failure}\n";
                 }
             } else {
-                $userContent .= $context['failure_report'] . "\n";
+                $userContent .= $context['failure_report']."\n";
             }
             $userContent .= "\n";
         }
 
         if (! empty($context['guidance'])) {
-            $userContent .= "# User Guidance\n\n" . $context['guidance'] . "\n\n";
+            $userContent .= "# User Guidance\n\n".$context['guidance']."\n\n";
         }
 
         $messages[] = ['role' => 'user', 'content' => $userContent];
@@ -259,7 +258,7 @@ PROMPT;
             'run_linter' => $this->toolRunLinter($arguments, $worktreePath),
             'git_status' => $this->toolGitStatus($worktreePath),
             'git_diff' => $this->toolGitDiff($worktreePath),
-            default => 'Error: Unknown tool "' . $name . '".',
+            default => 'Error: Unknown tool "'.$name.'".',
         };
     }
 
@@ -271,7 +270,7 @@ PROMPT;
         }
 
         if (! file_exists($path)) {
-            return 'Error: File not found: ' . ($arguments['path'] ?? '');
+            return 'Error: File not found: '.($arguments['path'] ?? '');
         }
 
         $content = file_get_contents($path);
@@ -293,7 +292,7 @@ PROMPT;
 
         file_put_contents($path, $arguments['content'] ?? '');
 
-        return 'File written: ' . ($arguments['path'] ?? '');
+        return 'File written: '.($arguments['path'] ?? '');
     }
 
     private function toolListFiles(array $arguments, string $worktreePath): string
@@ -304,7 +303,7 @@ PROMPT;
         }
 
         if (! is_dir($path)) {
-            return 'Error: Directory not found: ' . ($arguments['path'] ?? '');
+            return 'Error: Directory not found: '.($arguments['path'] ?? '');
         }
 
         $entries = scandir($path);
@@ -313,8 +312,8 @@ PROMPT;
             if ($entry === '.' || $entry === '..') {
                 continue;
             }
-            $full = $path . '/' . $entry;
-            $lines[] = is_dir($full) ? $entry . '/' : $entry;
+            $full = $path.'/'.$entry;
+            $lines[] = is_dir($full) ? $entry.'/' : $entry;
         }
 
         return implode("\n", $lines) ?: '(empty directory)';
@@ -332,7 +331,7 @@ PROMPT;
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', $command]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
         $output = $this->truncate($output, self::OUTPUT_MAX_BYTES);
 
         if (! $result->successful()) {
@@ -358,13 +357,13 @@ PROMPT;
 
         $fileArgs = implode(' ', array_map('escapeshellarg', $files));
 
-        $linterBin = file_exists($worktreePath . '/vendor/bin/pint') ? 'vendor/bin/pint' : 'vendor/bin/php-cs-fixer fix';
+        $linterBin = file_exists($worktreePath.'/vendor/bin/pint') ? 'vendor/bin/pint' : 'vendor/bin/php-cs-fixer fix';
 
         $result = Process::path($worktreePath)
             ->timeout(self::SHELL_TIMEOUT)
             ->run(['sh', '-c', "{$linterBin} {$fileArgs}"]);
 
-        $output = $result->output() . $result->errorOutput();
+        $output = $result->output().$result->errorOutput();
 
         return $this->truncate($output, self::OUTPUT_MAX_BYTES) ?: '(no output)';
     }
@@ -393,7 +392,7 @@ PROMPT;
     {
         $relative = ltrim($relative, '/');
 
-        $combined = $worktreePath . '/' . $relative;
+        $combined = $worktreePath.'/'.$relative;
 
         $resolved = realpath(dirname($combined));
         if ($resolved === false) {
@@ -401,9 +400,9 @@ PROMPT;
             if ($resolved === false) {
                 return null;
             }
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         } else {
-            $resolved .= '/' . basename($combined);
+            $resolved .= '/'.basename($combined);
         }
 
         $realWorktree = realpath($worktreePath);
@@ -449,7 +448,7 @@ PROMPT;
             return $text;
         }
 
-        return substr($text, 0, $maxBytes) . "\n... (truncated at {$maxBytes} bytes)";
+        return substr($text, 0, $maxBytes)."\n... (truncated at {$maxBytes} bytes)";
     }
 
     private function truncateArguments(array $arguments): array
@@ -457,7 +456,7 @@ PROMPT;
         $truncated = [];
         foreach ($arguments as $key => $value) {
             if (is_string($value) && strlen($value) > 200) {
-                $truncated[$key] = substr($value, 0, 200) . '...';
+                $truncated[$key] = substr($value, 0, 200).'...';
             } else {
                 $truncated[$key] = $value;
             }

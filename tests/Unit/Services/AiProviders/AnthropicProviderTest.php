@@ -28,7 +28,7 @@ class AnthropicProviderTest extends TestCase
     {
         parent::setUpBeforeClass();
 
-        self::$container = new Container();
+        self::$container = new Container;
         Facade::setFacadeApplication(self::$container);
     }
 
@@ -43,7 +43,7 @@ class AnthropicProviderTest extends TestCase
     {
         parent::setUp();
         // Fresh Factory each test → no fake state leaks.
-        self::$container->instance(HttpFactory::class, new HttpFactory());
+        self::$container->instance(HttpFactory::class, new HttpFactory);
         Facade::clearResolvedInstance(HttpFactory::class);
     }
 
