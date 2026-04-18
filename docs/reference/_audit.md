@@ -43,10 +43,10 @@ Legend: ✅ covered · ❌ missing · ➖ intentionally omitted · △ partial /
 
 | Code surface (`app/Services/`) | Reference | How-to | Explanation | Tutorial |
 | --- | --- | --- | --- | --- |
-| `PreflightAgent` | ✅ `reference/agents/preflight.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md pipeline diagram | ✅ `tutorials/first-run.md` |
-| `ImplementAgent` | ✅ `reference/agents/implement.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
-| `VerifyAgent` | ✅ `reference/agents/verify.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
-| `ReleaseAgent` | ✅ `reference/agents/release.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
+| `PreflightAgent` | ✅ `reference/agents/preflight.md` (Phase-04 log events + collaborators added) | ✅ `how-to/troubleshooting/stage-failures.md` | △ architecture.md pipeline diagram | ✅ `tutorials/first-run.md` |
+| `ImplementAgent` | ✅ `reference/agents/implement.md` (Phase-04 log events + collaborators added) | ✅ `how-to/troubleshooting/stage-failures.md` | △ architecture.md | ✅ first-run |
+| `VerifyAgent` | ✅ `reference/agents/verify.md` (Phase-04 log events + collaborators added) | ✅ `how-to/troubleshooting/stage-failures.md` | △ architecture.md | ✅ first-run |
+| `ReleaseAgent` | ✅ `reference/agents/release.md` (Phase-04 log events + collaborators added) | ✅ `how-to/troubleshooting/stage-failures.md` | △ architecture.md | ✅ first-run |
 
 All four agent reference pages were extended in this phase to document the `PipelineLogger` events, token-usage fields, and upstream/downstream collaborators.
 
@@ -54,8 +54,8 @@ All four agent reference pages were extended in this phase to document the `Pipe
 
 | Code surface (`app/Services/AiProviders/`) | Reference | How-to | Explanation | Tutorial |
 | --- | --- | --- | --- | --- |
-| `App\Contracts\AiProvider` (contract) | ❌ | ✅ `how-to/add-ai-provider.md` | △ architecture.md "Provider adapters" | ❌ (candidate for 2nd tutorial) |
-| `AiProviderManager` | ❌ | △ add-ai-provider | △ architecture.md scope cascade | ➖ internal wiring — no user-facing tutorial |
+| `App\Contracts\AiProvider` (contract) | ➖ contract itself — documented via per-provider reference pages + `how-to/add-ai-provider.md` | ✅ `how-to/add-ai-provider.md` | △ architecture.md "Provider adapters" | ✅ `tutorials/configure-custom-ai-provider.md` |
+| `AiProviderManager` | ➖ internal dispatcher — cascade covered in architecture.md + `tutorials/configure-custom-ai-provider.md`; no public surface beyond `resolve()` | △ add-ai-provider | △ architecture.md scope cascade | ✅ `tutorials/configure-custom-ai-provider.md` |
 | `AnthropicProvider` | ✅ `reference/ai-providers/anthropic.md` | △ add-ai-provider | △ architecture.md | ➖ |
 | `OpenAiProvider` | ✅ `reference/ai-providers/openai.md` | △ add-ai-provider | △ architecture.md | ➖ |
 | `GeminiProvider` | ✅ `reference/ai-providers/gemini.md` | △ add-ai-provider | △ architecture.md | ➖ |
@@ -65,18 +65,18 @@ All four agent reference pages were extended in this phase to document the `Pipe
 
 | Code surface (`app/Services/`) | Reference | How-to | Explanation | Tutorial |
 | --- | --- | --- | --- | --- |
-| `OrchestratorService` | ✅ `reference/orchestrator.md` | ❌ troubleshooting stage-failures | △ architecture.md "Orchestrator" | ✅ first-run |
+| `OrchestratorService` | ✅ `reference/orchestrator.md` | ✅ `how-to/troubleshooting/stage-failures.md` | △ architecture.md "Orchestrator" | ✅ first-run |
 | `AutonomyResolver` | ✅ `reference/autonomy-resolver.md` | ✅ `how-to/configure-autonomy.md` | △ architecture.md "Autonomy resolution" | ➖ |
 | `FilterRuleService` | ✅ `reference/filter-rules.md` | △ configure-autonomy (escalation only) | △ architecture.md "Intake filters" | ➖ |
 | `EscalationRuleService` | ✅ `reference/escalation-rules.md` | △ configure-autonomy | △ architecture.md | ➖ |
-| `MergeConflictDetector` | ✅ `reference/merge-conflict-detector.md` | ❌ troubleshooting merge-conflicts | △ architecture.md | ➖ |
-| `WorktreeService` | ✅ `reference/worktree-service.md` | ❌ troubleshooting stage-failures | △ architecture.md | ➖ |
-| `GitHubClient` | ❌ (fold into orchestrator/worktree ref?) | ✅ connect-github | △ architecture.md | ➖ |
-| `JiraClient` | ❌ | ✅ connect-jira | △ architecture.md | ➖ |
-| `OauthService` | ❌ | ✅ connect-github / connect-jira | △ architecture.md | ➖ |
-| `MobileOauthService` | ❌ | △ connect-github (desktop only today) | △ configuration.md "Mobile" | ➖ |
-| `MobileSyncService` | ❌ | ➖ mobile is internal to the NativePHP shell | △ configuration.md "Mobile" | ➖ |
-| `PushNotificationService` | ❌ | ➖ internal infrastructure | △ architecture.md | ➖ |
+| `MergeConflictDetector` | ✅ `reference/merge-conflict-detector.md` | ✅ `how-to/troubleshooting/merge-conflicts.md` | △ architecture.md | ➖ |
+| `WorktreeService` | ✅ `reference/worktree-service.md` | ✅ `how-to/troubleshooting/stage-failures.md` | △ architecture.md | ➖ |
+| `GitHubClient` | ➖ thin HTTP wrapper — user surface lives in `how-to/connect-github.md` | ✅ connect-github | △ architecture.md | ➖ |
+| `JiraClient` | ➖ thin HTTP wrapper — user surface lives in `how-to/connect-jira.md` | ✅ connect-jira | △ architecture.md | ➖ |
+| `OauthService` | ➖ internal OAuth broker — exposed via connect-github / connect-jira how-tos | ✅ connect-github / connect-jira | △ architecture.md | ➖ |
+| `MobileOauthService` | ➖ mobile-shell-only variant of OauthService; no desktop surface | △ connect-github (desktop only today) | △ configuration.md "Mobile" | ➖ |
+| `MobileSyncService` | ➖ internal to the NativePHP mobile shell | ➖ mobile is internal to the NativePHP shell | △ configuration.md "Mobile" | ➖ |
+| `PushNotificationService` | ➖ internal infrastructure — no user-facing config beyond configuration.md | ➖ internal infrastructure | △ architecture.md | ➖ |
 
 ### Troubleshooting (how-to category)
 
