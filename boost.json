@@ -1,0 +1,17 @@
+{
+    "agents": [
+        "claude_code",
+        "codex",
+        "cursor"
+    ],
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch_mcp": false,
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "livewire-development",
+        "echo-development",
+        "tailwindcss-development"
+    ]
+}
