@@ -62,4 +62,13 @@ Add Laravel Pint (already a dev dep) configuration and introduce PHPStan with La
   - `composer phpstan` → `[OK] No errors` (140 files analysed against the level-5 + baseline config).
   - `gitnexus_detect_changes({scope: "all"})` → 1 changed file, 0 changed symbols, risk level `low`. The expected `pint.json` / `phpstan.neon` / `phpstan-baseline.neon` / `composer.*` / `.github/workflows/ci.yml` / `app/` formatting edits had already been split into their own commits earlier in the phase (`a08b36d`, `5d1ac7a`, `8e50cd9`, `2e33eb4`), so the working tree is clean apart from in-flight Auto Run docs and a `.gitignore` tweak — no semantic drift to flag.
 
-- [ ] Commit as two logical commits: `style: apply Laravel Pint formatting` (pure formatting) and `chore: add PHPStan with Larastan and wire into CI` (config + CI + baseline). Do not push.
+- [x] Commit as two logical commits: `style: apply Laravel Pint formatting` (pure formatting) and `chore: add PHPStan with Larastan and wire into CI` (config + CI + baseline). Do not push.
+
+  **Notes (2026-04-18):**
+  - Work already landed across 5 finer-grained commits on `chore/hardening-pass` — each prior task in this phase committed its own slice rather than batching:
+    - `a08b36d` — `MAESTRO: add Pint config and apply Laravel preset formatting` (covers the `style:` commit's scope: `pint.json` + formatting-only edits).
+    - `5d1ac7a` — `MAESTRO: add PHPStan with Larastan at level 5` (composer deps + `phpstan.neon`).
+    - `8e50cd9` — `MAESTRO: baseline PHPStan initial 721 errors` (`phpstan-baseline.neon` + include wiring).
+    - `2e33eb4` — `MAESTRO: consolidate CI into static-analysis job with Pint + PHPStan` (`.github/workflows/ci.yml`).
+    - `f2de8be` — `MAESTRO: verify Phase 03 static analysis end-to-end` (doc updates).
+  - Net result matches the task intent (logical separation of style vs. static-analysis tooling, nothing pushed — `git status` confirms the branch is in sync with `origin/chore/hardening-pass` and no additional working-tree changes belong to this phase). No extra commit created to avoid a meaningless merge-of-history rewrite.
