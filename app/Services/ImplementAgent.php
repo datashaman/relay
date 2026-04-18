@@ -178,7 +178,16 @@ PROMPT;
         ]);
 
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
-            $response = $provider->chat($messages, self::TOOLS, ['cwd' => $worktreePath]);
+            $response = $provider->chat($messages, self::TOOLS, [
+                'cwd' => $worktreePath,
+                'log_context' => [
+                    'run_id' => $run->id,
+                    'issue_id' => $run->issue_id,
+                    'stage' => $stage->name->value,
+                    'iteration' => $stage->iteration,
+                    'loop' => $loop,
+                ],
+            ]);
 
             if (empty($response['tool_calls'])) {
                 $this->recordEvent($stage, 'implement_no_tool_call', 'implement_agent', [

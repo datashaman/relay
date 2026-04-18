@@ -52,6 +52,25 @@ class PipelineLogger
         ], $context));
     }
 
+    public static function aiError(string $provider, string $model, ?int $status, ?string $body, array $context = []): void
+    {
+        self::emit('error', 'ai_error', array_merge([
+            'provider' => $provider,
+            'model' => $model,
+            'status' => $status,
+            'error_body' => $body === null ? null : self::truncate($body, 2048),
+        ], $context));
+    }
+
+    private static function truncate(string $value, int $limit): string
+    {
+        if (strlen($value) <= $limit) {
+            return $value;
+        }
+
+        return substr($value, 0, $limit).'…[truncated]';
+    }
+
     private static function runContext(Run $run): array
     {
         return [
@@ -62,9 +81,13 @@ class PipelineLogger
 
     private static function emit(string $level, string $event, array $context): void
     {
-        Log::channel(self::CHANNEL)->{$level}('pipeline.'.$event, array_merge(
-            ['event' => $event],
-            $context,
-        ));
+        try {
+            Log::channel(self::CHANNEL)->{$level}('pipeline.'.$event, array_merge(
+                ['event' => $event],
+                $context,
+            ));
+        } catch (Throwable) {
+            // Logging must never break the pipeline.
+        }
     }
 }

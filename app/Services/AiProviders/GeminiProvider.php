@@ -3,6 +3,8 @@
 namespace App\Services\AiProviders;
 
 use App\Contracts\AiProvider;
+use App\Support\Logging\PipelineLogger;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 class GeminiProvider implements AiProvider
@@ -17,13 +19,40 @@ class GeminiProvider implements AiProvider
     {
         $model = $options['model'] ?? $this->model;
         $url = "{$this->baseUrl}/v1beta/models/{$model}:generateContent?key={$this->apiKey}";
+        $logContext = is_array($options['log_context'] ?? null) ? $options['log_context'] : [];
+        $startedAt = microtime(true);
 
         $body = $this->buildRequestBody($messages, $tools, $options);
 
-        $response = Http::post($url, $body);
-        $response->throw();
+        try {
+            $response = Http::post($url, $body);
+            $response->throw();
+        } catch (RequestException $e) {
+            PipelineLogger::aiError(
+                'gemini',
+                $model,
+                $e->response->status(),
+                $e->response->body(),
+                array_merge($logContext, ['duration_ms' => self::elapsedMs($startedAt)]),
+            );
+            throw $e;
+        }
 
-        return $this->normalizeResponse($response->json());
+        $normalized = $this->normalizeResponse($response->json());
+
+        PipelineLogger::aiCall(
+            'gemini',
+            $model,
+            $normalized['usage'],
+            array_merge($logContext, ['duration_ms' => self::elapsedMs($startedAt)]),
+        );
+
+        return $normalized;
+    }
+
+    private static function elapsedMs(float $startedAt): int
+    {
+        return (int) round((microtime(true) - $startedAt) * 1000);
     }
 
     public function stream(array $messages, array $tools = [], array $options = []): \Generator

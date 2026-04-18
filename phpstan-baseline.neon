@@ -445,6 +445,18 @@ parameters:
 			path: app/Services/FilterRuleService.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ImplementAgent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ImplementAgent.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$worktree_path\.$#'
 			identifier: property.notFound
 			count: 1
@@ -453,7 +465,7 @@ parameters:
 		-
 			message: '#^Cannot access property \$value on string\.$#'
 			identifier: property.nonObject
-			count: 3
+			count: 4
 			path: app/Services/ImplementAgent.php
 
 		-
@@ -667,6 +679,18 @@ parameters:
 			path: app/Services/PreflightAgent.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/PreflightAgent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/PreflightAgent.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
 			identifier: property.notFound
 			count: 2
@@ -693,7 +717,7 @@ parameters:
 		-
 			message: '#^Cannot access property \$value on string\.$#'
 			identifier: property.nonObject
-			count: 4
+			count: 6
 			path: app/Services/PreflightAgent.php
 
 		-
@@ -733,6 +757,18 @@ parameters:
 			path: app/Services/ReleaseAgent.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ReleaseAgent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ReleaseAgent.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$worktree_path\.$#'
 			identifier: property.notFound
 			count: 1
@@ -741,7 +777,7 @@ parameters:
 		-
 			message: '#^Cannot access property \$value on string\.$#'
 			identifier: property.nonObject
-			count: 5
+			count: 6
 			path: app/Services/ReleaseAgent.php
 
 		-
@@ -749,6 +785,18 @@ parameters:
 			identifier: argument.type
 			count: 4
 			path: app/Services/ReleaseAgent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/VerifyAgent.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/VerifyAgent.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$worktree_path\.$#'
@@ -759,7 +807,7 @@ parameters:
 		-
 			message: '#^Cannot access property \$value on string\.$#'
 			identifier: property.nonObject
-			count: 5
+			count: 6
 			path: app/Services/VerifyAgent.php
 
 		-

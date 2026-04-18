@@ -3,6 +3,7 @@
 namespace App\Services\AiProviders;
 
 use App\Contracts\AiProvider;
+use App\Support\Logging\PipelineLogger;
 use Symfony\Component\Process\Process;
 
 class ClaudeCodeCliProvider implements AiProvider
@@ -17,15 +18,41 @@ class ClaudeCodeCliProvider implements AiProvider
     {
         $args = $this->buildArgs($messages, $options, $tools);
         $process = $this->spawn($args, $options['cwd'] ?? null);
+        $model = $options['model'] ?? 'claude-code-cli';
+        $logContext = is_array($options['log_context'] ?? null) ? $options['log_context'] : [];
+        $startedAt = microtime(true);
+
         $process->run();
 
         if (! $process->isSuccessful()) {
+            PipelineLogger::aiError(
+                'claude_code_cli',
+                $model,
+                $process->getExitCode(),
+                $process->getErrorOutput(),
+                array_merge($logContext, ['duration_ms' => self::elapsedMs($startedAt)]),
+            );
+
             throw new \RuntimeException(
                 "Claude Code CLI failed (exit {$process->getExitCode()}): {$process->getErrorOutput()}"
             );
         }
 
-        return $this->parseStreamJsonOutput($process->getOutput(), $tools);
+        $normalized = $this->parseStreamJsonOutput($process->getOutput(), $tools);
+
+        PipelineLogger::aiCall(
+            'claude_code_cli',
+            $model,
+            $normalized['usage'],
+            array_merge($logContext, ['duration_ms' => self::elapsedMs($startedAt)]),
+        );
+
+        return $normalized;
+    }
+
+    private static function elapsedMs(float $startedAt): int
+    {
+        return (int) round((microtime(true) - $startedAt) * 1000);
     }
 
     public function stream(array $messages, array $tools = [], array $options = []): \Generator

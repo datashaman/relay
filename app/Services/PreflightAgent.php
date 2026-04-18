@@ -167,6 +167,12 @@ PROMPT;
         $messages = $this->buildMessages($issue, $context);
         $response = $provider->chat($messages, [self::ASSESS_TOOL], array_filter([
             'cwd' => $run->worktree_path,
+            'log_context' => [
+                'run_id' => $run->id,
+                'issue_id' => $run->issue_id,
+                'stage' => $stage->name->value,
+                'purpose' => 'preflight.assess',
+            ],
         ]));
 
         $assessment = $this->parseAssessment($response);
@@ -220,6 +226,12 @@ PROMPT;
         $messages = $this->buildDocMessages($run, $issue);
         $response = $provider->chat($messages, [self::DOC_TOOL], array_filter([
             'cwd' => $run->worktree_path,
+            'log_context' => [
+                'run_id' => $run->id,
+                'issue_id' => $run->issue_id,
+                'stage' => $stage->name->value,
+                'purpose' => 'preflight.generate_doc',
+            ],
         ]));
 
         $docData = $this->parseDocResponse($response);
