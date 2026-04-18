@@ -27,6 +27,8 @@ use Illuminate\Support\Carbon;
  * @property array<int, mixed>|null $known_facts
  * @property array<int, array<string, mixed>>|null $clarification_questions
  * @property array<string, mixed>|null $clarification_answers
+ * @property int $preflight_round
+ * @property array<int, array<string, mixed>>|null $clarification_history
  * @property int $iteration
  * @property bool $has_conflicts
  * @property Carbon|null $conflict_detected_at
@@ -55,6 +57,8 @@ class Run extends Model
         'known_facts',
         'clarification_questions',
         'clarification_answers',
+        'preflight_round',
+        'clarification_history',
         'iteration',
         'has_conflicts',
         'conflict_detected_at',
@@ -72,9 +76,11 @@ class Run extends Model
             'known_facts' => 'array',
             'clarification_questions' => 'array',
             'clarification_answers' => 'array',
+            'clarification_history' => 'array',
             'conflict_files' => 'array',
             'stuck_unread' => 'boolean',
             'has_conflicts' => 'boolean',
+            'preflight_round' => 'integer',
             'iteration' => 'integer',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',

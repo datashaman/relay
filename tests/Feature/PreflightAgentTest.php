@@ -7,6 +7,7 @@ use App\Enums\IssueStatus;
 use App\Enums\RunStatus;
 use App\Enums\StageName;
 use App\Enums\StageStatus;
+use App\Enums\StuckState;
 use App\Jobs\ExecuteStageJob;
 use App\Models\Issue;
 use App\Models\Run;
@@ -317,7 +318,7 @@ class PreflightAgentTest extends TestCase
         $event = $stage->events()->where('type', 'assessment_complete')->first();
         $this->assertNotNull($event);
         $this->assertEquals('preflight_agent', $event->actor);
-        $this->assertEquals('clear', $event->payload['confidence']);
+        $this->assertTrue($event->payload['ready']);
         $this->assertEquals(2, $event->payload['known_facts_count']);
     }
 
@@ -853,6 +854,230 @@ class PreflightAgentTest extends TestCase
         $this->assertNotNull($run->preflight_doc);
         $this->assertStringContainsString('## Summary', $run->preflight_doc);
         $this->assertEquals(['q1' => 'Bar'], $run->clarification_answers);
+    }
+
+    // === Clarification Loop Tests ===
+
+    public function test_resume_with_answers_reruns_assess_when_still_ambiguous(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+
+        $run->update([
+            'known_facts' => ['Some fact'],
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which?', 'type' => 'text'],
+            ],
+            'clarification_answers' => ['q1' => 'Dashboard'],
+        ]);
+
+        // Only one assess response returned — still ambiguous after answers.
+        $newQuestions = [
+            ['id' => 'q2', 'text' => 'Which dashboard type?', 'type' => 'text'],
+        ];
+        $this->bindMockProvider($this->mockAmbiguousResponse(['Refined fact'], $newQuestions));
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $run->refresh();
+        $stage->refresh();
+
+        $this->assertEquals(1, $run->preflight_round);
+        // New questions replace prior ones.
+        $this->assertCount(1, $run->clarification_questions);
+        $this->assertEquals('q2', $run->clarification_questions[0]['id']);
+        // Answers are cleared so the next resume fires a fresh round.
+        $this->assertNull($run->clarification_answers);
+        // History holds the prior round.
+        $this->assertNotNull($run->clarification_history);
+        $this->assertCount(1, $run->clarification_history);
+        $this->assertEquals(['q1' => 'Dashboard'], $run->clarification_history[0]['answers']);
+        // Stage paused again, not completed.
+        $this->assertEquals(StageStatus::AwaitingApproval, $stage->status);
+        $this->assertNull($run->preflight_doc);
+    }
+
+    public function test_resume_with_answers_proceeds_to_doc_when_ready(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+
+        $run->update([
+            'known_facts' => ['Some fact'],
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which?', 'type' => 'text'],
+            ],
+            'clarification_answers' => ['q1' => 'Admin'],
+        ]);
+
+        $this->bindMultiCallProvider([
+            $this->mockClearResponse(['Refined fact']),
+            $this->mockDocResponse(),
+        ]);
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $run->refresh();
+        $stage->refresh();
+
+        $this->assertEquals(1, $run->preflight_round);
+        $this->assertEquals(StageStatus::Completed, $stage->status);
+        $this->assertNotNull($run->preflight_doc);
+    }
+
+    public function test_round_cap_aborts_with_preflight_no_consensus(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+
+        // Configure a tight cap for the test.
+        config()->set('relay.preflight.max_clarification_rounds', 2);
+
+        $run->update([
+            'preflight_round' => 2,
+            'known_facts' => ['Something'],
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which?', 'type' => 'text'],
+            ],
+            'clarification_answers' => ['q1' => 'Dashboard'],
+        ]);
+
+        // No provider response should be consumed — aborting early.
+        $this->bindMockProvider($this->mockAmbiguousResponse());
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $run->refresh();
+        $stage->refresh();
+
+        $this->assertEquals(RunStatus::Stuck, $run->status);
+        $this->assertEquals(StuckState::PreflightNoConsensus, $run->stuck_state);
+        $this->assertEquals(StageStatus::Stuck, $stage->status);
+
+        $event = $stage->events()->where('type', 'preflight_no_consensus')->first();
+        $this->assertNotNull($event);
+        $this->assertEquals(3, $event->payload['attempted_round']);
+        $this->assertEquals(2, $event->payload['max_rounds']);
+    }
+
+    public function test_preflight_round_increments_across_resumes(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+
+        $run->update([
+            'known_facts' => ['Fact'],
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which?', 'type' => 'text'],
+            ],
+            'clarification_answers' => ['q1' => 'Admin'],
+        ]);
+
+        $this->bindMockProvider($this->mockAmbiguousResponse(['Fact'], [
+            ['id' => 'q2', 'text' => 'More detail?', 'type' => 'text'],
+        ]));
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $run->refresh();
+        $this->assertEquals(1, $run->preflight_round);
+
+        // Simulate a second resume.
+        $run->update(['clarification_answers' => ['q2' => 'whatever']]);
+        $stage->refresh();
+        $stage->update(['status' => StageStatus::Running]);
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $run->refresh();
+        $this->assertEquals(2, $run->preflight_round);
+    }
+
+    public function test_skip_to_doc_does_not_increment_round(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+
+        $run->update([
+            'known_facts' => ['Some facts here'],
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Question?', 'type' => 'text'],
+            ],
+            'preflight_round' => 1,
+        ]);
+
+        $this->bindMultiCallProvider([
+            $this->mockDocResponse(),
+        ]);
+
+        app(PreflightAgent::class)->execute($stage, ['skip_to_doc' => true]);
+
+        $run->refresh();
+        // Round is unchanged when skipping.
+        $this->assertEquals(1, $run->preflight_round);
+    }
+
+    public function test_initial_execute_does_not_consume_a_round(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+
+        // First execute: no answers set yet. Ambiguous response → pauses.
+        $this->bindMockProvider($this->mockAmbiguousResponse());
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $run->refresh();
+        $this->assertEquals(0, $run->preflight_round);
+    }
+
+    public function test_preflight_clarification_page_shows_round_counter(): void
+    {
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+        $run->update([
+            'preflight_round' => 1,
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Follow-up?', 'type' => 'text'],
+            ],
+        ]);
+
+        config()->set('relay.preflight.max_clarification_rounds', 3);
+
+        $response = $this->get(route('preflight.show', $run));
+
+        $response->assertOk();
+        // Round counter surfaces the upcoming round (preflight_round + 1) out of max.
+        $response->assertSee('Round 2 of 3');
+    }
+
+    public function test_clarification_history_feeds_next_round_prompt(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+
+        $run->update([
+            'known_facts' => ['Fact'],
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which dashboard?', 'type' => 'text'],
+            ],
+            'clarification_answers' => ['q1' => 'Admin'],
+        ]);
+
+        $mock = $this->bindCapturingProvider();
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $userMessage = collect($mock->capturedMessages)->firstWhere('role', 'user')['content'];
+        $this->assertStringContainsString('Clarification Answers', $userMessage);
+        $this->assertStringContainsString('Which dashboard?', $userMessage);
+        $this->assertStringContainsString('Admin', $userMessage);
     }
 
     // === Migration Tests ===
