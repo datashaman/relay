@@ -77,10 +77,11 @@ Start the hardening effort on branch `chore/hardening-pass` and close the unit-t
     - CLI provider test needs no facades at all — pure reflection on `splitCommand`, `buildArgs`, `buildPrompt`, `pickTerminalTool`, `extractJson`, `synthesizeToolCall`, `normalizeEvent`, `parseStreamJsonOutput` — process spawning is intentionally left to the feature test (`tests/Feature/AiProviderTest.php` mocks `chat()` directly).
     - All five files extend `PHPUnit\Framework\TestCase` (not `Tests\TestCase`) — fast, isolated, no DB, no app boot. Existing `tests/Feature/AiProviderTest.php` (22 cases / 73 assertions) remains green and continues to cover overlap inside a full app boot.
 
-- [ ] Configure the Unit testsuite for speed and run it:
+- [x] Configure the Unit testsuite for speed and run it:
   - Ensure `phpunit.xml` has a `<testsuite name="Unit">` entry pointing at `tests/Unit`, separate from `Feature`.
   - Run `./vendor/bin/phpunit --testsuite=Unit` (or `php artisan test --testsuite=Unit`) and confirm every new test passes.
   - Run the full suite with `php artisan test` to ensure nothing regressed.
   - If any test is slow (>50ms), refactor it to drop Laravel bootstrapping.
+  - **Results:** `phpunit.xml` already had `<testsuite name="Unit">` pointing at `tests/Unit` (separate from `Feature`) — no config change needed. `./vendor/bin/phpunit --testsuite=Unit` → 187 tests / 348 assertions / 166ms (green). Full `php artisan test` → 755 tests / 1731 assertions / 24.19s (green). Slowest Unit test is 0.06s (`matches filters empty rule passes`, the one-time facade-container bootstrap on first `FilterRuleServiceTest` case) — every other Unit case is ≤30ms; well under the 50ms budget. No refactor needed.
 
 - [ ] Run `gitnexus_detect_changes({scope: "all"})` and confirm the only touched paths are under `tests/Unit/` and `phpunit.xml`. Then stage and commit with message `test: add unit test coverage for pure services and AI providers`. Do NOT push or open a PR — leave that to the user.
