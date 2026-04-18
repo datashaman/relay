@@ -5,11 +5,38 @@ namespace App\Models;
 use App\Enums\RunStatus;
 use App\Enums\StuckState;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $issue_id
+ * @property int|null $repository_id
+ * @property RunStatus $status
+ * @property StuckState|null $stuck_state
+ * @property string|null $guidance
+ * @property bool $stuck_unread
+ * @property string|null $branch
+ * @property string|null $worktree_path
+ * @property string|null $preflight_doc
+ * @property array<int, array<string, mixed>>|null $preflight_doc_history
+ * @property array<int, mixed>|null $known_facts
+ * @property array<int, array<string, mixed>>|null $clarification_questions
+ * @property array<string, mixed>|null $clarification_answers
+ * @property int $iteration
+ * @property bool $has_conflicts
+ * @property Carbon|null $conflict_detected_at
+ * @property array<int, string>|null $conflict_files
+ * @property Carbon|null $started_at
+ * @property Carbon|null $completed_at
+ * @property-read Issue $issue
+ * @property-read Repository|null $repository
+ * @property-read Collection<int, Stage> $stages
+ */
 class Run extends Model
 {
     use HasFactory;

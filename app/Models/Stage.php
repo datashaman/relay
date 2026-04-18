@@ -4,11 +4,24 @@ namespace App\Models;
 
 use App\Enums\StageName;
 use App\Enums\StageStatus;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $run_id
+ * @property StageName $name
+ * @property StageStatus $status
+ * @property int $iteration
+ * @property Carbon|null $started_at
+ * @property Carbon|null $completed_at
+ * @property-read Run $run
+ * @property-read Collection<int, StageEvent> $events
+ */
 class Stage extends Model
 {
     use HasFactory;

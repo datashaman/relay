@@ -6,6 +6,10 @@ return [
     'deploy_hook' => env('RELAY_DEPLOY_HOOK'),
     'repos_root' => env('RELAY_REPOS_ROOT', storage_path('relay-repos')),
 
+    'orchestrator' => [
+        'stage_job_timeout' => (int) env('RELAY_STAGE_JOB_TIMEOUT', 600),
+    ],
+
     'mobile' => [
         'platform' => env('RELAY_MOBILE_PLATFORM'),
         'network_status' => env('RELAY_MOBILE_NETWORK', 'wifi'),
