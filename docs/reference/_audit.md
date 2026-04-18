@@ -107,16 +107,16 @@ Phase 05 explicitly asks that the autonomy model, the filter/escalation engines,
 | First run (zero → PR) | `tutorials/first-run.md` | ✅ |
 | Configure a custom AI provider | ✅ `tutorials/configure-custom-ai-provider.md` | Walks the `AiProviderManager` cascade: global env default → stage-scoped `ProviderConfig` → workspace-scoped `ProviderConfig`. Cross-links `[[first-run]]`, `[[add-ai-provider]]`, `[[configuration]]`, per-provider refs, and `[[ai-provider-errors]]`. |
 
-## 3. Execution flows worth referencing (GitNexus)
+## 3. Execution flows worth referencing
 
-`gitnexus_query` returned no named processes for "pipeline stage transition" or "AI provider call" — the indexed graph at time of audit has symbol-level definitions but no grouped processes for these concepts. The following symbols surfaced and are the canonical anchors to cite in the new reference pages:
+The following symbols are the canonical anchors to cite in the new reference pages:
 
 - `App\Services\OrchestratorService` (stage lifecycle: `startRun`, `startStage`, `pause`, `resume`, `bounce`, `complete`)
 - `App\Support\Logging\PipelineLogger` (structured log channel introduced in Phase 04 — emits `event` values that drive troubleshooting docs)
 - `App\Services\AiProviders\AiProviderManager` (scope cascade: workspace+stage → workspace → global+stage → global → default)
 - Per-provider classes in `app/Services/AiProviders/` (request/response + token accounting)
 
-When writing reference pages, link directly to the file/line anchors in `app/Services/…` rather than to process names. Revisit the process index once `npx gitnexus analyze` re-runs post-commit.
+When writing reference pages, link directly to the file/line anchors in `app/Services/…` rather than to process names.
 
 ## 4. Summary — work remaining for Phase 05
 
