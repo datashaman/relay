@@ -2,25 +2,36 @@
 
 namespace App\Services;
 
+use App\Models\OauthToken;
 use App\Models\Repository;
 use App\Models\Run;
 use App\Models\Source;
 use App\Models\StageEvent;
+use Illuminate\Contracts\Process\ProcessResult;
+use Illuminate\Process\Exceptions\ProcessTimedOutException as LaravelProcessTimedOutException;
 use Illuminate\Support\Facades\Process;
+use Symfony\Component\Process\Exception\ProcessTimedOutException as SymfonyProcessTimedOutException;
 
 class WorktreeService
 {
+    public function __construct(
+        private ?OauthService $oauthService = null,
+    ) {}
+
     public function createWorktree(Run $run, Repository $repository): string
     {
         $this->ensureCloned($repository, $run->issue?->source);
+
+        $this->assertIndexLockNotStale($repository->path);
 
         $root = $repository->worktree_root ?? $repository->path;
         $worktreePath = $root.'/relay-'.$run->id;
         $branch = $run->branch ?? 'relay/run-'.$run->id;
 
-        Process::path($repository->path)
-            ->run(['git', 'worktree', 'add', '-b', $branch, $worktreePath, $repository->default_branch])
-            ->throw();
+        $this->runGit(
+            $repository->path,
+            ['worktree', 'add', '-b', $branch, $worktreePath, $repository->default_branch],
+        )->throw();
 
         $run->update([
             'worktree_path' => $worktreePath,
@@ -54,7 +65,7 @@ class WorktreeService
 
             $cloneUrl = $this->buildCloneUrl($repository, $source);
 
-            $result = Process::run(['git', 'clone', '--quiet', $cloneUrl, $target]);
+            $result = $this->runGit(null, ['clone', '--quiet', $cloneUrl, $target]);
 
             if (! $result->successful()) {
                 // Scrub the token before surfacing the error.
@@ -77,7 +88,18 @@ class WorktreeService
     {
         if ($source && $source->type->value === 'github') {
             $token = $source->oauthTokens()->where('provider', 'github')->first();
-            if ($token && $token->access_token) {
+            if ($token instanceof OauthToken && $token->access_token) {
+                // Refresh first so a stale token doesn't make `git clone` prompt
+                // for credentials (which would hang indefinitely even with
+                // GIT_TERMINAL_PROMPT=0 if the underlying auth negotiates).
+                $oauth = $this->oauthService ?? app(OauthService::class);
+                try {
+                    $token = $oauth->refreshIfExpired($token);
+                } catch (\Throwable) {
+                    // Fall through with the existing token; clone will fail fast
+                    // on auth rather than hang, thanks to batch-mode env.
+                }
+
                 return "https://x-access-token:{$token->access_token}@github.com/{$repository->name}.git";
             }
         }
@@ -88,7 +110,7 @@ class WorktreeService
 
     private function resolveDefaultBranch(string $path): string
     {
-        $result = Process::path($path)->run(['git', 'symbolic-ref', '--short', 'HEAD']);
+        $result = $this->runGit($path, ['symbolic-ref', '--short', 'HEAD']);
 
         return trim($result->output()) ?: 'main';
     }
@@ -100,9 +122,10 @@ class WorktreeService
         }
 
         if ($run->worktree_path) {
-            Process::path($repository->path)
-                ->run(['git', 'worktree', 'remove', '--force', $run->worktree_path])
-                ->throw();
+            $this->runGit(
+                $repository->path,
+                ['worktree', 'remove', '--force', $run->worktree_path],
+            )->throw();
 
             $run->update(['worktree_path' => null]);
         }
@@ -119,8 +142,7 @@ class WorktreeService
 
     public function recoverStaleWorktrees(Repository $repository): array
     {
-        $result = Process::path($repository->path)
-            ->run(['git', 'worktree', 'list', '--porcelain']);
+        $result = $this->runGit($repository->path, ['worktree', 'list', '--porcelain']);
 
         if (! $result->successful()) {
             return [];
@@ -137,8 +159,10 @@ class WorktreeService
 
             if ($line === '' && $currentPath !== null) {
                 if ($this->isRelayWorktree($currentPath) && $this->isStale($currentPath)) {
-                    Process::path($repository->path)
-                        ->run(['git', 'worktree', 'remove', '--force', $currentPath]);
+                    $this->runGit(
+                        $repository->path,
+                        ['worktree', 'remove', '--force', $currentPath],
+                    );
                     $recovered[] = $currentPath;
                 }
                 $currentPath = null;
@@ -146,8 +170,10 @@ class WorktreeService
         }
 
         if ($currentPath !== null && $this->isRelayWorktree($currentPath) && $this->isStale($currentPath)) {
-            Process::path($repository->path)
-                ->run(['git', 'worktree', 'remove', '--force', $currentPath]);
+            $this->runGit(
+                $repository->path,
+                ['worktree', 'remove', '--force', $currentPath],
+            );
             $recovered[] = $currentPath;
         }
 
@@ -182,6 +208,70 @@ class WorktreeService
         }
 
         return $output;
+    }
+
+    /**
+     * Run a git subprocess with a hard timeout and batch-mode env so it
+     * never prompts for credentials or hangs on SSH handshake. A timeout
+     * is converted into a RuntimeException with a clear message instead
+     * of the Symfony-level exception, so the run's failure reason is
+     * specific rather than generic.
+     */
+    private function runGit(?string $path, array $args, ?int $timeout = null): ProcessResult
+    {
+        $timeout ??= (int) config('relay.worktree.git_timeout', 60);
+
+        $pending = Process::env($this->gitEnv())->timeout($timeout);
+        if ($path !== null) {
+            $pending = $pending->path($path);
+        }
+
+        $command = array_merge(['git'], $args);
+
+        try {
+            return $pending->run($command);
+        } catch (LaravelProcessTimedOutException|SymfonyProcessTimedOutException $e) {
+            throw new \RuntimeException(
+                "git command timed out after {$timeout}s: ".implode(' ', $command),
+                previous: $e,
+            );
+        }
+    }
+
+    private function gitEnv(): array
+    {
+        return [
+            'GIT_TERMINAL_PROMPT' => '0',
+            'GIT_SSH_COMMAND' => 'ssh -oBatchMode=yes -oStrictHostKeyChecking=accept-new',
+        ];
+    }
+
+    /**
+     * If the cache repo has a `.git/index.lock` older than the configured
+     * threshold, fail fast instead of waiting on `git worktree add` to
+     * block behind it. A fresh lock means another git op is in flight and
+     * we should let it finish, so we only abort on stale locks.
+     */
+    private function assertIndexLockNotStale(?string $repoPath): void
+    {
+        if (! $repoPath) {
+            return;
+        }
+
+        $lock = $repoPath.'/.git/index.lock';
+        if (! is_file($lock)) {
+            return;
+        }
+
+        $threshold = (int) config('relay.worktree.stale_lock_seconds', 300);
+        $age = time() - (int) @filemtime($lock);
+        if ($age < $threshold) {
+            return;
+        }
+
+        throw new \RuntimeException(
+            "Stale git index.lock at {$lock} (age {$age}s, threshold {$threshold}s). Remove it and retry."
+        );
     }
 
     protected function recordScriptEvent(Run $run, string $script, string $output, int $exitCode): void

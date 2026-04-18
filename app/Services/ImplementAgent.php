@@ -177,7 +177,21 @@ PROMPT;
             'has_failure_context' => isset($context['failure_report']),
         ]);
 
+        $this->recordEvent($stage, 'agent_loop_started', 'implement_agent', [
+            'iteration' => $stage->iteration,
+        ]);
+        PipelineLogger::event($run, 'stage.agent_loop_started', [
+            'stage' => $stage->name->value,
+            'iteration' => $stage->iteration,
+        ]);
+
         for ($loop = 0; $loop < self::MAX_TOOL_LOOPS; $loop++) {
+            PipelineLogger::event($run, 'ai_call_started', [
+                'stage' => $stage->name->value,
+                'iteration' => $stage->iteration,
+                'loop' => $loop,
+            ]);
+
             $response = $provider->chat($messages, self::TOOLS, [
                 'cwd' => $worktreePath,
                 'log_context' => [
@@ -187,6 +201,13 @@ PROMPT;
                     'iteration' => $stage->iteration,
                     'loop' => $loop,
                 ],
+            ]);
+
+            PipelineLogger::event($run, 'ai_call_returned', [
+                'stage' => $stage->name->value,
+                'iteration' => $stage->iteration,
+                'loop' => $loop,
+                'has_tool_calls' => ! empty($response['tool_calls']),
             ]);
 
             if (empty($response['tool_calls'])) {

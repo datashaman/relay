@@ -13,6 +13,7 @@ class AnthropicProvider implements AiProvider
         private string $apiKey,
         private string $model = 'claude-sonnet-4-6',
         private string $baseUrl = 'https://api.anthropic.com',
+        private int $timeout = 120,
     ) {}
 
     public function chat(array $messages, array $tools = [], array $options = []): array
@@ -26,7 +27,9 @@ class AnthropicProvider implements AiProvider
             $response = Http::withHeaders([
                 'x-api-key' => $this->apiKey,
                 'anthropic-version' => '2023-06-01',
-            ])->post("{$this->baseUrl}/v1/messages", $body);
+            ])
+                ->timeout($this->timeout)
+                ->post("{$this->baseUrl}/v1/messages", $body);
 
             $response->throw();
         } catch (RequestException $e) {
@@ -65,7 +68,9 @@ class AnthropicProvider implements AiProvider
         $response = Http::withHeaders([
             'x-api-key' => $this->apiKey,
             'anthropic-version' => '2023-06-01',
-        ])->withOptions(['stream' => true])
+        ])
+            ->timeout($this->timeout)
+            ->withOptions(['stream' => true])
             ->post("{$this->baseUrl}/v1/messages", $body);
 
         $response->throw();

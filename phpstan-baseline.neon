@@ -235,12 +235,6 @@ parameters:
 			path: app/Services/PushNotificationService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$access_token\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/WorktreeService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1

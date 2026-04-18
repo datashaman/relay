@@ -13,6 +13,7 @@ class GeminiProvider implements AiProvider
         private string $apiKey,
         private string $model = 'gemini-2.5-flash',
         private string $baseUrl = 'https://generativelanguage.googleapis.com',
+        private int $timeout = 120,
     ) {}
 
     public function chat(array $messages, array $tools = [], array $options = []): array
@@ -25,7 +26,8 @@ class GeminiProvider implements AiProvider
         $body = $this->buildRequestBody($messages, $tools, $options);
 
         try {
-            $response = Http::post($url, $body);
+            $response = Http::timeout($this->timeout)
+                ->post($url, $body);
             $response->throw();
         } catch (RequestException $e) {
             PipelineLogger::aiError(
@@ -62,7 +64,9 @@ class GeminiProvider implements AiProvider
 
         $body = $this->buildRequestBody($messages, $tools, $options);
 
-        $response = Http::withOptions(['stream' => true])->post($url, $body);
+        $response = Http::timeout($this->timeout)
+            ->withOptions(['stream' => true])
+            ->post($url, $body);
         $response->throw();
 
         foreach (explode("\n", $response->body()) as $line) {

@@ -10,6 +10,7 @@ use App\Services\WorktreeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\Process;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Tests\TestCase;
 
 class WorktreeServiceTest extends TestCase
@@ -275,5 +276,105 @@ class WorktreeServiceTest extends TestCase
         $recovered = $this->service->recoverStaleWorktrees($this->repository);
 
         $this->assertCount(0, $recovered);
+    }
+
+    public function test_git_commands_set_timeout_and_batch_mode_env(): void
+    {
+        config([
+            'relay.worktree.git_timeout' => 42,
+        ]);
+
+        $observed = [];
+        Process::fake(function (PendingProcess $process) use (&$observed) {
+            if (($process->command[0] ?? null) === 'git') {
+                $observed[] = [
+                    'timeout' => $process->timeout,
+                    'env' => $process->environment,
+                ];
+            }
+
+            return Process::result(output: '');
+        });
+
+        $this->service->createWorktree($this->run, $this->repository);
+
+        $this->assertNotEmpty($observed, 'expected at least one git subprocess');
+        foreach ($observed as $call) {
+            $this->assertSame(42, $call['timeout']);
+            $this->assertSame('0', $call['env']['GIT_TERMINAL_PROMPT'] ?? null);
+            $this->assertStringContainsString(
+                'BatchMode=yes',
+                (string) ($call['env']['GIT_SSH_COMMAND'] ?? ''),
+            );
+        }
+    }
+
+    public function test_hanging_git_subprocess_fails_fast_with_timeout_error(): void
+    {
+        Process::fake(function (PendingProcess $process) {
+            if (($process->command[0] ?? null) === 'git' && in_array('worktree', $process->command, true)) {
+                throw new ProcessTimedOutException(
+                    new \Symfony\Component\Process\Process(['git']),
+                    ProcessTimedOutException::TYPE_GENERAL,
+                );
+            }
+
+            return Process::result(output: '');
+        });
+
+        try {
+            $this->service->createWorktree($this->run, $this->repository);
+            $this->fail('Expected createWorktree to throw on timeout.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('timed out', strtolower($e->getMessage()));
+            $this->assertStringContainsString('git', $e->getMessage());
+        }
+    }
+
+    public function test_stale_index_lock_fails_fast(): void
+    {
+        $tmp = sys_get_temp_dir().'/relay-worktree-test-'.uniqid();
+        mkdir($tmp.'/.git', 0755, true);
+        touch($tmp.'/.git/index.lock', time() - 3600);
+
+        $this->repository->update(['path' => $tmp]);
+
+        config(['relay.worktree.stale_lock_seconds' => 300]);
+
+        Process::fake(['*' => Process::result(output: '')]);
+
+        try {
+            $this->service->createWorktree($this->run, $this->repository);
+            $this->fail('Expected createWorktree to abort on stale index.lock.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('index.lock', $e->getMessage());
+            $this->assertStringContainsString('Stale', $e->getMessage());
+        } finally {
+            @unlink($tmp.'/.git/index.lock');
+            @rmdir($tmp.'/.git');
+            @rmdir($tmp);
+        }
+    }
+
+    public function test_fresh_index_lock_is_tolerated(): void
+    {
+        $tmp = sys_get_temp_dir().'/relay-worktree-test-'.uniqid();
+        mkdir($tmp.'/.git', 0755, true);
+        touch($tmp.'/.git/index.lock', time());
+
+        $this->repository->update(['path' => $tmp]);
+
+        config(['relay.worktree.stale_lock_seconds' => 300]);
+
+        Process::fake(['*' => Process::result(output: '')]);
+
+        try {
+            $path = $this->service->createWorktree($this->run, $this->repository);
+            $this->assertSame('/worktrees/relay-'.$this->run->id, $path);
+        } finally {
+            @unlink($tmp.'/.git/index.lock');
+            @rmdir($tmp.'/.git');
+            @rmdir($tmp);
+        }
     }
 }

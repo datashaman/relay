@@ -22,22 +22,26 @@ class AiProviderManager
     {
         $providerConfig = config("ai.providers.{$provider}", []);
         $merged = array_merge($providerConfig, $settings);
+        $httpTimeout = (int) ($merged['timeout'] ?? config('relay.http.ai_timeout', 120));
 
         return match ($provider) {
             'anthropic' => new AnthropicProvider(
                 apiKey: $merged['api_key'] ?? '',
                 model: $merged['model'] ?? 'claude-sonnet-4-6',
                 baseUrl: $merged['base_url'] ?? 'https://api.anthropic.com',
+                timeout: $httpTimeout,
             ),
             'openai' => new OpenAiProvider(
                 apiKey: $merged['api_key'] ?? '',
                 model: $merged['model'] ?? 'gpt-4o',
                 baseUrl: $merged['base_url'] ?? 'https://api.openai.com',
+                timeout: $httpTimeout,
             ),
             'gemini' => new GeminiProvider(
                 apiKey: $merged['api_key'] ?? '',
                 model: $merged['model'] ?? 'gemini-2.5-flash',
                 baseUrl: $merged['base_url'] ?? 'https://generativelanguage.googleapis.com',
+                timeout: $httpTimeout,
             ),
             'claude_code_cli' => new ClaudeCodeCliProvider(
                 command: $merged['command'] ?? 'claude --dangerously-skip-permissions --print --output-format stream-json --verbose',

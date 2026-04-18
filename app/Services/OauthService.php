@@ -11,6 +11,11 @@ use Illuminate\Support\Str;
 
 class OauthService
 {
+    private function httpTimeout(): int
+    {
+        return (int) config('relay.http.oauth_timeout', 30);
+    }
+
     public function providerConfig(string $provider): array
     {
         $config = config("services.{$provider}");
@@ -64,13 +69,15 @@ class OauthService
     {
         $config = $this->providerConfig($provider);
 
-        $response = Http::accept('application/json')->post($config['token_url'], [
-            'client_id' => $config['client_id'],
-            'client_secret' => $config['client_secret'],
-            'code' => $code,
-            'redirect_uri' => $config['redirect_uri'],
-            'grant_type' => 'authorization_code',
-        ]);
+        $response = Http::accept('application/json')
+            ->timeout($this->httpTimeout())
+            ->post($config['token_url'], [
+                'client_id' => $config['client_id'],
+                'client_secret' => $config['client_secret'],
+                'code' => $code,
+                'redirect_uri' => $config['redirect_uri'],
+                'grant_type' => 'authorization_code',
+            ]);
 
         if ($response->failed()) {
             throw new \RuntimeException('Token exchange failed: '.$response->body());
@@ -83,6 +90,7 @@ class OauthService
     {
         $response = Http::withToken($accessToken)
             ->accept('application/json')
+            ->timeout($this->httpTimeout())
             ->get('https://api.github.com/user');
 
         if ($response->failed()) {
@@ -96,6 +104,7 @@ class OauthService
     {
         $response = Http::withToken($accessToken)
             ->accept('application/json')
+            ->timeout($this->httpTimeout())
             ->get('https://api.atlassian.com/oauth/token/accessible-resources');
 
         if ($response->failed()) {
@@ -113,6 +122,7 @@ class OauthService
 
         $response = Http::acceptJson()
             ->asJson()
+            ->timeout($this->httpTimeout())
             ->post('https://auth.atlassian.com/oauth/revoke', [
                 'client_id' => $config['client_id'],
                 'client_secret' => $config['client_secret'],
@@ -131,6 +141,7 @@ class OauthService
 
         $response = Http::withBasicAuth($config['client_id'], $config['client_secret'])
             ->accept('application/json')
+            ->timeout($this->httpTimeout())
             ->delete('https://api.github.com/applications/'.$config['client_id'].'/grant', [
                 'access_token' => $accessToken,
             ]);
@@ -165,12 +176,13 @@ class OauthService
 
         $config = $this->providerConfig($token->provider);
 
-        $response = Http::post($config['token_url'], [
-            'client_id' => $config['client_id'],
-            'client_secret' => $config['client_secret'],
-            'refresh_token' => $token->refresh_token,
-            'grant_type' => 'refresh_token',
-        ]);
+        $response = Http::timeout($this->httpTimeout())
+            ->post($config['token_url'], [
+                'client_id' => $config['client_id'],
+                'client_secret' => $config['client_secret'],
+                'refresh_token' => $token->refresh_token,
+                'grant_type' => 'refresh_token',
+            ]);
 
         if ($response->failed()) {
             throw new \RuntimeException('Token refresh failed: '.$response->body());
@@ -202,11 +214,15 @@ class OauthService
     {
         $token = $this->refreshIfExpired($token);
 
-        $response = Http::withToken($token->access_token)->$method($url, $options);
+        $response = Http::withToken($token->access_token)
+            ->timeout($this->httpTimeout())
+            ->$method($url, $options);
 
         if ($response->status() === 401 && $token->refresh_token) {
             $token = $this->refreshToken($token);
-            $response = Http::withToken($token->access_token)->$method($url, $options);
+            $response = Http::withToken($token->access_token)
+                ->timeout($this->httpTimeout())
+                ->$method($url, $options);
         }
 
         return $response;

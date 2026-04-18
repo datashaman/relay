@@ -53,13 +53,38 @@ class OrchestratorService
             return $run;
         }
 
+        // Create the Preflight stage up-front so worktree instrumentation
+        // events are visible on the run timeline even if worktree setup hangs
+        // or fails. Everything before this was a guaranteed-fast DB op.
+        $firstStage = $this->createStage($run, StageName::Preflight);
+
+        $worktreeStartedAt = microtime(true);
+        $this->recordEvent($firstStage, 'worktree_requested', 'system', [
+            'repository_id' => $repository->id,
+            'repository' => $repository->name,
+        ]);
+        PipelineLogger::event($run, 'stage.worktree_requested', [
+            'stage' => StageName::Preflight->value,
+            'repository' => $repository->name,
+        ]);
+
         try {
             $this->worktreeService->createWorktree($run, $repository);
         } catch (\Throwable $e) {
-            $this->failRunImmediately($run, $issue, 'Worktree setup failed: '.$e->getMessage(), $e);
+            $this->failRunImmediately($run, $issue, 'Worktree setup failed: '.$e->getMessage(), $e, $firstStage);
 
             return $run;
         }
+
+        $worktreeDurationMs = (int) round((microtime(true) - $worktreeStartedAt) * 1000);
+        $this->recordEvent($firstStage, 'worktree_ready', 'system', [
+            'duration_ms' => $worktreeDurationMs,
+            'worktree_path' => $run->fresh()->worktree_path,
+        ]);
+        PipelineLogger::event($run, 'stage.worktree_ready', [
+            'stage' => StageName::Preflight->value,
+            'duration_ms' => $worktreeDurationMs,
+        ]);
 
         PipelineLogger::event($run, 'run_started', [
             'stage' => StageName::Preflight->value,
@@ -67,16 +92,14 @@ class OrchestratorService
             'repository' => $repository->name,
         ]);
 
-        $firstStage = $this->createStage($run, StageName::Preflight);
-
         $this->transitionStage($firstStage, $context);
 
         return $run;
     }
 
-    private function failRunImmediately(Run $run, Issue $issue, string $reason, ?\Throwable $exception = null): void
+    private function failRunImmediately(Run $run, Issue $issue, string $reason, ?\Throwable $exception = null, ?Stage $stage = null): void
     {
-        $stage = $this->createStage($run, StageName::Preflight);
+        $stage ??= $this->createStage($run, StageName::Preflight);
         $stage->update(['status' => StageStatus::Failed, 'completed_at' => now()]);
         $this->recordEvent($stage, 'failed', 'system', ['reason' => $reason]);
 

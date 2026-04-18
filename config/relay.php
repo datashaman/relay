@@ -10,6 +10,16 @@ return [
         'stage_job_timeout' => (int) env('RELAY_STAGE_JOB_TIMEOUT', 600),
     ],
 
+    'worktree' => [
+        'git_timeout' => (int) env('RELAY_WORKTREE_GIT_TIMEOUT', 60),
+        'stale_lock_seconds' => (int) env('RELAY_WORKTREE_STALE_LOCK_SECONDS', 300),
+    ],
+
+    'http' => [
+        'oauth_timeout' => (int) env('RELAY_OAUTH_HTTP_TIMEOUT', 30),
+        'ai_timeout' => (int) env('RELAY_AI_HTTP_TIMEOUT', 120),
+    ],
+
     'mobile' => [
         'platform' => env('RELAY_MOBILE_PLATFORM'),
         'network_status' => env('RELAY_MOBILE_NETWORK', 'wifi'),

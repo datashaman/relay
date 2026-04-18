@@ -13,6 +13,7 @@ class OpenAiProvider implements AiProvider
         private string $apiKey,
         private string $model = 'gpt-4o',
         private string $baseUrl = 'https://api.openai.com',
+        private int $timeout = 120,
     ) {}
 
     public function chat(array $messages, array $tools = [], array $options = []): array
@@ -24,6 +25,7 @@ class OpenAiProvider implements AiProvider
 
         try {
             $response = Http::withToken($this->apiKey)
+                ->timeout($this->timeout)
                 ->post("{$this->baseUrl}/v1/chat/completions", $body);
 
             $response->throw();
@@ -61,6 +63,7 @@ class OpenAiProvider implements AiProvider
         $body['stream'] = true;
 
         $response = Http::withToken($this->apiKey)
+            ->timeout($this->timeout)
             ->withOptions(['stream' => true])
             ->post("{$this->baseUrl}/v1/chat/completions", $body);
 
