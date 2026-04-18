@@ -1,0 +1,22 @@
+{
+  "exitCode": 0,
+  "exitSignal": null,
+  "tokens": {
+    "input": 15655,
+    "output": 3008,
+    "cacheRead": 268800,
+    "cacheWrite": 0
+  },
+  "cost": 0.11654824999999999,
+  "toolCalls": 23,
+  "retries": 0,
+  "compactions": 0,
+  "durationSec": 88,
+  "lastToolCall": "read: /Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1/taskplane-tasks/EXAMPLE-001-hello-world/STATUS.md",
+  "error": null,
+  "contextUsage": {
+    "tokens": 13873,
+    "contextWindow": 272000,
+    "percent": 5.100367647058823
+  }
+}

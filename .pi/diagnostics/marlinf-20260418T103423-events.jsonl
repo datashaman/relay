@@ -1,0 +1,2 @@
+{"batchId":"20260418T103423","phase":"completed","mode":"repo","taskId":"EXAMPLE-001","status":"succeeded","classification":"unknown","cost":0,"durationSec":88,"retries":0,"repoId":null,"exitReason":".DONE file created by lane-runner","startedAt":1776501266665,"endedAt":1776501354864}
+{"batchId":"20260418T103423","phase":"completed","mode":"repo","taskId":"EXAMPLE-002","status":"succeeded","classification":"unknown","cost":0,"durationSec":98,"retries":0,"repoId":null,"exitReason":".DONE file created by lane-runner","startedAt":1776501266672,"endedAt":1776501365029}

@@ -1,0 +1,20 @@
+{
+  "batchId": "20260418T103423",
+  "agentId": "orch-marlinf-lane-1-worker",
+  "role": "worker",
+  "laneNumber": 1,
+  "taskId": "EXAMPLE-001",
+  "repoId": "default",
+  "pid": 192,
+  "parentPid": 99720,
+  "startedAt": 1776501266670,
+  "status": "exited",
+  "cwd": "/Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1",
+  "packet": {
+    "promptPath": "/Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1/taskplane-tasks/EXAMPLE-001-hello-world/PROMPT.md",
+    "statusPath": "/Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1/taskplane-tasks/EXAMPLE-001-hello-world/STATUS.md",
+    "donePath": "/Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1/taskplane-tasks/EXAMPLE-001-hello-world/.DONE",
+    "reviewsDir": "/Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1/taskplane-tasks/EXAMPLE-001-hello-world/.reviews",
+    "taskFolder": "/Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1/taskplane-tasks/EXAMPLE-001-hello-world"
+  }
+}

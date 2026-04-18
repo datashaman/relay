@@ -1,0 +1,16 @@
+{
+  "opId": "marlinf",
+  "batchId": "20260418T103423",
+  "waveIndex": 1,
+  "laneNumber": 2,
+  "repoId": null,
+  "baseHEAD": "c11f4f963a48a19c516ee0f80dc5411aeb36f9f0",
+  "laneHEAD": "ee89cb030e7b958e320d25cd7f9b2a536151bfb9",
+  "mergedHEAD": "3ed4fef6151da588d78ecae30b3b6e9cb15a8370",
+  "status": "committed",
+  "rollbackAttempted": false,
+  "rollbackResult": null,
+  "recoveryCommands": [],
+  "startedAt": "2026-04-18T08:36:18.278Z",
+  "completedAt": "2026-04-18T08:36:28.672Z"
+}

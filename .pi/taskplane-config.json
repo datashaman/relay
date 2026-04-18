@@ -1,0 +1,24 @@
+{
+  "configVersion": 1,
+  "taskRunner": {
+    "project": {
+      "name": "relay",
+      "description": ""
+    },
+    "paths": {
+      "tasks": "taskplane-tasks"
+    },
+    "testing": {
+      "commands": {
+        "unit": "composer run test"
+      }
+    },
+    "taskAreas": {
+      "general": {
+        "path": "taskplane-tasks",
+        "prefix": "TP",
+        "context": "taskplane-tasks/CONTEXT.md"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "batchId": "20260418T103423",
+  "agentId": "orch-marlinf-merge-1",
+  "role": "merger",
+  "laneNumber": null,
+  "taskId": null,
+  "repoId": "default",
+  "pid": 830,
+  "parentPid": 99720,
+  "startedAt": 1776501368136,
+  "status": "killed",
+  "cwd": "/Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/merge",
+  "packet": null
+}

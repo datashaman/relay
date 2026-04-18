@@ -1,0 +1,31 @@
+{
+  "batchId": "20260418T103423",
+  "laneNumber": 1,
+  "laneId": "lane-1",
+  "repoId": "default",
+  "taskId": "EXAMPLE-001",
+  "segmentId": "EXAMPLE-001::default",
+  "status": "complete",
+  "worker": {
+    "agentId": "orch-marlinf-lane-1-worker",
+    "status": "exited",
+    "elapsedMs": 88189,
+    "toolCalls": 23,
+    "contextPct": 5.100367647058823,
+    "costUsd": 0.11654824999999999,
+    "lastTool": "read: /Users/marlinf/Projects/datashaman/relay/.worktrees/marlinf-20260418T103423/lane-1/taskplane-tasks/EXAMPLE-001-hello-world/STATUS.md",
+    "inputTokens": 15655,
+    "outputTokens": 3008,
+    "cacheReadTokens": 268800,
+    "cacheWriteTokens": 0
+  },
+  "reviewer": null,
+  "progress": {
+    "currentStep": "Step 3: Delivery",
+    "checked": 5,
+    "total": 5,
+    "iteration": 1,
+    "reviews": 0
+  },
+  "updatedAt": 1776501354864
+}

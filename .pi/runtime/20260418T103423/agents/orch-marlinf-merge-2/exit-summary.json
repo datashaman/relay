@@ -1,0 +1,22 @@
+{
+  "exitCode": 143,
+  "exitSignal": null,
+  "tokens": {
+    "input": 5113,
+    "output": 287,
+    "cacheRead": 13184,
+    "cacheWrite": 0
+  },
+  "cost": 0.01527295,
+  "toolCalls": 4,
+  "retries": 0,
+  "compactions": 0,
+  "durationSec": 11,
+  "lastToolCall": "write: /Users/marlinf/Projects/datashaman/relay/.pi/merge-result-w1-lane2-marlinf-20260418T103423.json",
+  "error": null,
+  "contextUsage": {
+    "tokens": 4455,
+    "contextWindow": 272000,
+    "percent": 1.6378676470588236
+  }
+}

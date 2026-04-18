@@ -1,0 +1,21 @@
+{
+  "batchId": "20260418T103423",
+  "mergeNumber": 2,
+  "sessionName": "orch-marlinf-merge-2",
+  "waveIndex": 1,
+  "status": "failed",
+  "agent": {
+    "agentId": "orch-marlinf-merge-2",
+    "status": "crashed",
+    "elapsedMs": 10868,
+    "toolCalls": 4,
+    "contextPct": 1.6378676470588236,
+    "costUsd": 0.01527295,
+    "lastTool": "write: /Users/marlinf/Projects/datashaman/relay/.pi/merge-result-w1-lane2-marlinf-20260418T103423.json",
+    "inputTokens": 5113,
+    "outputTokens": 287,
+    "cacheReadTokens": 13184,
+    "cacheWriteTokens": 0
+  },
+  "updatedAt": 1776501389383
+}
