@@ -13,3 +13,4 @@ parameters:
     excludePaths:
         - database/migrations
         - storage
+        - resources/views

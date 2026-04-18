@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property IssueStatus $status
+ * @property array<int, string>|null $labels
+ * @property bool $auto_accepted
+ * @property int|null $component_id
+ * @property int|null $repository_id
+ * @property-read Component|null $component
+ * @property-read Repository|null $repository
+ * @property-read Source $source
+ */
 class Issue extends Model
 {
     use HasFactory;

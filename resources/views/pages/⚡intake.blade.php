@@ -3,6 +3,7 @@
 use App\Enums\IssueStatus;
 use App\Jobs\SyncSourceIssuesJob;
 use App\Models\Issue;
+use App\Models\OauthToken;
 use App\Models\Repository;
 use App\Models\Source;
 use App\Services\GitHubClient;
@@ -16,7 +17,8 @@ use Livewire\Component;
 new
 #[Title('Intake Control')]
 #[Layout('layouts::app')]
-class extends Component {
+class extends Component
+{
     /** source id → flash message for the last test-connection call */
     public array $testResults = [];
 
@@ -63,7 +65,10 @@ class extends Component {
     public function testConnection(int $sourceId, OauthService $oauth): void
     {
         $source = Source::findOrFail($sourceId);
-        $token = $source->oauthTokens()->where('provider', $source->type->value)->first();
+        $token = OauthToken::query()
+            ->where('source_id', $source->id)
+            ->where('provider', $source->type->value)
+            ->first();
 
         if (! $token) {
             $this->testResults[$sourceId] = ['ok' => false, 'label' => 'No token ✗'];
@@ -81,7 +86,7 @@ class extends Component {
             }
 
             $this->testResults[$sourceId] = ['ok' => true, 'label' => 'OK ✓'];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->testResults[$sourceId] = ['ok' => false, 'label' => 'Failed ✗'];
         }
     }
@@ -99,8 +104,10 @@ class extends Component {
         $repository = null;
 
         if ($repositoryId !== null) {
-            if ($issue->component_id) {
-                $repository = $issue->component->repositories()->whereKey($repositoryId)->first();
+            $component = $issue->component;
+
+            if ($component) {
+                $repository = $component->repositories()->whereKey($repositoryId)->first();
             } else {
                 $repository = Repository::whereKey($repositoryId)->first();
             }

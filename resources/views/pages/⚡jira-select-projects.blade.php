@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\OauthToken;
 use App\Models\Source;
 use App\Services\JiraClient;
 use App\Services\JiraWebhookManager;
@@ -12,7 +13,8 @@ use Livewire\Component;
 new
 #[Title('Select Jira Projects')]
 #[Layout('layouts::app')]
-class extends Component {
+class extends Component
+{
     public Source $source;
 
     public array $selected = [];
@@ -49,7 +51,10 @@ class extends Component {
             ]),
         ]);
 
-        $token = $this->source->oauthTokens()->where('provider', 'jira')->first();
+        $token = OauthToken::query()
+            ->where('source_id', $this->source->id)
+            ->where('provider', 'jira')
+            ->first();
 
         if ($token) {
             $this->source->refresh();
@@ -81,7 +86,10 @@ class extends Component {
 
     public function with(OauthService $oauth): array
     {
-        $token = $this->source->oauthTokens()->where('provider', 'jira')->first();
+        $token = OauthToken::query()
+            ->where('source_id', $this->source->id)
+            ->where('provider', 'jira')
+            ->first();
 
         if (! $token) {
             return [
@@ -120,7 +128,7 @@ class extends Component {
                 'statuses' => $statuses,
                 'error' => null,
             ];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return [
                 'projects' => [],
                 'statuses' => [],
