@@ -18,7 +18,7 @@ Add a CI workflow so tests, lint, and (later) static analysis run automatically 
   - `.github/workflows/` already contains **`tests.yml`** (a pre-existing coverage-focused workflow). Phase-02 says to create `ci.yml` — it will co-exist alongside `tests.yml`. Flag for follow-up: once `ci.yml` stabilises, the older `tests.yml` may be redundant (not in scope for this phase).
   - No issue/PR templates or other `.github/` content to worry about.
 
-- [ ] Create `.github/workflows/ci.yml` with a single `test` job that:
+- [x] Create `.github/workflows/ci.yml` with a single `test` job that:
   - Triggers on `push` to any branch and `pull_request` targeting `main`.
   - Runs on `ubuntu-latest`.
   - Uses `shivammathur/setup-php@v2` with PHP 8.4, extensions `mbstring, sqlite3, pdo_sqlite, intl, bcmath, gd, zip`, and coverage `none`.
@@ -27,6 +27,8 @@ Add a CI workflow so tests, lint, and (later) static analysis run automatically 
   - Sets up Node via `actions/setup-node@v4` with caching keyed on `package-lock.json`, runs `npm ci --ignore-scripts` and `npm run build`.
   - Copies `.env.example` to `.env`, runs `php artisan key:generate`, creates `database/database.sqlite`, runs `php artisan migrate --force`.
   - Runs `php artisan test` as the final step.
+
+  **Completed (2026-04-18):** Created `.github/workflows/ci.yml` with the `test` job matching the spec. Triggers on all pushes and PRs targeting `main`. Co-exists with the pre-existing `tests.yml` (coverage workflow). Commit will follow in the final task of this phase.
 
 - [ ] Add a second job `lint` (or parallel step) that runs `./vendor/bin/pint --test` to enforce code style without modifying files. Make it independent of `test` so both jobs run in parallel. Leave a TODO comment near the job mentioning that Phase 03 will add a PHPStan job.
 
