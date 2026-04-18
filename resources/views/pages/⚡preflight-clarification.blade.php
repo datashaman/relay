@@ -103,6 +103,10 @@ class extends Component
 ?>
 
 <div>
+<div class="mb-4 rounded-xl bg-surface-container-low p-4 text-sm text-on-surface-variant">
+    This stage is paused. Nothing happens until you submit answers or explicitly proceed.
+</div>
+
 <div class="mb-6">
     <h1 class="text-2xl font-headline font-bold">Preflight Clarification</h1>
     <p class="text-sm text-on-surface-variant mt-1">
@@ -170,15 +174,21 @@ class extends Component
             @endforeach
         </div>
 
-        <div class="mt-6 flex gap-3">
+        <div class="mt-6 flex items-center gap-3">
             <button type="submit"
                     class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary/90">
                 Submit Answers
             </button>
-            <button type="button" wire:click="skipToDoc"
+            <button type="button"
+                    wire:click="skipToDoc"
+                    wire:confirm="The agent will generate a doc without your answers. This can't be undone from this page. Continue?"
                     class="rounded-md bg-surface-container-high px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-highest">
-                Skip to Doc
+                Proceed without answers
             </button>
+            <a href="{{ route('intake.index') }}"
+               class="ml-auto text-sm text-on-surface-variant hover:text-on-surface">
+                Back to intake
+            </a>
         </div>
     </form>
 @else
