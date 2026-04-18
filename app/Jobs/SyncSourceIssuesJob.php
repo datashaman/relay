@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\IssueStatus;
 use App\Enums\SourceType;
 use App\Events\SourceSynced;
+use App\Models\Issue;
 use App\Models\Repository;
 use App\Models\Source;
 use App\Services\FrameworkDetector;
@@ -194,7 +195,8 @@ class SyncSourceIssuesJob implements ShouldQueue
         }
 
         if ($this->source->backlog_threshold) {
-            $queuedCount = $this->source->issues()
+            $queuedCount = Issue::where('source_id', $this->source->id)
+                ->active()
                 ->where('status', IssueStatus::Queued)
                 ->count();
 

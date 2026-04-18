@@ -2,6 +2,7 @@
 
 use App\Enums\FrameworkSource;
 use App\Enums\IssueStatus;
+use App\Enums\RunStatus;
 use App\Jobs\SyncSourceIssuesJob;
 use App\Models\Issue;
 use App\Models\OauthToken;
@@ -42,6 +43,9 @@ class extends Component
 
     /** "sourceId-repoFullName" → currently-editing flag */
     public array $editingFramework = [];
+
+    /** Whether to show archived issues in the queue. */
+    public bool $showArchived = false;
 
     public function startEditFramework(int $sourceId, string $repoFullName): void
     {
@@ -147,6 +151,27 @@ class extends Component
         }
     }
 
+    public function archiveIssue(int $issueId, string $reason = ''): void
+    {
+        $issue = Issue::findOrFail($issueId);
+
+        if ($issue->runs()->whereIn('status', [RunStatus::Pending, RunStatus::Running, RunStatus::Stuck])->exists()) {
+            session()->flash('error', 'Cancel the in-flight run before archiving this issue.');
+
+            return;
+        }
+
+        $issue->archive($reason !== '' ? $reason : null);
+        session()->flash('success', "Issue \"{$issue->title}\" archived.");
+    }
+
+    public function unarchiveIssue(int $issueId): void
+    {
+        $issue = Issue::findOrFail($issueId);
+        $issue->unarchive();
+        session()->flash('success', "Issue \"{$issue->title}\" unarchived.");
+    }
+
     public function acceptIssue(int $issueId, OrchestratorService $orchestrator, ?int $repositoryId = null): void
     {
         $issue = Issue::findOrFail($issueId);
@@ -210,18 +235,24 @@ class extends Component
 
         $repositoriesByName = Repository::whereIn('name', $repoNames)->get()->keyBy('name');
 
+        $incomingQuery = Issue::with(['source', 'component.repositories', 'repository'])
+            ->orderByDesc('created_at')
+            ->limit(15);
+
+        if ($this->showArchived) {
+            $incomingQuery->archived();
+        } else {
+            $incomingQuery->active()->where('status', IssueStatus::Queued);
+        }
+
         return [
             'sources' => $sources,
             'pausedCount' => $sources->where('is_intake_paused', true)->count(),
             'connectedCount' => $sources->where('is_active', true)->count(),
             'repositoriesByName' => $repositoriesByName,
             'frameworkOptions' => FrameworkDetector::ALLOWED,
-            'incoming' => Issue::with(['source', 'component.repositories', 'repository'])
-                ->where('status', IssueStatus::Queued)
-                ->orderByDesc('created_at')
-                ->limit(15)
-                ->get(),
-            'pendingCount' => Issue::where('status', IssueStatus::Queued)->count(),
+            'incoming' => $incomingQuery->get(),
+            'pendingCount' => Issue::active()->where('status', IssueStatus::Queued)->count(),
         ];
     }
 };
@@ -774,17 +805,29 @@ class extends Component
     <section class="space-y-3">
         <div class="flex items-center justify-between px-1">
             <h2 class="font-headline text-xl text-on-surface">Incoming Queue</h2>
-            <span class="font-label text-[10px] text-outline uppercase tracking-widest">
-                Pending {{ str_pad((string) $pendingCount, 2, '0', STR_PAD_LEFT) }}
-            </span>
+            <div class="flex items-center gap-3">
+                <button type="button" wire:click="$toggle('showArchived')"
+                        class="font-label text-[10px] uppercase tracking-widest {{ $showArchived ? 'text-stage-stuck' : 'text-outline' }} hover:underline">
+                    {{ $showArchived ? 'Hide Archived' : 'Show Archived' }}
+                </button>
+                @if (! $showArchived)
+                    <span class="font-label text-[10px] text-outline uppercase tracking-widest">
+                        Pending {{ str_pad((string) $pendingCount, 2, '0', STR_PAD_LEFT) }}
+                    </span>
+                @endif
+            </div>
         </div>
 
         @if ($incoming->isEmpty())
             <div class="bg-surface-container-low rounded-xl p-8 text-center">
-                <p class="text-on-surface-variant">No incoming issues.</p>
-                <p class="font-label text-[10px] text-outline uppercase tracking-widest mt-1">
-                    Next sync will pull any new items
-                </p>
+                @if ($showArchived)
+                    <p class="text-on-surface-variant">No archived issues.</p>
+                @else
+                    <p class="text-on-surface-variant">No incoming issues.</p>
+                    <p class="font-label text-[10px] text-outline uppercase tracking-widest mt-1">
+                        Next sync will pull any new items
+                    </p>
+                @endif
             </div>
         @else
             @foreach ($incoming as $issue)
@@ -803,6 +846,10 @@ class extends Component
                                 </span>
                                 <span class="text-outline-variant">·</span>
                                 <span class="text-primary">{{ $externalRef }}</span>
+                                @if ($issue->archived_at)
+                                    <span class="text-outline-variant">·</span>
+                                    <span class="inline-flex items-center rounded bg-stage-stuck/20 text-stage-stuck px-1.5 py-0.5 tracking-wider">Archived {{ $issue->archived_at->diffForHumans(null, true) }} ago</span>
+                                @endif
                                 @if ($issue->raw_status)
                                     <span class="text-outline-variant">·</span>
                                     <span class="inline-flex items-center rounded bg-secondary-container text-on-secondary-container px-1.5 py-0.5 tracking-wider">{{ $issue->raw_status }}</span>
@@ -816,6 +863,10 @@ class extends Component
                             </div>
 
                             <h3 class="text-sm font-semibold text-on-surface leading-snug">{{ $issue->title }}</h3>
+
+                            @if ($issue->archived_reason)
+                                <p class="text-xs text-stage-stuck italic">Reason: {{ $issue->archived_reason }}</p>
+                            @endif
 
                             @if ($issue->body)
                                 <div>
@@ -838,45 +889,59 @@ class extends Component
                         </div>
 
                         <div class="shrink-0 flex flex-col gap-1 min-w-[9rem]">
-                            @php
-                                $componentRepos = $issue->component?->repositories ?? collect();
-                                $hasDirectRepo = (bool) $issue->repository_id;
-                            @endphp
-
-                            @if ($hasDirectRepo)
-                                <button type="button" wire:click="acceptIssue({{ $issue->id }})"
+                            @if ($showArchived)
+                                <button type="button" wire:click="unarchiveIssue({{ $issue->id }})"
                                         class="w-full rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
-                                    Accept
+                                    Unarchive
                                 </button>
-                            @elseif ($issue->component_id && $componentRepos->isNotEmpty())
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider text-right">
-                                    Start on · {{ $issue->component->name }}
-                                </span>
-                                @foreach ($componentRepos as $repo)
-                                    <button type="button" wire:click="acceptIssue({{ $issue->id }}, {{ $repo->id }})"
-                                            class="w-full rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90 font-mono truncate"
-                                            title="{{ $repo->name }}">
-                                        {{ $repo->name }}
-                                    </button>
-                                @endforeach
-                            @elseif ($issue->component_id)
-                                <span class="rounded-md bg-stage-stuck/20 text-stage-stuck px-3 py-1.5 font-label text-[10px] uppercase tracking-widest text-center">
-                                    No repos for {{ $issue->component->name }}
-                                </span>
-                                <a href="{{ route('components.index', $issue->source) }}"
-                                   class="w-full rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest text-center">
-                                    Map repos →
-                                </a>
                             @else
-                                <span class="rounded-md bg-stage-stuck/20 text-stage-stuck px-3 py-1.5 font-label text-[10px] uppercase tracking-widest text-center">
-                                    No component
-                                </span>
-                            @endif
+                                @php
+                                    $componentRepos = $issue->component?->repositories ?? collect();
+                                    $hasDirectRepo = (bool) $issue->repository_id;
+                                @endphp
 
-                            <button type="button" wire:click="rejectIssue({{ $issue->id }})"
-                                    class="w-full rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
-                                Reject
-                            </button>
+                                @if ($hasDirectRepo)
+                                    <button type="button" wire:click="acceptIssue({{ $issue->id }})"
+                                            class="w-full rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90">
+                                        Accept
+                                    </button>
+                                @elseif ($issue->component_id && $componentRepos->isNotEmpty())
+                                    <span class="font-label text-[10px] text-outline uppercase tracking-wider text-right">
+                                        Start on · {{ $issue->component->name }}
+                                    </span>
+                                    @foreach ($componentRepos as $repo)
+                                        <button type="button" wire:click="acceptIssue({{ $issue->id }}, {{ $repo->id }})"
+                                                class="w-full rounded-md bg-primary text-on-primary px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-primary/90 font-mono truncate"
+                                                title="{{ $repo->name }}">
+                                            {{ $repo->name }}
+                                        </button>
+                                    @endforeach
+                                @elseif ($issue->component_id)
+                                    <span class="rounded-md bg-stage-stuck/20 text-stage-stuck px-3 py-1.5 font-label text-[10px] uppercase tracking-widest text-center">
+                                        No repos for {{ $issue->component->name }}
+                                    </span>
+                                    <a href="{{ route('components.index', $issue->source) }}"
+                                       class="w-full rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest text-center">
+                                        Map repos →
+                                    </a>
+                                @else
+                                    <span class="rounded-md bg-stage-stuck/20 text-stage-stuck px-3 py-1.5 font-label text-[10px] uppercase tracking-widest text-center">
+                                        No component
+                                    </span>
+                                @endif
+
+                                <button type="button"
+                                        x-data
+                                        x-on:click="$wire.archiveIssue({{ $issue->id }}, prompt('Archive reason (optional):') ?? '')"
+                                        class="w-full rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
+                                    Archive
+                                </button>
+
+                                <button type="button" wire:click="rejectIssue({{ $issue->id }})"
+                                        class="w-full rounded-md bg-surface-container-high text-on-surface px-3 py-1.5 font-label text-[10px] uppercase tracking-widest hover:bg-surface-container-highest">
+                                    Reject
+                                </button>
+                            @endif
                         </div>
                     </div>
                 </div>
