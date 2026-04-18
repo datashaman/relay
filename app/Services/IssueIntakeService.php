@@ -20,6 +20,7 @@ class IssueIntakeService
             ->first();
 
         if ($existing) {
+            $this->reconcileReopenOnFetchedRow($existing);
             $this->updateExistingIssue($existing, $issueData);
 
             return $existing->fresh();
@@ -63,17 +64,38 @@ class IssueIntakeService
             return null;
         }
 
+        $this->reconcileReopenOnFetchedRow($issue);
+
+        return $issue->fresh();
+    }
+
+    /**
+     * Clear a sync-driven rejection so the row returns to Queued. No-op for
+     * user-driven rejections (distinguished by raw_status being null) and
+     * non-Rejected rows. Writes directly using the row we already fetched
+     * so callers that pair this with upsert logic don't pay for a second
+     * lookup.
+     */
+    private function reconcileReopenOnFetchedRow(Issue $issue): void
+    {
+        if ($issue->status !== IssueStatus::Rejected) {
+            return;
+        }
+
         $syncDrivenClose = $issue->raw_status !== null
             && (str_starts_with($issue->raw_status, 'closed') || $issue->raw_status === 'deleted');
 
-        if ($issue->status === IssueStatus::Rejected && $syncDrivenClose) {
-            Issue::where('id', $issue->id)->update([
-                'status' => IssueStatus::Queued,
-                'raw_status' => null,
-            ]);
+        if (! $syncDrivenClose) {
+            return;
         }
 
-        return $issue->fresh();
+        Issue::where('id', $issue->id)->update([
+            'status' => IssueStatus::Queued,
+            'raw_status' => null,
+        ]);
+
+        $issue->status = IssueStatus::Queued;
+        $issue->raw_status = null;
     }
 
     public function markDeleted(Source $source, string $externalId): ?Issue

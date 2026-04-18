@@ -550,7 +550,7 @@ class IssueSyncTest extends TestCase
                 && str_contains($url, 'status in ("In Review","Backlog")')
                 && str_contains($url, 'assignee = currentUser()')
                 && str_contains($url, 'sprint in openSprints()')
-                && str_contains($url, 'status != Done');
+                && str_contains($url, 'updated >= -30d');
         });
     }
 
