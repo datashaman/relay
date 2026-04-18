@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property array<string, mixed>|null $payload
- * @property \Illuminate\Support\Carbon|null $processed_at
+ * @property Carbon|null $processed_at
  * @property bool $wasRecentlyCreated
  * @property-read Source|null $source
  */

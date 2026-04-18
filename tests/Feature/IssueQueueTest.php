@@ -7,6 +7,7 @@ use App\Enums\SourceType;
 use App\Jobs\SyncSourceIssuesJob;
 use App\Models\Issue;
 use App\Models\Source;
+use App\Services\IssueIntakeService;
 use App\Services\OauthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -177,7 +178,7 @@ class IssueQueueTest extends TestCase
         ]);
 
         $job = new SyncSourceIssuesJob($source);
-        $job->handle(app(OauthService::class), app(\App\Services\IssueIntakeService::class));
+        $job->handle(app(OauthService::class), app(IssueIntakeService::class));
 
         $this->assertEquals(0, Issue::count());
     }
@@ -198,7 +199,7 @@ class IssueQueueTest extends TestCase
         ]);
 
         $job = new SyncSourceIssuesJob($source);
-        $job->handle(app(OauthService::class), app(\App\Services\IssueIntakeService::class));
+        $job->handle(app(OauthService::class), app(IssueIntakeService::class));
 
         $this->assertEquals(2, Issue::count());
     }

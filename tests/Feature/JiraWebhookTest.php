@@ -8,6 +8,7 @@ use App\Models\Issue;
 use App\Models\Source;
 use App\Models\WebhookDelivery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class JiraWebhookTest extends TestCase
@@ -45,7 +46,7 @@ class JiraWebhookTest extends TestCase
         ], $overrides);
     }
 
-    private function postWebhook(Source $source, array $payload, ?string $token = null): \Illuminate\Testing\TestResponse
+    private function postWebhook(Source $source, array $payload, ?string $token = null): TestResponse
     {
         $token ??= $source->webhook_secret;
 
