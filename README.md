@@ -32,7 +32,8 @@ Copy `.env.example` to `.env` and set your provider credentials:
 AI_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-...
 
-# GitHub OAuth (for issue sync and PR creation)
+# GitHub OAuth (for issue sync, webhook management, and PR creation)
+# Required scopes: repo, read:org, workflow, admin:repo_hook
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 

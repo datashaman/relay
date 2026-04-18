@@ -15,13 +15,13 @@ By the end, you will have seen a pull request opened by the Release agent agains
 
 Open `http://localhost:8000` in your browser. You will land on the Overview page. From the sidebar, go to **Intake** and click **Connect GitHub**.
 
-You will be redirected through the GitHub OAuth flow. Approve the `repo` scope. On return, Relay lists your accessible repositories.
+You will be redirected through the GitHub OAuth flow. Approve the `repo`, `read:org`, `workflow`, and `admin:repo_hook` scopes. On return, Relay lists your accessible repositories.
 
 ## Step 2: Sync issues
 
-From **Intake**, click **Sync now** on your connected source. Relay fetches open issues into the intake queue.
+From **Intake**, click **Sync now** on your connected source. Relay automatically provisions or updates the intake webhook for selected repositories, then fetches open issues into the intake queue.
 
-Notice that issues appear as **pending** — they have not yet entered the pipeline. Intake is a filter stage, not a pipeline stage.
+Notice that issues appear as **pending** — they have not yet entered the pipeline. Intake is a filter stage, not a pipeline stage. If Relay cannot manage a webhook because of missing permission/admin access, Intake shows explicit guidance and a manual fallback section.
 
 ## Step 3: Accept an issue
 

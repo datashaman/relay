@@ -103,6 +103,35 @@ class GithubSelectReposTest extends TestCase
         $this->assertEquals(['acme/api'], $source->config['repositories']);
     }
 
+    public function test_managed_webhook_path_hides_manual_copy_paste_in_normal_case(): void
+    {
+        $source = $this->createGithubSourceWithToken();
+        $this->fakeReposResponse([
+            ['full_name' => 'acme/api', 'private' => false, 'description' => null, 'updated_at' => '2026-04-10T00:00:00Z'],
+        ]);
+
+        Http::fake([
+            'api.github.com/user/repos*' => Http::response([
+                ['full_name' => 'acme/api', 'private' => false, 'description' => null],
+            ], 200),
+            'api.github.com/repos/acme/api/hooks' => Http::sequence()
+                ->push([], 200)
+                ->push(['id' => 9001], 201),
+        ]);
+
+        Livewire::test('pages::github-select-repos', ['source' => $source])
+            ->call('toggle', 'acme/api')
+            ->call('save')
+            ->assertRedirect(route('intake.index'));
+
+        $source->refresh();
+        $this->assertSame('managed', $source->config['managed_webhooks']['acme/api']['state']);
+
+        $this->get(route('intake.index'))
+            ->assertSee('Managed')
+            ->assertDontSee('Manual setup fallback');
+    }
+
     public function test_preselects_existing_repositories(): void
     {
         $source = $this->createGithubSourceWithToken(['repositories' => ['acme/existing']]);

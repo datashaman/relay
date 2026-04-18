@@ -395,10 +395,56 @@ class extends Component {
                         $webhookUrl = $source->type->value === 'github'
                             ? route('webhooks.github', $source)
                             : route('webhooks.jira', [$source, $source->webhook_secret]);
+
+                        $selectedRepos = $source->config['repositories'] ?? [];
+                        $managedWebhookStates = $source->config['managed_webhooks'] ?? [];
+                        $repoStates = collect($selectedRepos)->mapWithKeys(fn ($repo) => [$repo => $managedWebhookStates[$repo]['state'] ?? null]);
+                        $needsPermissionRepos = $repoStates->filter(fn ($state) => $state === 'needs_permission')->keys()->values();
+                        $manualRepos = $repoStates->filter(fn ($state) => $state === 'manual')->keys()->values();
+                        $errorRepos = $repoStates->filter(fn ($state) => $state === 'error')->keys()->values();
+                        $managedRepos = $repoStates->filter(fn ($state) => $state === 'managed')->keys()->values();
+
+                        $webhookState = 'manual';
+
+                        if ($source->type->value === 'github') {
+                            if (empty($selectedRepos)) {
+                                $webhookState = 'unconfigured';
+                            } elseif ($needsPermissionRepos->isNotEmpty()) {
+                                $webhookState = 'needs_permission';
+                            } elseif ($errorRepos->isNotEmpty()) {
+                                $webhookState = 'error';
+                            } elseif ($managedRepos->count() === count($selectedRepos)) {
+                                $webhookState = 'managed';
+                            }
+                        }
                     @endphp
                     <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <span class="font-label text-[10px] text-outline uppercase tracking-wider">Webhook</span>
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Webhook</span>
+                                @if ($source->type->value === 'github')
+                                    @php
+                                        $stateStyles = [
+                                            'managed' => 'bg-secondary-container text-on-secondary-container',
+                                            'needs_permission' => 'bg-error-container text-on-error-container',
+                                            'error' => 'bg-error-container text-on-error-container',
+                                            'manual' => 'bg-surface-container-high text-on-surface-variant',
+                                            'unconfigured' => 'bg-surface-container-high text-on-surface-variant',
+                                        ][$webhookState] ?? 'bg-surface-container-high text-on-surface-variant';
+
+                                        $stateLabels = [
+                                            'managed' => 'Managed',
+                                            'needs_permission' => 'Needs Permission',
+                                            'error' => 'Error',
+                                            'manual' => 'Manual Fallback',
+                                            'unconfigured' => 'Not Configured',
+                                        ];
+                                    @endphp
+                                    <span class="inline-flex items-center rounded px-1.5 py-0.5 font-label text-[9px] uppercase tracking-wider {{ $stateStyles }}">
+                                        {{ $stateLabels[$webhookState] ?? 'Manual' }}
+                                    </span>
+                                @endif
+                            </div>
                             @if ($source->webhook_last_delivery_at)
                                 <span class="font-label text-[10px] text-outline uppercase tracking-wider">
                                     Last delivery {{ $source->webhook_last_delivery_at->diffForHumans(null, true) }} ago
@@ -407,21 +453,76 @@ class extends Component {
                                 <span class="font-label text-[10px] text-outline uppercase tracking-wider">Never delivered</span>
                             @endif
                         </div>
-                        <div class="flex items-center gap-2">
-                            <input type="text" readonly
-                                   value="{{ $webhookUrl }}"
-                                   class="flex-1 min-w-0 bg-surface-container-high text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
-                                   onclick="this.select()">
-                        </div>
+
                         @if ($source->type->value === 'github')
+                            @if ($webhookState === 'managed')
+                                <p class="text-xs text-secondary leading-snug">
+                                    Relay is managing webhook setup for {{ $managedRepos->count() }} {{ \Illuminate\Support\Str::plural('repository', $managedRepos->count()) }}.
+                                </p>
+                            @elseif ($webhookState === 'needs_permission')
+                                <p class="text-xs text-error leading-snug">
+                                    Relay could not manage {{ $needsPermissionRepos->count() }} {{ \Illuminate\Support\Str::plural('repository', $needsPermissionRepos->count()) }} due to missing GitHub webhook permissions. Reconnect GitHub with webhook admin scope.
+                                </p>
+                            @elseif ($webhookState === 'error')
+                                <p class="text-xs text-error leading-snug">
+                                    Relay could not finish webhook setup for one or more repositories. Check repository access and retry sync.
+                                </p>
+                            @elseif ($webhookState === 'unconfigured')
+                                <p class="text-xs text-on-surface-variant leading-snug">
+                                    Pick repositories first and Relay will attempt webhook provisioning automatically.
+                                </p>
+                            @else
+                                <p class="text-xs text-on-surface-variant leading-snug">
+                                    Relay is in manual fallback mode for one or more repositories.
+                                </p>
+                            @endif
+
+                            @if ($needsPermissionRepos->isNotEmpty() || $errorRepos->isNotEmpty() || $manualRepos->isNotEmpty())
+                                <ul class="space-y-1">
+                                    @foreach ($selectedRepos as $repoFullName)
+                                        @php
+                                            $repoState = $managedWebhookStates[$repoFullName]['state'] ?? 'manual';
+                                            $repoReason = $managedWebhookStates[$repoFullName]['reason'] ?? null;
+                                        @endphp
+                                        @if (in_array($repoState, ['needs_permission', 'error', 'manual'], true))
+                                            <li class="text-[11px] text-on-surface-variant">
+                                                <span class="font-mono">{{ $repoFullName }}</span>
+                                                <span class="uppercase text-[9px] tracking-wider">({{ str_replace('_', ' ', $repoState) }})</span>
+                                                @if ($repoReason)
+                                                    <span> — {{ $repoReason }}</span>
+                                                @endif
+                                            </li>
+                                        @endif
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            @if ($webhookState !== 'managed')
+                                <details class="rounded-md bg-surface-container-high px-2 py-1.5">
+                                    <summary class="cursor-pointer font-label text-[10px] text-outline uppercase tracking-wider">
+                                        Manual setup fallback
+                                    </summary>
+                                    <div class="mt-2 space-y-1.5">
+                                        <input type="text" readonly
+                                               value="{{ $webhookUrl }}"
+                                               class="w-full bg-surface-container-highest text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
+                                               onclick="this.select()">
+                                        <input type="text" readonly
+                                               value="{{ $source->webhook_secret }}"
+                                               class="w-full bg-surface-container-highest text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
+                                               onclick="this.select()">
+                                    </div>
+                                </details>
+                            @endif
+                        @else
                             <div class="flex items-center gap-2">
-                                <span class="font-label text-[10px] text-outline uppercase tracking-wider">Secret</span>
                                 <input type="text" readonly
-                                       value="{{ $source->webhook_secret }}"
+                                       value="{{ $webhookUrl }}"
                                        class="flex-1 min-w-0 bg-surface-container-high text-on-surface-variant rounded px-2 py-1 font-mono text-[10px] tracking-wider"
                                        onclick="this.select()">
                             </div>
                         @endif
+
                         @if ($source->webhook_last_error)
                             <div class="rounded-md bg-error-container/20 border-l-2 border-error px-2 py-1.5">
                                 <p class="text-xs text-error leading-snug">{{ $source->webhook_last_error }}</p>

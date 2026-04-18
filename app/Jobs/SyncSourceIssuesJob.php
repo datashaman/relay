@@ -7,6 +7,7 @@ use App\Enums\SourceType;
 use App\Models\Repository;
 use App\Models\Source;
 use App\Services\GitHubClient;
+use App\Services\GitHubWebhookManager;
 use App\Services\IssueIntakeService;
 use App\Services\JiraClient;
 use App\Services\OauthService;
@@ -24,8 +25,10 @@ class SyncSourceIssuesJob implements ShouldQueue
         public Source $source,
     ) {}
 
-    public function handle(OauthService $oauth, IssueIntakeService $intake): void
+    public function handle(OauthService $oauth, IssueIntakeService $intake, ?GitHubWebhookManager $webhookManager = null): void
     {
+        $webhookManager ??= app(GitHubWebhookManager::class);
+
         if ($this->isIntakePaused()) {
             return;
         }
@@ -44,7 +47,7 @@ class SyncSourceIssuesJob implements ShouldQueue
             $token = $oauth->refreshIfExpired($token);
 
             $rawIssues = match ($this->source->type) {
-                SourceType::GitHub => $this->fetchGitHubIssues($token, $oauth),
+                SourceType::GitHub => $this->fetchGitHubIssues($token, $oauth, $webhookManager),
                 SourceType::Jira => $this->fetchJiraIssues($token, $oauth, $intake),
             };
 
@@ -62,7 +65,7 @@ class SyncSourceIssuesJob implements ShouldQueue
         }
     }
 
-    private function fetchGitHubIssues($token, OauthService $oauth): array
+    private function fetchGitHubIssues($token, OauthService $oauth, GitHubWebhookManager $webhookManager): array
     {
         $client = new GitHubClient($token, $oauth);
         $repos = $this->source->config['repositories'] ?? [];
@@ -70,6 +73,8 @@ class SyncSourceIssuesJob implements ShouldQueue
         if (empty($repos)) {
             throw new \RuntimeException('No repositories configured for this GitHub source. Add repositories to source config.');
         }
+
+        $webhookManager->provisionForSelectedRepositories($this->source, $token, $oauth);
 
         $mapped = [];
 
