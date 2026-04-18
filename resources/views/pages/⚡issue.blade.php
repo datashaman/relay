@@ -397,7 +397,33 @@ class extends Component
                             </div>
                         @endif
 
-                        @if ($currentStage && $currentStage->status === \App\Enums\StageStatus::AwaitingApproval)
+                        @php
+                            $needsClarification = $currentStage
+                                && $currentStage->status === \App\Enums\StageStatus::AwaitingApproval
+                                && $currentStage->name === \App\Enums\StageName::Preflight
+                                && empty($latestRun->preflight_doc)
+                                && ! empty($latestRun->clarification_questions);
+                        @endphp
+
+                        @if ($needsClarification)
+                            <div class="mb-4">
+                                <span class="inline-flex items-center rounded-full bg-stage-preflight/20 text-stage-preflight px-2.5 py-0.5 font-label text-[10px] uppercase tracking-widest">
+                                    Needs Clarification
+                                </span>
+                                <p class="mt-2 text-sm text-on-surface-variant">
+                                    Preflight flagged this issue as ambiguous and generated
+                                    <span class="font-medium">{{ count($latestRun->clarification_questions) }}</span>
+                                    {{ \Illuminate\Support\Str::plural('question', count($latestRun->clarification_questions)) }}
+                                    before a doc can be produced.
+                                </p>
+                            </div>
+
+                            <a href="{{ route('preflight.show', $latestRun) }}"
+                               class="block w-full text-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary/90 transition-colors">
+                                Answer clarifying questions →
+                            </a>
+
+                        @elseif ($currentStage && $currentStage->status === \App\Enums\StageStatus::AwaitingApproval)
                             <div class="mb-4">
                                 <span class="inline-flex items-center rounded-full bg-stage-stuck/20 text-stage-stuck px-2.5 py-0.5 font-label text-[10px] uppercase tracking-widest">
                                     Awaiting Approval

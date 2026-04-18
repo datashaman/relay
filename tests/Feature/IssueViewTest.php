@@ -108,6 +108,34 @@ class IssueViewTest extends TestCase
         $response->assertSee('Awaiting Approval');
     }
 
+    public function test_show_displays_clarification_card_when_preflight_needs_questions(): void
+    {
+        $issue = $this->createPipelineIssue();
+        $run = Run::factory()->create([
+            'issue_id' => $issue->id,
+            'status' => RunStatus::Running,
+            'preflight_doc' => null,
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which library?', 'type' => 'free_text'],
+                ['id' => 'q2', 'text' => 'Target repo?', 'type' => 'free_text'],
+            ],
+        ]);
+        Stage::factory()->create([
+            'run_id' => $run->id,
+            'name' => StageName::Preflight,
+            'status' => StageStatus::AwaitingApproval,
+        ]);
+
+        $response = $this->get(route('issues.show', $issue));
+
+        $response->assertStatus(200);
+        $response->assertSee('Needs Clarification');
+        $response->assertSee('Answer clarifying questions');
+        $response->assertSee(route('preflight.show', $run));
+        $response->assertDontSee('Approve (A)');
+        $response->assertDontSee('Reject (R)');
+    }
+
     public function test_show_displays_guidance_form_when_stuck(): void
     {
         $issue = $this->createPipelineIssue(['status' => IssueStatus::Stuck]);
