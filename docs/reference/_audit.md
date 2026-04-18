@@ -82,10 +82,10 @@ All four agent reference pages were extended in this phase to document the `Pipe
 
 | Failure mode | How-to | Notes |
 | --- | --- | --- |
-| Index / entry point | ❌ `how-to/troubleshooting/index.md` | Required by Phase 05. |
-| AI provider errors (rate limit, auth, malformed) | ❌ `how-to/troubleshooting/ai-provider-errors.md` | Keyed to Phase-04 `pipeline` log channel events. |
-| Stage failures (Preflight / Implement / Verify / Release) | ❌ `how-to/troubleshooting/stage-failures.md` | Keyed to structured `event` values. |
-| Merge conflicts | ❌ `how-to/troubleshooting/merge-conflicts.md` | Uses `MergeConflictDetector` + AI-assisted resolution. |
+| Index / entry point | ✅ `how-to/troubleshooting/index.md` | Entry point with pipeline `event` table. |
+| AI provider errors (rate limit, auth, malformed) | ✅ `how-to/troubleshooting/ai-provider-errors.md` | Keyed to Phase-04 `pipeline` log channel events with `jq` recipes. |
+| Stage failures (Preflight / Implement / Verify / Release) | ✅ `how-to/troubleshooting/stage-failures.md` | Keyed to structured `event` values per agent. |
+| Merge conflicts | ✅ `how-to/troubleshooting/merge-conflicts.md` | Covers `MergeConflictDetector` probe + `ResolveConflictsJob` AI-assisted flow. |
 
 ### Explanation
 

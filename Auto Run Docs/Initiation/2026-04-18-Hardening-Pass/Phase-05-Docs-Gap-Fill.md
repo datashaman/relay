@@ -27,12 +27,13 @@ Audit the existing Diataxis structure (`docs/tutorials`, `docs/how-to`, `docs/re
     ```
   - Link related pages with `[[Wiki-Link]]` syntax for graph navigation.
 
-- [ ] Write or extend how-to guides in `docs/how-to/`:
+- [x] Write or extend how-to guides in `docs/how-to/`:
   - `troubleshooting/index.md` as an entry point listing common failure modes.
   - `troubleshooting/ai-provider-errors.md` — rate limits, auth failures, malformed responses; reference the pipeline log channel introduced in Phase 04 with grep snippets.
   - `troubleshooting/stage-failures.md` — what to check when Preflight/Implement/Verify/Release fail, keyed to the structured log `event` values.
   - `troubleshooting/merge-conflicts.md` — using the AI-assisted conflict resolution flow.
   - Each file uses `type: how-to` front matter and cross-links to the relevant reference pages.
+  - Notes: four pages created under `docs/how-to/troubleshooting/`. Each uses `type: how-to` front matter and `[[Wiki-Link]]` cross-references to the Phase-05 reference pages (agents, providers, orchestrator, merge detector) and to `stuck-states`. `docs/reference/_audit.md` section "Troubleshooting (how-to category)" flipped from ❌ to ✅ for all four entries.
 
 - [ ] Fill missing explanation and tutorial coverage if the audit surfaced gaps:
   - In `docs/explanation/`, ensure a page exists covering the autonomy model, the filter/escalation rule engines, and the overall pipeline philosophy. Add any that are missing.
