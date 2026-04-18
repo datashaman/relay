@@ -74,6 +74,47 @@ class GitHubClient
         ])->json();
     }
 
+    /**
+     * Fetch repository metadata (language, topics, default_branch, etc.).
+     *
+     * @return array<string, mixed>
+     */
+    public function getRepo(string $owner, string $repo): array
+    {
+        return $this->request('get', "/repos/{$owner}/{$repo}", [], [
+            'Accept' => 'application/vnd.github.mercy-preview+json',
+        ])->json();
+    }
+
+    /**
+     * Fetch the raw, decoded contents of a single file at the repo's default branch.
+     * Returns null when the file does not exist (404) or when the response cannot be decoded.
+     */
+    public function getFileContents(string $owner, string $repo, string $path): ?string
+    {
+        $response = $this->request(
+            'get',
+            "/repos/{$owner}/{$repo}/contents/{$path}",
+            [],
+            [],
+            allowNotFound: true,
+        );
+
+        if ($response->status() === 404) {
+            return null;
+        }
+
+        $body = $response->json();
+
+        if (! is_array($body) || ($body['encoding'] ?? null) !== 'base64' || ! isset($body['content'])) {
+            return null;
+        }
+
+        $decoded = base64_decode(str_replace("\n", '', (string) $body['content']), true);
+
+        return $decoded === false ? null : $decoded;
+    }
+
     public function listRepositoryWebhooks(string $owner, string $repo): array
     {
         return $this->request('get', "/repos/{$owner}/{$repo}/hooks")->json();
@@ -166,14 +207,20 @@ class GitHubClient
         return $all;
     }
 
-    private function request(string $method, string $path, array $data = []): Response
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, string>  $extraHeaders
+     */
+    private function request(string $method, string $path, array $data = [], array $extraHeaders = [], bool $allowNotFound = false): Response
     {
         $url = self::BASE_URL.$path;
 
         $this->token = $this->oauth->refreshIfExpired($this->token);
 
+        $headers = array_merge(['Accept' => 'application/vnd.github+json'], $extraHeaders);
+
         $pending = Http::withToken($this->token->access_token)
-            ->withHeaders(['Accept' => 'application/vnd.github+json']);
+            ->withHeaders($headers);
 
         $response = $method === 'get'
             ? $pending->get($url, $data)
@@ -182,7 +229,7 @@ class GitHubClient
         if ($response->status() === 401 && $this->token->refresh_token) {
             $this->token = $this->oauth->refreshToken($this->token);
             $pending = Http::withToken($this->token->access_token)
-                ->withHeaders(['Accept' => 'application/vnd.github+json']);
+                ->withHeaders($headers);
             $response = $method === 'get'
                 ? $pending->get($url, $data)
                 : $pending->$method($url, $data);
@@ -191,7 +238,11 @@ class GitHubClient
         if ($response->status() === 403 && $this->isRateLimited($response)) {
             $this->waitForRateLimit($response);
 
-            return $this->request($method, $path, $data);
+            return $this->request($method, $path, $data, $extraHeaders, $allowNotFound);
+        }
+
+        if ($allowNotFound && $response->status() === 404) {
+            return $response;
         }
 
         $response->throw();

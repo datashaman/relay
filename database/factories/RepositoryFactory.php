@@ -19,6 +19,8 @@ class RepositoryFactory extends Factory
             'setup_script' => null,
             'teardown_script' => null,
             'run_script' => null,
+            'framework' => null,
+            'framework_source' => null,
         ];
     }
 }
