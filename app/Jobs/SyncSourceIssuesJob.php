@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\IssueStatus;
 use App\Enums\SourceType;
+use App\Events\SourceSynced;
 use App\Models\Repository;
 use App\Models\Source;
 use App\Services\FrameworkDetector;
@@ -76,6 +77,13 @@ class SyncSourceIssuesJob implements ShouldQueue
                 'sync_error' => null,
                 'next_retry_at' => null,
             ]);
+
+            SourceSynced::dispatch(
+                $this->source->id,
+                true,
+                null,
+                now()->toIso8601String(),
+            );
         } catch (\Throwable $e) {
             $this->recordError($e->getMessage());
         }
@@ -205,5 +213,12 @@ class SyncSourceIssuesJob implements ShouldQueue
             'sync_error' => $message,
             'next_retry_at' => now()->addMinutes($this->source->sync_interval ?? 5),
         ]);
+
+        SourceSynced::dispatch(
+            $this->source->id,
+            false,
+            $message,
+            now()->toIso8601String(),
+        );
     }
 }
