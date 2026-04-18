@@ -949,7 +949,7 @@ parameters:
 			path: tests/Feature/PreflightAgentTest.php
 
 		-
-			message: '#^Property App\\Contracts\\AiProvider@anonymous/tests/Feature/PreflightAgentTest\.php\:357\:\:\$captured is never read, only written\.$#'
+			message: '#^Property App\\Contracts\\AiProvider@anonymous/(?:[^:]+/)?PreflightAgentTest\.php\:357\:\:\$captured is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Feature/PreflightAgentTest.php
