@@ -1,10 +1,10 @@
 # TP-002: GitHub webhook management via app permissions — Status
 
-**Current Step:** Step 2: UI/API + resilience
+**Current Step:** Step 3: Verification & docs
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-04-18
 **Review Level:** 2
-**Review Counter:** 1
+**Review Counter:** 3
 **Iteration:** 1
 **Size:** M
 
@@ -31,16 +31,16 @@
 ---
 
 ### Step 2: UI/API + resilience
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Update intake UI/API responses to surface managed webhook state and guidance
-- [ ] Add clear handling/messages for insufficient permissions and repo constraints
-- [ ] Preserve compatibility for existing manual webhook setups
+- [x] Update intake UI/API responses to surface managed webhook state and guidance
+- [x] Add clear handling/messages for insufficient permissions and repo constraints
+- [x] Preserve compatibility for existing manual webhook setups
 
 ---
 
 ### Step 3: Verification & docs
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add/adjust tests for webhook creation, update/reuse, and permission failures
 - [ ] Verify end-to-end intake hookup flow no longer requires manual copy/paste in normal case
@@ -90,4 +90,9 @@
 - 2026-04-18: Added `GitHubWebhookManager` service plus new `GitHubClient` webhook endpoints (`list/create/update`) to auto-provision Relay intake webhooks for selected repositories, storing per-repo managed state in `source.config.managed_webhooks`.
 - 2026-04-18: Idempotency handled by matching existing repo hooks on Relay callback URL and patching the existing hook instead of creating duplicates; sync path now re-runs provisioning safely.
 - 2026-04-18: Provisioning path now always sources secrets from `Source::ensureWebhookSecret()` (encrypted at rest via model casts) and avoids persisting plaintext secrets in webhook status metadata.
+- 2026-04-18: Intake UI now renders GitHub webhook lifecycle states (`managed`, `needs_permission`, `error`, `manual`, `unconfigured`) with repo-level guidance, and source JSON endpoints now include a structured `webhook` status payload for GitHub sources.
+- 2026-04-18: Webhook provisioning failures now distinguish permission failures (401/403 → `needs_permission`) from repository/admin constraints (404/422 → `manual`) so users get actionable reconnect/admin guidance instead of opaque errors.
+- 2026-04-18: Existing manual webhook flow is preserved as explicit fallback in intake via collapsible manual setup details (URL + secret) whenever managed mode is unavailable.
 | 2026-04-18 08:55 | Review R001 | plan Step 1: APPROVE |
+| 2026-04-18 09:02 | Review R002 | code Step 1: APPROVE |
+| 2026-04-18 09:04 | Review R003 | plan Step 2: APPROVE |

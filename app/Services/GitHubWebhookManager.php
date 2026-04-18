@@ -47,6 +47,7 @@ class GitHubWebhookManager
             } catch (\Illuminate\Http\Client\RequestException $e) {
                 $status = $e->response?->status();
                 $isPermissionError = in_array($status, [401, 403], true);
+                $isRepoConstraint = in_array($status, [404, 422], true);
 
                 if ($isPermissionError) {
                     $permissionErrors++;
@@ -55,7 +56,9 @@ class GitHubWebhookManager
                 }
 
                 $states[$repoFullName] = [
-                    'state' => $isPermissionError ? 'needs_permission' : 'error',
+                    'state' => $isPermissionError
+                        ? 'needs_permission'
+                        : ($isRepoConstraint ? 'manual' : 'error'),
                     'hook_id' => null,
                     'updated_at' => now()->toIso8601String(),
                     'reason' => $this->truncateReason($e->response?->json('message') ?? $e->getMessage()),
