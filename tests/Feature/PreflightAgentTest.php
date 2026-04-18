@@ -434,7 +434,38 @@ class PreflightAgentTest extends TestCase
         $response->assertSee('Local');
         $response->assertSee('Any design specs?');
         $response->assertSee('Submit Answers');
-        $response->assertSee('Skip to Doc');
+        $response->assertSee('Proceed without answers');
+        $response->assertDontSee('Skip to Doc');
+    }
+
+    public function test_clarification_page_ux_requirements(): void
+    {
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+        $run->update([
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which auth provider?', 'type' => 'text'],
+            ],
+        ]);
+
+        $response = $this->get(route('preflight.show', $run));
+
+        $response->assertOk();
+
+        // Parked-state banner is visible
+        $response->assertSee('This stage is paused');
+
+        // Destructive button is renamed — does not contain "Skip to Doc"
+        $response->assertDontSee('Skip to Doc');
+        $response->assertSee('Proceed without answers');
+
+        // Confirm dialog is attached to the destructive Livewire action
+        $response->assertSee('wire:click="skipToDoc"', false);
+        $response->assertSee('wire:confirm="The agent will generate a doc without your answers.', false);
+
+        // Non-mutating back link is present
+        $response->assertSee(route('intake.index'), false);
+        $response->assertSee('Back to intake');
     }
 
     public function test_show_redirects_when_no_pending_stage(): void
