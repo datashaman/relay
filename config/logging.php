@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Logging\UseJsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -70,6 +71,15 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'pipeline' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/pipeline.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'tap' => [UseJsonFormatter::class],
             'replace_placeholders' => true,
         ],
 
