@@ -38,8 +38,16 @@ Add a CI workflow so tests, lint, and (later) static analysis run automatically 
 
   **Completed (2026-04-18):** Origin is `git@github.com:datashaman/relay.git` → owner/repo is `datashaman/relay`. Inserted a linked CI badge immediately below the `# Relay` heading pointing at `.github/workflows/ci.yml`.
 
-- [ ] Sanity-check the workflow locally where possible:
+- [x] Sanity-check the workflow locally where possible:
   - Run `composer install` and `php artisan test` on a clean checkout-like state to confirm the steps succeed.
   - Run `./vendor/bin/pint --test` and note any pre-existing style violations — do NOT auto-fix them here (Phase 03 owns that). If failures would block CI, scope the Pint job to a warning-only mode (`continue-on-error: true`) with a TODO to remove in Phase 03.
+
+  **Completed (2026-04-18):**
+  - `composer install --prefer-dist --no-progress --no-interaction` → "Nothing to install, update or remove" (deps already in sync); package discovery succeeded.
+  - `php artisan test` → **755 passed (1731 assertions)** in 24.07s. No failures or errors.
+  - `./vendor/bin/pint --test` → **FAIL** with many pre-existing violations. Two classes of findings:
+    1. **First-party sources (Phase 03 will fix):** `app/Http/Controllers/*`, `app/Services/*` (WorktreeService, OauthService, ReleaseAgent, JiraClient, FilterRuleService, ImplementAgent, MergeConflictDetector, GitHubClient, VerifyAgent, PreflightAgent), `app/Jobs/ResolveConflictsJob.php`, `app/Providers/NativeAppServiceProvider.php`, `config/nativephp.php`, `database/migrations/2026_04_12_000001_create_sources_table.php`, `database/factories/*`, `database/seeders/DemoDataSeeder.php`, many `tests/Feature/*` and `tests/Unit/Services/*` files, and `packages/nativephp-laravel/**` + `packages/nativephp-electron/src/Updater/UpdaterManager.php`. Typical fixers: `concat_space`, `unary_operator_spaces`, `not_operator_with_successor_space`, `braces_position`, `single_line_empty_body`, `class_definition`, `no_unused_imports`, `ordered_imports`, `fully_qualified_strict_types`, `new_with_parentheses`.
+    2. **Build artefacts that should not be linted at all (flag for Phase 03 pint.json excludes):** `dist/mac-arm64/Laravel.app/**` and `packages/nativephp-electron/resources/js/resources/app/**`. These are generated Electron bundles duplicating first-party code — Phase 03 should add them to `pint.json` `exclude` rather than "fixing" them.
+  - Action taken: added `continue-on-error: true` to the `lint` job in `.github/workflows/ci.yml` plus an explicit Phase-03 removal TODO. CI will still surface Pint output but won't fail the run until Phase 03 normalises style.
 
 - [ ] Run `gitnexus_detect_changes({scope: "all"})` and confirm changes are limited to `.github/workflows/ci.yml` and `README.md`. Commit with message `ci: add GitHub Actions workflow for tests and lint`. Do not push.
