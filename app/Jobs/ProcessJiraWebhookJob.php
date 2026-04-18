@@ -63,7 +63,19 @@ class ProcessJiraWebhookJob implements ShouldQueue
             }
 
             $attrs = JiraClient::mapToIssueAttributes($jiraIssue);
-            unset($attrs['status']);
+
+            if (($attrs['state'] ?? 'open') === 'closed') {
+                $intake->markClosed($source, $externalId, $attrs['state_reason'] ?? null);
+                $delivery->update(['processed_at' => now()]);
+
+                return;
+            }
+
+            // Reconcile reopens: a status transition back to an open Jira status
+            // must un-reject issues that were previously closed by sync or webhook.
+            $intake->markReopened($source, $externalId);
+
+            unset($attrs['status'], $attrs['state'], $attrs['state_reason']);
             $attrs['component_id'] = $intake->resolveComponentId($source, $attrs);
             unset($attrs['component_external_id'], $attrs['component_name']);
 

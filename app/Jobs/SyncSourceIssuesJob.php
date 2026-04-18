@@ -60,6 +60,10 @@ class SyncSourceIssuesJob implements ShouldQueue
                     continue;
                 }
 
+                // Reconcile reopens on the sync pass so sources without discrete reopen
+                // webhook events (e.g. Jira) are not left stuck in Rejected indefinitely.
+                $intake->markReopened($this->source, $issueData['external_id']);
+
                 unset($issueData['state'], $issueData['state_reason']);
                 $intake->upsertIssue($this->source, $issueData);
             }

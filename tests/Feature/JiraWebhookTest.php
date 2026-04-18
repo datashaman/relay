@@ -116,6 +116,88 @@ class JiraWebhookTest extends TestCase
         $this->assertEquals(IssueStatus::Rejected, $issue->status);
     }
 
+    public function test_issue_updated_to_done_rejects_queued_issue(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'closeable',
+            'status' => IssueStatus::Queued,
+        ]);
+
+        $response = $this->postWebhook($source, $this->issuePayload('jira:issue_updated', [
+            'issue' => ['fields' => ['status' => ['name' => 'Done']]],
+        ]));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Rejected, $issue->status);
+        $this->assertEquals('closed:Done', $issue->raw_status);
+    }
+
+    public function test_issue_updated_to_done_preserves_accepted_status(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'in flight',
+            'status' => IssueStatus::Accepted,
+        ]);
+
+        $response = $this->postWebhook($source, $this->issuePayload('jira:issue_updated', [
+            'issue' => ['fields' => ['status' => ['name' => 'Done']]],
+        ]));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Accepted, $issue->status);
+        $this->assertEquals('closed:Done', $issue->raw_status);
+    }
+
+    public function test_issue_updated_to_open_status_reopens_sync_rejected_issue(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'reopenable',
+            'status' => IssueStatus::Rejected,
+            'raw_status' => 'closed:Done',
+        ]);
+
+        $response = $this->postWebhook($source, $this->issuePayload('jira:issue_updated', [
+            'issue' => ['fields' => ['status' => ['name' => 'To Do']]],
+        ]));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Queued, $issue->status);
+        // upsertIssue runs after markReopened, so raw_status reflects the current Jira status
+        $this->assertEquals('To Do', $issue->raw_status);
+    }
+
+    public function test_issue_updated_to_open_does_not_revive_user_rejected_issue(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'TEST-1',
+            'title' => 'user-rejected',
+            'status' => IssueStatus::Rejected,
+            'raw_status' => null,
+        ]);
+
+        $response = $this->postWebhook($source, $this->issuePayload('jira:issue_updated', [
+            'issue' => ['fields' => ['status' => ['name' => 'To Do']]],
+        ]));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Rejected, $issue->status, 'user-driven rejection must not resurrect on upstream reopen');
+    }
+
     public function test_idempotency_via_synthetic_delivery_id(): void
     {
         $source = $this->createSource();
