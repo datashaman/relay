@@ -164,7 +164,7 @@ PROMPT;
 
         $provider = $this->providerManager->resolve(null, StageName::Preflight);
 
-        $messages = $this->buildMessages($issue, $context);
+        $messages = $this->buildMessages($issue, $run->worktree_path, $context);
         $response = $provider->chat($messages, [self::ASSESS_TOOL], array_filter([
             'cwd' => $run->worktree_path,
             'log_context' => [
@@ -360,7 +360,7 @@ PROMPT;
         return $doc;
     }
 
-    private function buildMessages($issue, array $context): array
+    private function buildMessages($issue, ?string $worktreePath, array $context): array
     {
         $messages = [
             ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
@@ -377,9 +377,84 @@ PROMPT;
             $issueContent .= "Assignee: {$issue->assignee}\n";
         }
 
+        $repoListing = $this->buildRepoListing($worktreePath);
+        if ($repoListing !== '') {
+            $issueContent .= "\n## Repository file listing\n\n{$repoListing}";
+        }
+
         $messages[] = ['role' => 'user', 'content' => $issueContent];
 
         return $messages;
+    }
+
+    /**
+     * Walks key subdirectories of the worktree and returns a newline-delimited
+     * file listing relative to the worktree root.
+     *
+     * The listing is capped at 2000 files or 6000 bytes (whichever is reached
+     * first), with a truncation notice appended so the model knows the list
+     * may be incomplete. Files are listed in alphabetical order — "mentioned
+     * first" ordering is intentionally skipped for v1 to keep the implementation
+     * simple; the model still gets the full listing to check against.
+     *
+     * Returns an empty string when the worktree path is absent or unreadable.
+     */
+    private function buildRepoListing(?string $worktreePath): string
+    {
+        if (! $worktreePath || ! is_dir($worktreePath)) {
+            return '';
+        }
+
+        $subdirs = ['app', 'config', 'routes', 'database/migrations'];
+        $filePaths = [];
+
+        foreach ($subdirs as $subdir) {
+            $fullPath = $worktreePath.DIRECTORY_SEPARATOR.$subdir;
+            if (! is_dir($fullPath)) {
+                continue;
+            }
+
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            foreach ($iterator as $fileInfo) {
+                if (! $fileInfo->isFile()) {
+                    continue;
+                }
+
+                $filePaths[] = ltrim(
+                    str_replace($worktreePath, '', $fileInfo->getPathname()),
+                    DIRECTORY_SEPARATOR
+                );
+            }
+        }
+
+        sort($filePaths);
+
+        $maxFiles = 2000;
+        $maxBytes = 6000;
+        $lines = [];
+        $byteCount = 0;
+        $omitted = 0;
+
+        foreach ($filePaths as $index => $path) {
+            if (count($lines) >= $maxFiles || $byteCount >= $maxBytes) {
+                $omitted = count($filePaths) - $index;
+                break;
+            }
+
+            $lines[] = $path;
+            $byteCount += strlen($path) + 1;
+        }
+
+        $output = implode("\n", $lines);
+        if ($omitted > 0) {
+            $output .= "\n... ({$omitted} more files omitted)";
+        }
+
+        return $output;
     }
 
     private function parseAssessment(array $response): array

@@ -390,6 +390,147 @@ class PreflightAgentTest extends TestCase
         $this->assertStringContainsString('johndoe', $userMessage);
     }
 
+    public function test_repo_file_listing_included_in_messages_when_worktree_set(): void
+    {
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+
+        $worktreeDir = sys_get_temp_dir().'/preflight-listing-'.uniqid();
+        mkdir($worktreeDir.'/app/Jobs', 0777, true);
+        file_put_contents($worktreeDir.'/app/Jobs/ProcessGitHubWebhookJob.php', '<?php');
+        file_put_contents($worktreeDir.'/app/Jobs/ProcessJiraWebhookJob.php', '<?php');
+        mkdir($worktreeDir.'/config', 0777, true);
+        file_put_contents($worktreeDir.'/config/app.php', '<?php');
+
+        $run->update(['worktree_path' => $worktreeDir]);
+
+        $capturedMessages = null;
+        $mock = new class($capturedMessages) implements AiProvider
+        {
+            public function __construct(private &$captured) {}
+
+            public function chat(array $messages, array $tools = [], array $options = []): array
+            {
+                $this->captured = $messages;
+
+                return [
+                    'content' => null,
+                    'tool_calls' => [
+                        ['id' => 'c1', 'name' => 'assess_issue', 'arguments' => ['confidence' => 'clear', 'known_facts' => []]],
+                    ],
+                    'usage' => ['input_tokens' => 10, 'output_tokens' => 10],
+                    'raw' => [],
+                ];
+            }
+
+            public function stream(array $messages, array $tools = [], array $options = []): \Generator
+            {
+                yield [];
+            }
+        };
+
+        Queue::fake();
+        $manager = $this->createMock(AiProviderManager::class);
+        $manager->method('resolve')->willReturn($mock);
+        $this->app->instance(AiProviderManager::class, $manager);
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $userMessage = collect($capturedMessages)->firstWhere('role', 'user')['content'];
+        $this->assertStringContainsString('## Repository file listing', $userMessage);
+        $this->assertStringContainsString('ProcessGitHubWebhookJob.php', $userMessage);
+        $this->assertStringContainsString('ProcessJiraWebhookJob.php', $userMessage);
+
+        // cleanup
+        array_map('unlink', glob($worktreeDir.'/app/Jobs/*'));
+        rmdir($worktreeDir.'/app/Jobs');
+        rmdir($worktreeDir.'/app');
+        array_map('unlink', glob($worktreeDir.'/config/*'));
+        rmdir($worktreeDir.'/config');
+        rmdir($worktreeDir);
+    }
+
+    public function test_repo_file_listing_omitted_when_no_worktree_path(): void
+    {
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+
+        $capturedMessages = null;
+        $mock = new class($capturedMessages) implements AiProvider
+        {
+            public function __construct(private &$captured) {}
+
+            public function chat(array $messages, array $tools = [], array $options = []): array
+            {
+                $this->captured = $messages;
+
+                return [
+                    'content' => null,
+                    'tool_calls' => [
+                        ['id' => 'c1', 'name' => 'assess_issue', 'arguments' => ['confidence' => 'clear', 'known_facts' => []]],
+                    ],
+                    'usage' => ['input_tokens' => 10, 'output_tokens' => 10],
+                    'raw' => [],
+                ];
+            }
+
+            public function stream(array $messages, array $tools = [], array $options = []): \Generator
+            {
+                yield [];
+            }
+        };
+
+        Queue::fake();
+        $manager = $this->createMock(AiProviderManager::class);
+        $manager->method('resolve')->willReturn($mock);
+        $this->app->instance(AiProviderManager::class, $manager);
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $userMessage = collect($capturedMessages)->firstWhere('role', 'user')['content'];
+        $this->assertStringNotContainsString('## Repository file listing', $userMessage);
+    }
+
+    public function test_repo_file_listing_omitted_when_worktree_path_does_not_exist(): void
+    {
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+
+        $run->update(['worktree_path' => '/nonexistent/path/that/does/not/exist']);
+
+        $capturedMessages = null;
+        $mock = new class($capturedMessages) implements AiProvider
+        {
+            public function __construct(private &$captured) {}
+
+            public function chat(array $messages, array $tools = [], array $options = []): array
+            {
+                $this->captured = $messages;
+
+                return [
+                    'content' => null,
+                    'tool_calls' => [
+                        ['id' => 'c1', 'name' => 'assess_issue', 'arguments' => ['confidence' => 'clear', 'known_facts' => []]],
+                    ],
+                    'usage' => ['input_tokens' => 10, 'output_tokens' => 10],
+                    'raw' => [],
+                ];
+            }
+
+            public function stream(array $messages, array $tools = [], array $options = []): \Generator
+            {
+                yield [];
+            }
+        };
+
+        Queue::fake();
+        $manager = $this->createMock(AiProviderManager::class);
+        $manager->method('resolve')->willReturn($mock);
+        $this->app->instance(AiProviderManager::class, $manager);
+
+        app(PreflightAgent::class)->execute($stage, []);
+
+        $userMessage = collect($capturedMessages)->firstWhere('role', 'user')['content'];
+        $this->assertStringNotContainsString('## Repository file listing', $userMessage);
+    }
+
     // === ExecuteStageJob Tests ===
 
     public function test_execute_stage_job_dispatches_preflight_agent(): void
