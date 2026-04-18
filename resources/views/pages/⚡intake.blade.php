@@ -13,6 +13,7 @@ use App\Services\JiraClient;
 use App\Services\OauthService;
 use App\Services\OrchestratorService;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -23,6 +24,18 @@ class extends Component
 {
     /** source id → flash message for the last test-connection call */
     public array $testResults = [];
+
+    #[On('echo-private:intake,.IntakeQueueChanged')]
+    public function handleIntakeQueueChanged(): void
+    {
+        // Re-render handled automatically by Livewire when this method is called.
+    }
+
+    #[On('echo-private:intake,.SourceSynced')]
+    public function handleSourceSynced(): void
+    {
+        // Re-render handled automatically by Livewire when this method is called.
+    }
 
     /** source id → flash message for the last sync-now call */
     public array $syncResults = [];

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\IssueStatus;
+use App\Events\IntakeQueueChanged;
 use App\Models\Component;
 use App\Models\Issue;
 use App\Models\Source;
@@ -20,13 +21,23 @@ class IssueIntakeService
             ->first();
 
         if ($existing) {
-            $this->reconcileReopenOnFetchedRow($existing);
-            $this->updateExistingIssue($existing, $issueData);
+            $this->reconcileReopenOnFetchedRow($existing, $source->id);
+            $hadChanges = $this->updateExistingIssue($existing, $issueData);
+
+            if ($hadChanges) {
+                IntakeQueueChanged::dispatch($source->id, 'upsert');
+            }
 
             return $existing->fresh();
         }
 
-        return $this->filterService->applyToSync($issueData, $source);
+        $issue = $this->filterService->applyToSync($issueData, $source);
+
+        if ($issue !== null) {
+            IntakeQueueChanged::dispatch($source->id, 'upsert');
+        }
+
+        return $issue;
     }
 
     public function markClosed(Source $source, string $externalId, ?string $stateReason = null): ?Issue
@@ -51,6 +62,8 @@ class IssueIntakeService
             Issue::where('id', $issue->id)->update(['raw_status' => $rawStatus]);
         }
 
+        IntakeQueueChanged::dispatch($source->id, 'close');
+
         return $issue->fresh();
     }
 
@@ -64,7 +77,7 @@ class IssueIntakeService
             return null;
         }
 
-        $this->reconcileReopenOnFetchedRow($issue);
+        $this->reconcileReopenOnFetchedRow($issue, $source->id);
 
         return $issue->fresh();
     }
@@ -74,9 +87,10 @@ class IssueIntakeService
      * user-driven rejections (distinguished by raw_status being null) and
      * non-Rejected rows. Writes directly using the row we already fetched
      * so callers that pair this with upsert logic don't pay for a second
-     * lookup.
+     * lookup. Broadcasts an `IntakeQueueChanged` `reopen` event when the
+     * row actually transitions.
      */
-    private function reconcileReopenOnFetchedRow(Issue $issue): void
+    private function reconcileReopenOnFetchedRow(Issue $issue, int $sourceId): void
     {
         if ($issue->status !== IssueStatus::Rejected) {
             return;
@@ -96,6 +110,8 @@ class IssueIntakeService
 
         $issue->status = IssueStatus::Queued;
         $issue->raw_status = null;
+
+        IntakeQueueChanged::dispatch($sourceId, 'reopen');
     }
 
     public function markDeleted(Source $source, string $externalId): ?Issue
@@ -115,6 +131,8 @@ class IssueIntakeService
         if ($rejected === 0) {
             Issue::where('id', $issue->id)->update(['raw_status' => 'deleted']);
         }
+
+        IntakeQueueChanged::dispatch($source->id, 'delete');
 
         return $issue->fresh();
     }
@@ -140,7 +158,7 @@ class IssueIntakeService
         return $component->id;
     }
 
-    private function updateExistingIssue(Issue $issue, array $issueData): void
+    private function updateExistingIssue(Issue $issue, array $issueData): bool
     {
         $updatable = ['title', 'body', 'external_url', 'assignee', 'labels', 'raw_status'];
         $changes = [];
@@ -161,6 +179,10 @@ class IssueIntakeService
 
         if (! empty($changes)) {
             $issue->update($changes);
+
+            return true;
         }
+
+        return false;
     }
 }
