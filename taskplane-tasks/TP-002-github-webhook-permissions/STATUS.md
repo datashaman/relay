@@ -1,27 +1,27 @@
 # TP-002: GitHub webhook management via app permissions — Status
 
-**Current Step:** Not Started
-**Status:** 🔵 Ready for Execution
+**Current Step:** Step 1: Implement webhook management
+**Status:** 🟡 In Progress
 **Last Updated:** 2026-04-18
 **Review Level:** 2
 **Review Counter:** 0
-**Iteration:** 0
+**Iteration:** 1
 **Size:** M
 
 ---
 
 ### Step 0: Preflight & permission design
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 
-- [ ] Confirm current intake flow behavior (where webhook URL/secret are shown and why)
-- [ ] Identify current GitHub OAuth/App permission set in code/config
-- [ ] Define minimum additional permissions required for repository webhook management
-- [ ] Document expected UX changes and fallback states before implementation
+- [x] Confirm current intake flow behavior (where webhook URL/secret are shown and why)
+- [x] Identify current GitHub OAuth/App permission set in code/config
+- [x] Define minimum additional permissions required for repository webhook management
+- [x] Document expected UX changes and fallback states before implementation
 
 ---
 
 ### Step 1: Implement webhook management
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Add/update GitHub permission configuration and auth flow handling
 - [ ] Implement service logic to create/update/find intake webhook for selected repos
@@ -68,6 +68,8 @@
 | Timestamp | Action | Outcome |
 |-----------|--------|---------|
 | 2026-04-18 | Task staged | STATUS.md created |
+| 2026-04-18 08:53 | Task started | Runtime V2 lane-runner execution |
+| 2026-04-18 08:53 | Step 0 started | Preflight & permission design |
 
 ---
 
@@ -79,4 +81,8 @@
 
 ## Notes
 
-*Reserved for execution notes*
+- 2026-04-18: Confirmed current intake behavior in `resources/views/pages/⚡intake.blade.php` — every source card renders a webhook URL, and GitHub cards also render plaintext `webhook_secret` for manual copy/paste into repository webhook settings. The page calls `$sources->each->ensureWebhookSecret()` so a secret always exists for display/manual setup.
+- 2026-04-18: Identified current GitHub auth permissions in `config/services.php` as OAuth scopes `repo`, `read:org`, and `workflow` (requested by `OauthService::generateAuthUrl()`), and docs/tutorial copy currently only mentions approving `repo` scope.
+- 2026-04-18: Defined webhook-management permission target: require explicit repository webhook admin capability (`admin:repo_hook` for OAuth apps; equivalent GitHub App permission is Repository Webhooks read/write). Treat missing webhook-admin permission as a first-class state in API/UI rather than silent failure.
+- 2026-04-18: Documented planned UX/fallback states for implementation: (1) intake card shows managed webhook status (`managed`, `needs_permission`, `error`, `manual`) instead of exposing copy/paste secret by default, (2) webhook provisioning runs automatically after repository selection and during sync retries, (3) permission/admin failures show actionable reconnect/admin messaging, and (4) existing manual webhooks remain accepted as compatibility fallback when managed provisioning cannot complete.
+
