@@ -2,6 +2,7 @@
 
 use App\Models\Source;
 use App\Services\GitHubClient;
+use App\Services\GitHubWebhookManager;
 use App\Services\OauthService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -35,7 +36,7 @@ class extends Component {
         $this->page = 1;
     }
 
-    public function save()
+    public function save(OauthService $oauth, GitHubWebhookManager $webhookManager)
     {
         $selected = array_values($this->selected);
 
@@ -51,7 +52,28 @@ class extends Component {
             'paused_repositories' => $paused,
         ]);
 
-        session()->flash('success', count($this->selected).' repositories selected for '.$this->source->external_account.'.');
+        $summary = count($selected).' repositories selected for '.$this->source->external_account.'.';
+
+        $token = $this->source->oauthTokens()->where('provider', 'github')->first();
+
+        if ($token && $selected !== []) {
+            $token = $oauth->refreshIfExpired($token);
+            $result = $webhookManager->provisionForSelectedRepositories($this->source->fresh(), $token, $oauth);
+
+            if ($result['permission_errors'] > 0) {
+                $summary .= ' '. $result['permission_errors'].' webhook'.($result['permission_errors'] === 1 ? '' : 's').' need additional GitHub permissions.';
+            }
+
+            if ($result['other_errors'] > 0) {
+                $summary .= ' '. $result['other_errors'].' webhook'.($result['other_errors'] === 1 ? '' : 's').' failed to configure automatically.';
+            }
+
+            if ($result['managed'] > 0) {
+                $summary .= ' Managed '.$result['managed'].' webhook'.($result['managed'] === 1 ? '' : 's').'.';
+            }
+        }
+
+        session()->flash('success', $summary);
 
         return $this->redirectRoute('intake.index', navigate: true);
     }

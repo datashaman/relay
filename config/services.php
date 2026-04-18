@@ -41,7 +41,7 @@ return [
         'redirect_uri' => env('GITHUB_REDIRECT_URI', 'http://localhost:8000/oauth/github/callback'),
         'authorize_url' => 'https://github.com/login/oauth/authorize',
         'token_url' => 'https://github.com/login/oauth/access_token',
-        'scopes' => ['repo', 'read:org', 'workflow'],
+        'scopes' => ['repo', 'read:org', 'workflow', 'admin:repo_hook'],
     ],
 
     'jira' => [

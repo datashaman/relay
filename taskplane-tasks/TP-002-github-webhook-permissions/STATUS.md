@@ -1,10 +1,10 @@
 # TP-002: GitHub webhook management via app permissions — Status
 
-**Current Step:** Step 1: Implement webhook management
+**Current Step:** Step 2: UI/API + resilience
 **Status:** 🟡 In Progress
 **Last Updated:** 2026-04-18
 **Review Level:** 2
-**Review Counter:** 0
+**Review Counter:** 1
 **Iteration:** 1
 **Size:** M
 
@@ -21,17 +21,17 @@
 ---
 
 ### Step 1: Implement webhook management
-**Status:** 🟨 In Progress
+**Status:** ✅ Complete
 
-- [ ] Add/update GitHub permission configuration and auth flow handling
-- [ ] Implement service logic to create/update/find intake webhook for selected repos
-- [ ] Ensure idempotency (no duplicate hooks; safe updates)
-- [ ] Integrate secure secret handling in webhook provisioning path
+- [x] Add/update GitHub permission configuration and auth flow handling
+- [x] Implement service logic to create/update/find intake webhook for selected repos
+- [x] Ensure idempotency (no duplicate hooks; safe updates)
+- [x] Integrate secure secret handling in webhook provisioning path
 
 ---
 
 ### Step 2: UI/API + resilience
-**Status:** ⬜ Not Started
+**Status:** 🟨 In Progress
 
 - [ ] Update intake UI/API responses to surface managed webhook state and guidance
 - [ ] Add clear handling/messages for insufficient permissions and repo constraints
@@ -85,4 +85,9 @@
 - 2026-04-18: Identified current GitHub auth permissions in `config/services.php` as OAuth scopes `repo`, `read:org`, and `workflow` (requested by `OauthService::generateAuthUrl()`), and docs/tutorial copy currently only mentions approving `repo` scope.
 - 2026-04-18: Defined webhook-management permission target: require explicit repository webhook admin capability (`admin:repo_hook` for OAuth apps; equivalent GitHub App permission is Repository Webhooks read/write). Treat missing webhook-admin permission as a first-class state in API/UI rather than silent failure.
 - 2026-04-18: Documented planned UX/fallback states for implementation: (1) intake card shows managed webhook status (`managed`, `needs_permission`, `error`, `manual`) instead of exposing copy/paste secret by default, (2) webhook provisioning runs automatically after repository selection and during sync retries, (3) permission/admin failures show actionable reconnect/admin messaging, and (4) existing manual webhooks remain accepted as compatibility fallback when managed provisioning cannot complete.
-
+- 2026-04-18: GitNexus impact check before Step 1 edits: `GitHubClient` returned HIGH risk (23 upstream dependents across sync, release tooling, intake views, and tests). Proceeding with additive API changes and targeted regression coverage to avoid breaking existing call sites.
+- 2026-04-18: Updated GitHub OAuth scope config to include `admin:repo_hook` alongside existing scopes so auth flow can request explicit webhook-management capability.
+- 2026-04-18: Added `GitHubWebhookManager` service plus new `GitHubClient` webhook endpoints (`list/create/update`) to auto-provision Relay intake webhooks for selected repositories, storing per-repo managed state in `source.config.managed_webhooks`.
+- 2026-04-18: Idempotency handled by matching existing repo hooks on Relay callback URL and patching the existing hook instead of creating duplicates; sync path now re-runs provisioning safely.
+- 2026-04-18: Provisioning path now always sources secrets from `Source::ensureWebhookSecret()` (encrypted at rest via model casts) and avoids persisting plaintext secrets in webhook status metadata.
+| 2026-04-18 08:55 | Review R001 | plan Step 1: APPROVE |

@@ -74,6 +74,21 @@ class GitHubClient
         ])->json();
     }
 
+    public function listRepositoryWebhooks(string $owner, string $repo): array
+    {
+        return $this->request('get', "/repos/{$owner}/{$repo}/hooks")->json();
+    }
+
+    public function createRepositoryWebhook(string $owner, string $repo, array $payload): array
+    {
+        return $this->request('post', "/repos/{$owner}/{$repo}/hooks", $payload)->json();
+    }
+
+    public function updateRepositoryWebhook(string $owner, string $repo, int $hookId, array $payload): array
+    {
+        return $this->request('patch', "/repos/{$owner}/{$repo}/hooks/{$hookId}", $payload)->json();
+    }
+
     public function allIssues(string $owner, string $repo): array
     {
         return $this->fetchAllPages("/repos/{$owner}/{$repo}/issues", ['state' => 'open']);
