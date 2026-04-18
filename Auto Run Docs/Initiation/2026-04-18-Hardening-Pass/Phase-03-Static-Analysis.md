@@ -51,9 +51,15 @@ Add Laravel Pint (already a dev dep) configuration and introduce PHPStan with La
   - Job has no `needs`, so it runs in parallel with `test` on every push / PR.
   - Verified locally before committing: `composer phpstan` → `[OK] No errors`; `./vendor/bin/pint --test` → `{"result":"pass"}`.
 
-- [ ] Verify end-to-end:
+- [x] Verify end-to-end:
   - Run `php artisan test` to confirm formatting changes did not break runtime behaviour.
   - Run `./vendor/bin/pint --test` and `composer phpstan` — both should exit 0.
   - Run `gitnexus_detect_changes({scope: "all"})` and review the scope. Expected changes: `pint.json`, `phpstan.neon`, `phpstan-baseline.neon`, `composer.json`, `composer.lock`, `.github/workflows/ci.yml`, plus formatting-only edits across `app/`.
+
+  **Notes (2026-04-18):**
+  - `php artisan test` → **755 passed (1731 assertions)** in 24.55s; no regressions from the Pint formatting pass.
+  - `./vendor/bin/pint --test` → `{"result":"pass"}`.
+  - `composer phpstan` → `[OK] No errors` (140 files analysed against the level-5 + baseline config).
+  - `gitnexus_detect_changes({scope: "all"})` → 1 changed file, 0 changed symbols, risk level `low`. The expected `pint.json` / `phpstan.neon` / `phpstan-baseline.neon` / `composer.*` / `.github/workflows/ci.yml` / `app/` formatting edits had already been split into their own commits earlier in the phase (`a08b36d`, `5d1ac7a`, `8e50cd9`, `2e33eb4`), so the working tree is clean apart from in-flight Auto Run docs and a `.gitignore` tweak — no semantic drift to flag.
 
 - [ ] Commit as two logical commits: `style: apply Laravel Pint formatting` (pure formatting) and `chore: add PHPStan with Larastan and wire into CI` (config + CI + baseline). Do not push.
