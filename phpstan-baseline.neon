@@ -939,11 +939,11 @@ parameters:
 		-
 			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
 			identifier: generator.valueType
-			count: 2
+			count: 3
 			path: tests/Feature/PreflightAgentTest.php
 
 		-
-			message: '#^Property App\\Contracts\\AiProvider@anonymous/(?:[^:]+/)?PreflightAgentTest\.php\:357\:\:\$captured is never read, only written\.$#'
+			message: '#^Property App\\Contracts\\AiProvider@anonymous/(?:[^:]+/)?PreflightAgentTest\.php\:\d+\:\:\$captured is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Feature/PreflightAgentTest.php
