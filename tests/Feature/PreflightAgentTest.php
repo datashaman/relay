@@ -499,6 +499,87 @@ class PreflightAgentTest extends TestCase
         $this->assertArrayNotHasKey('q2', $run->clarification_answers);
     }
 
+    public function test_show_clarification_page_renders_other_option_for_choice(): void
+    {
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+        $run->update([
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which auth provider?', 'type' => 'choice', 'options' => ['OAuth', 'Local']],
+            ],
+        ]);
+
+        $response = $this->get(route('preflight.show', $run));
+
+        $response->assertOk();
+        $response->assertSee('Other — explain');
+    }
+
+    public function test_submit_answers_with_other_persists_free_text(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+        $run->update([
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which dashboard?', 'type' => 'choice', 'options' => ['Admin', 'User']],
+            ],
+        ]);
+
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->set('answers.q1', '__other__')
+            ->set('otherText.q1', 'Operations console we built in-house')
+            ->call('submitAnswers')
+            ->assertRedirect(route('intake.index'));
+
+        $run->refresh();
+        $this->assertEquals('Operations console we built in-house', $run->clarification_answers['q1']);
+        Queue::assertPushed(ExecuteStageJob::class);
+    }
+
+    public function test_submit_answers_with_other_and_empty_text_drops_answer(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+        $run->update([
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which dashboard?', 'type' => 'choice', 'options' => ['Admin', 'User']],
+                ['id' => 'q2', 'text' => 'Any constraints?', 'type' => 'text'],
+            ],
+        ]);
+
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->set('answers.q1', '__other__')
+            ->set('otherText.q1', '   ')
+            ->set('answers.q2', 'Must use React')
+            ->call('submitAnswers');
+
+        $run->refresh();
+        $this->assertArrayNotHasKey('q1', $run->clarification_answers);
+        $this->assertEquals('Must use React', $run->clarification_answers['q2']);
+    }
+
+    public function test_submit_answers_canonical_choice_is_unaffected_by_other_text(): void
+    {
+        Queue::fake();
+        [$issue, $run, $stage] = $this->setupRunWithStage();
+        $stage->update(['status' => StageStatus::AwaitingApproval]);
+        $run->update([
+            'clarification_questions' => [
+                ['id' => 'q1', 'text' => 'Which dashboard?', 'type' => 'choice', 'options' => ['Admin', 'User']],
+            ],
+        ]);
+
+        Livewire::test('pages::preflight-clarification', ['run' => $run])
+            ->set('answers.q1', 'Admin')
+            ->set('otherText.q1', 'should be ignored')
+            ->call('submitAnswers');
+
+        $run->refresh();
+        $this->assertEquals('Admin', $run->clarification_answers['q1']);
+    }
+
     public function test_submit_answers_redirects_when_no_pending_stage(): void
     {
         [$issue, $run, $stage] = $this->setupRunWithStage();

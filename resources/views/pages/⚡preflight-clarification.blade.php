@@ -10,10 +10,15 @@ use Livewire\Component;
 new
 #[Title('Preflight Clarification')]
 #[Layout('layouts::app')]
-class extends Component {
+class extends Component
+{
+    public const OTHER_SENTINEL = '__other__';
+
     public Run $run;
 
     public array $answers = [];
+
+    public array $otherText = [];
 
     public function mount(): void
     {
@@ -28,6 +33,7 @@ class extends Component {
 
         foreach ($this->run->clarification_questions ?? [] as $q) {
             $this->answers[$q['id']] = '';
+            $this->otherText[$q['id']] = '';
         }
     }
 
@@ -38,13 +44,30 @@ class extends Component {
             return $this->redirectRoute('intake.index', navigate: true);
         }
 
-        $answers = array_filter($this->answers, fn ($v) => $v !== null && $v !== '');
+        $answers = $this->normalizeAnswers();
         $this->run->update(['clarification_answers' => $answers]);
         $orchestrator->resume($stage);
 
         session()->flash('success', "Answers submitted for \"{$this->run->issue->title}\". Preflight resuming.");
 
         return $this->redirectRoute('intake.index', navigate: true);
+    }
+
+    private function normalizeAnswers(): array
+    {
+        $normalized = [];
+
+        foreach ($this->answers as $id => $value) {
+            if ($value === self::OTHER_SENTINEL) {
+                $value = trim($this->otherText[$id] ?? '');
+            }
+
+            if ($value !== null && $value !== '') {
+                $normalized[$id] = $value;
+            }
+        }
+
+        return $normalized;
     }
 
     public function skipToDoc(OrchestratorService $orchestrator)
@@ -117,12 +140,25 @@ class extends Component {
                             @foreach ($question['options'] as $option)
                                 <label class="flex items-center gap-2 text-sm text-on-surface-variant">
                                     <input type="radio"
-                                           wire:model="answers.{{ $question['id'] }}"
+                                           wire:model.live="answers.{{ $question['id'] }}"
                                            value="{{ $option }}"
                                            class="text-primary">
                                     {{ $option }}
                                 </label>
                             @endforeach
+                            <label class="flex items-center gap-2 text-sm text-on-surface-variant">
+                                <input type="radio"
+                                       wire:model.live="answers.{{ $question['id'] }}"
+                                       value="__other__"
+                                       class="text-primary">
+                                <span>Other — explain</span>
+                            </label>
+                            @if (($answers[$question['id']] ?? '') === '__other__')
+                                <textarea wire:model="otherText.{{ $question['id'] }}"
+                                          rows="3"
+                                          placeholder="Describe the answer none of the options captured…"
+                                          class="mt-2 w-full rounded-md bg-surface-container-lowest border-outline-variant text-on-surface px-3 py-2 text-sm focus:border-primary focus:ring-primary"></textarea>
+                            @endif
                         </div>
                     @else
                         <textarea wire:model="answers.{{ $question['id'] }}"
