@@ -20,8 +20,10 @@
     "vite": "^8.0.0"
   },
   "lint-staged": {
+    "*.php": [
+      "vendor/bin/pint --format agent"
+    ],
     "**/!(*.blade).php": [
-      "vendor/bin/pint --format agent",
       "vendor/bin/phpstan analyse --no-progress --memory-limit=1G"
     ]
   }
