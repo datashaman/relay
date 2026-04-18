@@ -151,6 +151,81 @@ class GitHubWebhookTest extends TestCase
         $this->assertEquals('deleted', $issue->raw_status);
     }
 
+    public function test_issue_closed_rejects_queued_issue(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'owner/repo#1',
+            'title' => 'closeable',
+            'status' => IssueStatus::Queued,
+        ]);
+
+        $response = $this->postWebhook($source, 'issues', $this->issuesPayload('closed', [
+            'issue' => ['state_reason' => 'completed'],
+        ]));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Rejected, $issue->status);
+        $this->assertEquals('closed:completed', $issue->raw_status);
+    }
+
+    public function test_issue_closed_preserves_accepted_status(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'owner/repo#1',
+            'title' => 'in flight',
+            'status' => IssueStatus::Accepted,
+        ]);
+
+        $response = $this->postWebhook($source, 'issues', $this->issuesPayload('closed'));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Accepted, $issue->status);
+        $this->assertEquals('closed', $issue->raw_status);
+    }
+
+    public function test_issue_reopened_returns_sync_rejected_to_queue(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'owner/repo#1',
+            'title' => 'reopenable',
+            'status' => IssueStatus::Rejected,
+            'raw_status' => 'closed:completed',
+        ]);
+
+        $response = $this->postWebhook($source, 'issues', $this->issuesPayload('reopened'));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Queued, $issue->status);
+        $this->assertNull($issue->raw_status);
+    }
+
+    public function test_issue_reopened_does_not_revive_user_rejected_issue(): void
+    {
+        $source = $this->createSource();
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'owner/repo#1',
+            'title' => 'user-rejected',
+            'status' => IssueStatus::Rejected,
+            'raw_status' => null,
+        ]);
+
+        $response = $this->postWebhook($source, 'issues', $this->issuesPayload('reopened'));
+
+        $response->assertOk();
+        $issue = Issue::first();
+        $this->assertEquals(IssueStatus::Rejected, $issue->status, 'user-driven rejection must not resurrect on upstream reopen');
+    }
+
     public function test_idempotency_by_delivery_id(): void
     {
         $source = $this->createSource();

@@ -91,7 +91,10 @@ class GitHubClient
 
     public function allIssues(string $owner, string $repo): array
     {
-        return $this->fetchAllPages("/repos/{$owner}/{$repo}/issues", ['state' => 'open']);
+        // state=all so we can reconcile issues closed on GitHub with local Queued rows.
+        // Tradeoff: O(all-time issues) per sync for large repos; revisit with a
+        // reconcile-only pass if it becomes a problem.
+        return $this->fetchAllPages("/repos/{$owner}/{$repo}/issues", ['state' => 'all']);
     }
 
     public static function mapToIssueAttributes(array $ghIssue): array
@@ -103,6 +106,8 @@ class GitHubClient
             'external_url' => $ghIssue['html_url'] ?? '',
             'assignee' => $ghIssue['assignee']['login'] ?? null,
             'labels' => array_map(fn ($l) => $l['name'], $ghIssue['labels'] ?? []),
+            'state' => $ghIssue['state'] ?? 'open',
+            'state_reason' => $ghIssue['state_reason'] ?? null,
         ];
     }
 

@@ -235,6 +235,70 @@ class IssueSyncTest extends TestCase
         $this->assertEquals('Bug report updated', $issue->title);
     }
 
+    public function test_github_sync_rejects_queued_issues_closed_upstream(): void
+    {
+        $source = $this->createGitHubSource();
+        $this->createToken($source);
+
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'owner/repo#1',
+            'title' => 'Will be closed',
+            'status' => IssueStatus::Queued,
+        ]);
+
+        $this->fakeGitHubIssues([
+            [
+                'number' => 1,
+                'title' => 'Will be closed',
+                'body' => '',
+                'html_url' => 'https://github.com/owner/repo/issues/1',
+                'assignee' => null,
+                'labels' => [],
+                'state' => 'closed',
+                'state_reason' => 'completed',
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'owner/repo#1')->first();
+        $this->assertEquals(IssueStatus::Rejected, $issue->status);
+        $this->assertEquals('closed:completed', $issue->raw_status);
+    }
+
+    public function test_github_sync_preserves_accepted_when_closed_upstream(): void
+    {
+        $source = $this->createGitHubSource();
+        $this->createToken($source);
+
+        Issue::factory()->create([
+            'source_id' => $source->id,
+            'external_id' => 'owner/repo#1',
+            'title' => 'In flight',
+            'status' => IssueStatus::Accepted,
+        ]);
+
+        $this->fakeGitHubIssues([
+            [
+                'number' => 1,
+                'title' => 'In flight',
+                'body' => '',
+                'html_url' => 'https://github.com/owner/repo/issues/1',
+                'assignee' => null,
+                'labels' => [],
+                'state' => 'closed',
+                'state_reason' => 'completed',
+            ],
+        ]);
+
+        SyncSourceIssuesJob::dispatchSync($source);
+
+        $issue = Issue::where('source_id', $source->id)->where('external_id', 'owner/repo#1')->first();
+        $this->assertEquals(IssueStatus::Accepted, $issue->status, 'local pipeline state must win over upstream close');
+        $this->assertEquals('closed:completed', $issue->raw_status);
+    }
+
     public function test_jira_sync_creates_issues(): void
     {
         $source = $this->createJiraSource();

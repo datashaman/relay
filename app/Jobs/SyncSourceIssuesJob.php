@@ -54,6 +54,13 @@ class SyncSourceIssuesJob implements ShouldQueue
             };
 
             foreach ($rawIssues as $issueData) {
+                if (($issueData['state'] ?? 'open') === 'closed') {
+                    $intake->markClosed($this->source, $issueData['external_id'], $issueData['state_reason'] ?? null);
+
+                    continue;
+                }
+
+                unset($issueData['state'], $issueData['state_reason']);
                 $intake->upsertIssue($this->source, $issueData);
             }
 

@@ -80,7 +80,22 @@ class ProcessGitHubWebhookJob implements ShouldQueue
                 return;
             }
 
+            if ($action === 'closed') {
+                $intake->markClosed($source, $externalId, $ghIssue['state_reason'] ?? null);
+                $delivery->update(['processed_at' => now()]);
+
+                return;
+            }
+
+            if ($action === 'reopened') {
+                $intake->markReopened($source, $externalId);
+                $delivery->update(['processed_at' => now()]);
+
+                return;
+            }
+
             $attrs = GitHubClient::mapToIssueAttributes($ghIssue);
+            unset($attrs['state'], $attrs['state_reason']);
             $attrs['external_id'] = $externalId;
             $attrs['repository_id'] = Repository::firstOrCreate(['name' => $repoFullName])->id;
 

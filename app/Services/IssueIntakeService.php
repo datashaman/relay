@@ -28,6 +28,54 @@ class IssueIntakeService
         return $this->filterService->applyToSync($issueData, $source);
     }
 
+    public function markClosed(Source $source, string $externalId, ?string $stateReason = null): ?Issue
+    {
+        $issue = Issue::where('source_id', $source->id)
+            ->where('external_id', $externalId)
+            ->first();
+
+        if (! $issue) {
+            return null;
+        }
+
+        $rawStatus = $stateReason !== null ? 'closed:'.$stateReason : 'closed';
+
+        $transitioned = Issue::where('id', $issue->id)
+            ->where('status', IssueStatus::Queued)
+            ->update(['status' => IssueStatus::Rejected, 'raw_status' => $rawStatus]);
+
+        if ($transitioned === 0) {
+            // Local pipeline state (Accepted / InProgress / Completed / Failed / Stuck)
+            // wins — don't clobber it, just record the upstream close.
+            Issue::where('id', $issue->id)->update(['raw_status' => $rawStatus]);
+        }
+
+        return $issue->fresh();
+    }
+
+    public function markReopened(Source $source, string $externalId): ?Issue
+    {
+        $issue = Issue::where('source_id', $source->id)
+            ->where('external_id', $externalId)
+            ->first();
+
+        if (! $issue) {
+            return null;
+        }
+
+        $syncDrivenClose = $issue->raw_status !== null
+            && (str_starts_with($issue->raw_status, 'closed') || $issue->raw_status === 'deleted');
+
+        if ($issue->status === IssueStatus::Rejected && $syncDrivenClose) {
+            Issue::where('id', $issue->id)->update([
+                'status' => IssueStatus::Queued,
+                'raw_status' => null,
+            ]);
+        }
+
+        return $issue->fresh();
+    }
+
     public function markDeleted(Source $source, string $externalId): ?Issue
     {
         $issue = Issue::where('source_id', $source->id)
