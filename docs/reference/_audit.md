@@ -43,12 +43,12 @@ Legend: ✅ covered · ❌ missing · ➖ intentionally omitted · △ partial /
 
 | Code surface (`app/Services/`) | Reference | How-to | Explanation | Tutorial |
 | --- | --- | --- | --- | --- |
-| `PreflightAgent` | ✅ `reference/agents/preflight.md` (needs Phase-04 log events + collaborators) | ❌ troubleshooting stage-failures | △ architecture.md pipeline diagram | ✅ `tutorials/first-run.md` |
-| `ImplementAgent` | ✅ `reference/agents/implement.md` (needs Phase-04 log events + collaborators) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
-| `VerifyAgent` | ✅ `reference/agents/verify.md` (needs Phase-04 log events + collaborators) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
-| `ReleaseAgent` | ✅ `reference/agents/release.md` (needs Phase-04 log events + collaborators) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
+| `PreflightAgent` | ✅ `reference/agents/preflight.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md pipeline diagram | ✅ `tutorials/first-run.md` |
+| `ImplementAgent` | ✅ `reference/agents/implement.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
+| `VerifyAgent` | ✅ `reference/agents/verify.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
+| `ReleaseAgent` | ✅ `reference/agents/release.md` (Phase-04 log events + collaborators added) | ❌ troubleshooting stage-failures | △ architecture.md | ✅ first-run |
 
-All four agent reference pages predate Phase 04. They must be extended to document the new `PipelineLogger` events, token-usage metrics, and upstream/downstream collaborators. Treat as "partial" for Phase 05 purposes.
+All four agent reference pages were extended in this phase to document the `PipelineLogger` events, token-usage fields, and upstream/downstream collaborators.
 
 ### AI providers
 
@@ -56,21 +56,21 @@ All four agent reference pages predate Phase 04. They must be extended to docume
 | --- | --- | --- | --- | --- |
 | `App\Contracts\AiProvider` (contract) | ❌ | ✅ `how-to/add-ai-provider.md` | △ architecture.md "Provider adapters" | ❌ (candidate for 2nd tutorial) |
 | `AiProviderManager` | ❌ | △ add-ai-provider | △ architecture.md scope cascade | ➖ internal wiring — no user-facing tutorial |
-| `AnthropicProvider` | ❌ `reference/ai-providers/anthropic.md` | △ add-ai-provider | △ architecture.md | ➖ |
-| `OpenAiProvider` | ❌ `reference/ai-providers/openai.md` | △ add-ai-provider | △ architecture.md | ➖ |
-| `GeminiProvider` | ❌ `reference/ai-providers/gemini.md` | △ add-ai-provider | △ architecture.md | ➖ |
-| `ClaudeCodeCliProvider` | ❌ `reference/ai-providers/claude-code-cli.md` | △ add-ai-provider | △ architecture.md | ➖ |
+| `AnthropicProvider` | ✅ `reference/ai-providers/anthropic.md` | △ add-ai-provider | △ architecture.md | ➖ |
+| `OpenAiProvider` | ✅ `reference/ai-providers/openai.md` | △ add-ai-provider | △ architecture.md | ➖ |
+| `GeminiProvider` | ✅ `reference/ai-providers/gemini.md` | △ add-ai-provider | △ architecture.md | ➖ |
+| `ClaudeCodeCliProvider` | ✅ `reference/ai-providers/claude-code-cli.md` | △ add-ai-provider | △ architecture.md | ➖ |
 
 ### Orchestration & domain services
 
 | Code surface (`app/Services/`) | Reference | How-to | Explanation | Tutorial |
 | --- | --- | --- | --- | --- |
-| `OrchestratorService` | ❌ `reference/orchestrator.md` | ❌ troubleshooting stage-failures | △ architecture.md "Orchestrator" | ✅ first-run |
-| `AutonomyResolver` | ❌ `reference/autonomy-resolver.md` | ✅ `how-to/configure-autonomy.md` | △ architecture.md "Autonomy resolution" | ➖ |
-| `FilterRuleService` | ❌ `reference/filter-rules.md` | △ configure-autonomy (escalation only) | △ architecture.md "Intake filters" | ➖ |
-| `EscalationRuleService` | ❌ `reference/escalation-rules.md` | △ configure-autonomy | △ architecture.md | ➖ |
-| `MergeConflictDetector` | ❌ `reference/merge-conflict-detector.md` | ❌ troubleshooting merge-conflicts | △ architecture.md | ➖ |
-| `WorktreeService` | ❌ `reference/worktree-service.md` | ❌ troubleshooting stage-failures | △ architecture.md | ➖ |
+| `OrchestratorService` | ✅ `reference/orchestrator.md` | ❌ troubleshooting stage-failures | △ architecture.md "Orchestrator" | ✅ first-run |
+| `AutonomyResolver` | ✅ `reference/autonomy-resolver.md` | ✅ `how-to/configure-autonomy.md` | △ architecture.md "Autonomy resolution" | ➖ |
+| `FilterRuleService` | ✅ `reference/filter-rules.md` | △ configure-autonomy (escalation only) | △ architecture.md "Intake filters" | ➖ |
+| `EscalationRuleService` | ✅ `reference/escalation-rules.md` | △ configure-autonomy | △ architecture.md | ➖ |
+| `MergeConflictDetector` | ✅ `reference/merge-conflict-detector.md` | ❌ troubleshooting merge-conflicts | △ architecture.md | ➖ |
+| `WorktreeService` | ✅ `reference/worktree-service.md` | ❌ troubleshooting stage-failures | △ architecture.md | ➖ |
 | `GitHubClient` | ❌ (fold into orchestrator/worktree ref?) | ✅ connect-github | △ architecture.md | ➖ |
 | `JiraClient` | ❌ | ✅ connect-jira | △ architecture.md | ➖ |
 | `OauthService` | ❌ | ✅ connect-github / connect-jira | △ architecture.md | ➖ |
@@ -120,10 +120,10 @@ When writing reference pages, link directly to the file/line anchors in `app/Ser
 
 ## 4. Summary — work remaining for Phase 05
 
-1. **Reference (13 pages to add or extend):**
-   - Extend 4 agent pages with Phase-04 log events + collaborators.
-   - Add 4 AI-provider pages under `reference/ai-providers/`.
-   - Add 6 orchestration/service pages at `reference/` root (`orchestrator`, `autonomy-resolver`, `filter-rules`, `escalation-rules`, `merge-conflict-detector`, `worktree-service`).
+1. **Reference (13 pages — ✅ done in this phase):**
+   - Extended 4 agent pages with Phase-04 log events + collaborators.
+   - Added 4 AI-provider pages under `reference/ai-providers/`.
+   - Added 6 orchestration/service pages at `reference/` root (`orchestrator`, `autonomy-resolver`, `filter-rules`, `escalation-rules`, `merge-conflict-detector`, `worktree-service`).
 2. **How-to troubleshooting (4 pages):** index + ai-provider-errors + stage-failures + merge-conflicts.
 3. **Tutorials (1 page):** `configure-custom-ai-provider.md`.
 4. **Index updates:** `docs/README.md` grouped reference index + troubleshooting section. Minimal touch to root `README.md`.

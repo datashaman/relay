@@ -10,7 +10,7 @@ Audit the existing Diataxis structure (`docs/tutorials`, `docs/how-to`, `docs/re
   - Build a gap matrix at `docs/reference/_audit.md` — rows are code surfaces, columns are Diataxis categories, cells mark present/missing. Use it to drive the rest of this phase.
   - Use `gitnexus_query({query: "pipeline stage transition"})` and `gitnexus_query({query: "AI provider call"})` to find any execution flows worth referencing in docs.
 
-- [ ] Write missing reference pages in `docs/reference/`:
+- [x] Write missing reference pages in `docs/reference/`:
   - One markdown file per agent: `preflight-agent.md`, `implement-agent.md`, `verify-agent.md`, `release-agent.md`. Each documents: purpose, inputs, outputs, side effects, error modes, emitted log events (from Phase 04), and upstream/downstream collaborators.
   - One page per AI provider: `ai-providers/anthropic.md`, `openai.md`, `gemini.md`, `claude-code-cli.md`. Document: config keys, required env vars, supported models, request/response shape, token accounting, known limitations.
   - One page per orchestration service: `orchestrator.md`, `autonomy-resolver.md`, `filter-rules.md`, `escalation-rules.md`, `merge-conflict-detector.md`, `worktree-service.md`.
