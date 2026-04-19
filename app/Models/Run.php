@@ -113,6 +113,9 @@ class Run extends Model
         return $this->belongsTo(Repository::class);
     }
 
+    /**
+     * @return HasMany<Stage, $this>
+     */
     public function stages(): HasMany
     {
         return $this->hasMany(Stage::class);

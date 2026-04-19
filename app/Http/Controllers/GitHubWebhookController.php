@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessGitHubIssueCommentJob;
 use App\Jobs\ProcessGitHubWebhookJob;
 use App\Models\Source;
 use App\Models\WebhookDelivery;
@@ -66,6 +67,21 @@ class GitHubWebhookController extends Controller
         if (! $delivery->wasRecentlyCreated) {
             // Re-acking an in-flight duplicate is safe; drop.
             return response()->json(['ok' => true, 'in_flight' => true]);
+        }
+
+        if ($event === 'issue_comment') {
+            // Only ingest comment events when this source has opted into the
+            // on_issue clarification channel. Otherwise drop silently — we
+            // never subscribed but defense-in-depth is cheap.
+            if ($source->clarificationChannel() !== 'on_issue') {
+                $delivery->update(['processed_at' => now(), 'error' => 'comment ignored: channel not on_issue']);
+
+                return response()->json(['ok' => true, 'ignored' => true]);
+            }
+
+            ProcessGitHubIssueCommentJob::dispatch($delivery);
+
+            return response()->json(['ok' => true]);
         }
 
         if ($event !== 'issues') {

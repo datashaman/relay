@@ -8,6 +8,9 @@ use App\Models\Run;
 use App\Models\Stage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Stage>
+ */
 class StageFactory extends Factory
 {
     protected $model = Stage::class;

@@ -8,7 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
+ * @property int $id
+ * @property int $source_id
+ * @property string $external_delivery_id
+ * @property string|null $event_type
+ * @property string|null $action
  * @property array<string, mixed>|null $payload
+ * @property string|null $error
  * @property Carbon|null $processed_at
  * @property bool $wasRecentlyCreated
  * @property-read Source|null $source

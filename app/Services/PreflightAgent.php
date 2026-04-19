@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\StageName;
 use App\Enums\StuckState;
+use App\Jobs\ResumePreflightFromCommentJob;
 use App\Models\Run;
 use App\Models\Stage;
 use App\Models\StageEvent;
@@ -287,8 +288,7 @@ PROMPT;
             return $run->clarification_channel;
         }
 
-        $source = $run->issue->source;
-        $channel = $source ? $source->clarificationChannel() : 'in_app';
+        $channel = $run->issue->source->clarificationChannel();
 
         $run->update(['clarification_channel' => $channel]);
 
@@ -422,13 +422,7 @@ PROMPT;
         $content .= $this->formatClarificationHistory($run);
 
         if ($run->clarification_answers) {
-            $content .= "\n## Clarification Answers\n";
-            $questions = $run->clarification_questions ?? [];
-            foreach ($run->clarification_answers as $questionId => $answer) {
-                $question = collect($questions)->firstWhere('id', $questionId);
-                $questionText = $question['text'] ?? $questionId;
-                $content .= "- **{$questionText}**: {$answer}\n";
-            }
+            $content .= $this->formatClarificationAnswers($run);
         }
 
         $messages[] = ['role' => 'user', 'content' => $content];
@@ -543,18 +537,43 @@ PROMPT;
         $issueContent .= $this->formatClarificationHistory($run);
 
         if (! empty($run->clarification_answers)) {
-            $issueContent .= "\n## Clarification Answers\n";
-            $questions = $run->clarification_questions ?? [];
-            foreach ($run->clarification_answers as $questionId => $answer) {
-                $question = collect($questions)->firstWhere('id', $questionId);
-                $questionText = $question['text'] ?? $questionId;
-                $issueContent .= "- **{$questionText}**: {$answer}\n";
-            }
+            $issueContent .= $this->formatClarificationAnswers($run);
         }
 
         $messages[] = ['role' => 'user', 'content' => $issueContent];
 
         return $messages;
+    }
+
+    /**
+     * Render clarification_answers, splitting per-question structured answers
+     * from a freeform issue-comment reply (sentinel key __comment__).
+     */
+    private function formatClarificationAnswers(Run $run): string
+    {
+        $answers = $run->clarification_answers ?? [];
+        $questions = $run->clarification_questions ?? [];
+        $output = '';
+
+        $structured = $answers;
+        $commentBody = $structured[ResumePreflightFromCommentJob::COMMENT_KEY] ?? null;
+        unset($structured[ResumePreflightFromCommentJob::COMMENT_KEY]);
+
+        if ($structured !== []) {
+            $output .= "\n## Clarification Answers\n";
+            foreach ($structured as $questionId => $answer) {
+                $question = collect($questions)->firstWhere('id', $questionId);
+                $questionText = $question['text'] ?? $questionId;
+                $output .= "- **{$questionText}**: {$answer}\n";
+            }
+        }
+
+        if ($commentBody !== null && $commentBody !== '') {
+            $output .= "\n## Reply from issue comment\n";
+            $output .= $commentBody."\n";
+        }
+
+        return $output;
     }
 
     /**

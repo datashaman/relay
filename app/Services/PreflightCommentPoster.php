@@ -117,20 +117,16 @@ class PreflightCommentPoster
     {
         $token = $this->resolveToken($source);
 
-        if ($source->type->value === 'github') {
-            [$owner, $repo, $number] = $this->parseGitHubExternalId($issue->external_id);
-            (new GitHubClient($token, $this->oauth))->addComment($owner, $repo, $number, $body);
+        match ($source->type->value) {
+            'github' => $this->postGitHubComment($token, $issue, $body),
+            'jira' => (new JiraClient($token, $this->oauth, $source))->addComment((string) $issue->external_id, $body),
+        };
+    }
 
-            return;
-        }
-
-        if ($source->type->value === 'jira') {
-            (new JiraClient($token, $this->oauth, $source))->addComment((string) $issue->external_id, $body);
-
-            return;
-        }
-
-        throw new \RuntimeException('Unsupported source type for comment posting: '.$source->type->value);
+    private function postGitHubComment(OauthToken $token, Issue $issue, string $body): void
+    {
+        [$owner, $repo, $number] = $this->parseGitHubExternalId($issue->external_id);
+        (new GitHubClient($token, $this->oauth))->addComment($owner, $repo, $number, $body);
     }
 
     private function resolveToken(Source $source): OauthToken

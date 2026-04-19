@@ -7,6 +7,9 @@ use App\Models\Issue;
 use App\Models\Run;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Run>
+ */
 class RunFactory extends Factory
 {
     protected $model = Run::class;
