@@ -174,11 +174,13 @@ class SourceManagementTest extends TestCase
     {
         $source = Source::factory()->create(['type' => 'github']);
 
-        // Disconnect has moved to the per-source detail page.
+        // Disconnect has moved to the per-source detail page; the form
+        // has an onsubmit confirm() so an accidental click can't fire it.
         $response = $this->get(route('intake.sources.show', $source));
 
         $response->assertStatus(200);
         $response->assertSee('Disconnect this source', false);
+        $response->assertSee("onsubmit=\"return confirm('Disconnect this source?", false);
     }
 
     public function test_sources_index_displays_session_messages(): void

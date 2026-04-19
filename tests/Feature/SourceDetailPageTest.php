@@ -28,6 +28,7 @@ class SourceDetailPageTest extends TestCase
             'type' => SourceType::GitHub,
             'external_account' => 'octocat',
             'is_active' => true,
+            'sync_error' => null,
             'config' => ['repositories' => ['octocat/hello', 'octocat/world']],
         ]);
 
@@ -35,6 +36,7 @@ class SourceDetailPageTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('octocat');
+        $response->assertSee('Healthy');
         $response->assertSee('Manage');
         $response->assertSee(route('intake.sources.show', $source), false);
     }
