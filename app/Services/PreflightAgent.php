@@ -148,6 +148,7 @@ PROMPT;
     public function __construct(
         private AiProviderManager $providerManager,
         private OrchestratorService $orchestrator,
+        private PreflightCommentPoster $commentPoster,
     ) {}
 
     public function execute(Stage $stage, array $context = []): void
@@ -245,6 +246,11 @@ PROMPT;
         // questions, clear answers so the resume path fires a fresh round.
         $this->archiveClarificationRound($run);
 
+        // Snapshot the source's clarification channel on the Run the first
+        // time clarification opens. A mid-flight Source toggle does NOT
+        // re-route an in-flight Run between channels.
+        $channel = $this->resolveAndSnapshotChannel($run);
+
         $run->update([
             'clarification_questions' => $assessment['questions'],
             'clarification_answers' => null,
@@ -252,16 +258,41 @@ PROMPT;
 
         $this->recordEvent($stage, 'clarification_needed', 'preflight_agent', [
             'round' => $run->preflight_round,
+            'channel' => $channel,
             'questions' => $assessment['questions'],
         ]);
 
         PipelineLogger::event($run, 'preflight.clarification_needed', [
             'stage' => $stage->name->value,
             'round' => $run->preflight_round,
+            'channel' => $channel,
             'questions_count' => count($assessment['questions']),
         ]);
 
+        if ($channel === 'on_issue') {
+            $this->commentPoster->postQuestions($stage, $run, $assessment['questions']);
+        }
+
         $this->orchestrator->pause($stage);
+    }
+
+    /**
+     * Resolve the clarification channel for this Run. If not yet snapshotted,
+     * read it from the Source and persist on the Run; subsequent rounds always
+     * use the snapshot (immune to mid-flight Source toggles).
+     */
+    private function resolveAndSnapshotChannel(Run $run): string
+    {
+        if ($run->clarification_channel !== null) {
+            return $run->clarification_channel;
+        }
+
+        $source = $run->issue->source;
+        $channel = $source ? $source->clarificationChannel() : 'in_app';
+
+        $run->update(['clarification_channel' => $channel]);
+
+        return $channel;
     }
 
     /**
@@ -290,6 +321,8 @@ PROMPT;
     {
         $run = $stage->run;
 
+        $unresolvedQuestions = $run->clarification_questions ?? [];
+
         $this->archiveClarificationRound($run);
 
         $this->recordEvent($stage, 'preflight_no_consensus', 'preflight_agent', [
@@ -302,6 +335,10 @@ PROMPT;
             'attempted_round' => $attemptedRound,
             'max_rounds' => $maxRounds,
         ]);
+
+        if ($run->clarification_channel === 'on_issue') {
+            $this->commentPoster->postNoConsensus($stage, $run, $attemptedRound, $maxRounds, $unresolvedQuestions);
+        }
 
         $this->orchestrator->markStuck($stage, StuckState::PreflightNoConsensus, [
             'attempted_round' => $attemptedRound,
