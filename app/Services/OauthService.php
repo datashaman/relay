@@ -114,6 +114,26 @@ class OauthService
         return $response->json();
     }
 
+    /**
+     * Fetch the Atlassian account profile (id + display name) of the OAuth subject.
+     * Used to capture the bot identity so comment-ingestion can self-loop guard.
+     *
+     * @return array<string, mixed>
+     */
+    public function fetchJiraCurrentUser(string $accessToken): array
+    {
+        $response = Http::withToken($accessToken)
+            ->accept('application/json')
+            ->timeout($this->httpTimeout())
+            ->get('https://api.atlassian.com/me');
+
+        if ($response->failed()) {
+            throw new \RuntimeException('Failed to fetch Jira user: '.$response->body());
+        }
+
+        return $response->json();
+    }
+
     public function revokeJiraToken(OauthToken $token): void
     {
         $config = $this->providerConfig('jira');

@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $clarification_answers
  * @property int $preflight_round
  * @property array<int, array<string, mixed>>|null $clarification_history
+ * @property string|null $clarification_channel
  * @property int $iteration
  * @property bool $has_conflicts
  * @property Carbon|null $conflict_detected_at
@@ -59,6 +60,7 @@ class Run extends Model
         'clarification_answers',
         'preflight_round',
         'clarification_history',
+        'clarification_channel',
         'iteration',
         'has_conflicts',
         'conflict_detected_at',

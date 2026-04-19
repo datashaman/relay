@@ -731,4 +731,74 @@ class OauthFlowTest extends TestCase
         $this->assertEquals('custom-jira-id', $config['client_id']);
         $this->assertEquals('custom-jira-secret', $config['client_secret']);
     }
+
+    public function test_github_callback_captures_bot_login(): void
+    {
+        $state = 'test-state-bot-login';
+        Cache::put("oauth_state:{$state}", 'github', now()->addMinutes(10));
+
+        Http::fake([
+            'github.com/login/oauth/access_token' => Http::response([
+                'access_token' => 'gho_token',
+                'expires_in' => 3600,
+            ]),
+            'api.github.com/user' => Http::response([
+                'login' => 'octocat-bot',
+                'id' => 42,
+            ]),
+        ]);
+
+        $this->get("/oauth/github/callback?code=auth-code&state={$state}");
+
+        $source = Source::where('type', 'github')->first();
+        $this->assertNotNull($source);
+        $this->assertEquals('octocat-bot', $source->bot_login);
+    }
+
+    public function test_jira_callback_captures_bot_account_id(): void
+    {
+        $state = 'test-jira-bot-account';
+        Cache::put("oauth_state:{$state}", 'jira', now()->addMinutes(10));
+
+        Http::fake([
+            'auth.atlassian.com/oauth/token' => Http::response([
+                'access_token' => 'jira-access',
+                'refresh_token' => 'jira-refresh',
+                'expires_in' => 3600,
+            ]),
+            'api.atlassian.com/oauth/token/accessible-resources' => Http::response([
+                ['id' => 'cloud-1', 'name' => 'My Site', 'url' => 'https://my.atlassian.net'],
+            ]),
+            'api.atlassian.com/me' => Http::response([
+                'account_id' => 'aaid:557058:abc-123',
+                'name' => 'Relay Bot',
+            ]),
+        ]);
+
+        $this->get("/oauth/jira/callback?code=auth-code&state={$state}");
+
+        $source = Source::where('type', 'jira')->first();
+        $this->assertNotNull($source);
+        $this->assertEquals('aaid:557058:abc-123', $source->bot_account_id);
+    }
+
+    public function test_github_callback_tolerates_bot_identity_fetch_failure(): void
+    {
+        $state = 'test-state-bot-fail';
+        Cache::put("oauth_state:{$state}", 'github', now()->addMinutes(10));
+
+        Http::fake([
+            'github.com/login/oauth/access_token' => Http::response([
+                'access_token' => 'gho_token',
+                'expires_in' => 3600,
+            ]),
+            'api.github.com/user' => Http::response('boom', 500),
+        ]);
+
+        $this->get("/oauth/github/callback?code=auth-code&state={$state}");
+
+        $source = Source::where('type', 'github')->first();
+        $this->assertNotNull($source);
+        $this->assertNull($source->bot_login);
+    }
 }
