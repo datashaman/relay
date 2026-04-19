@@ -10,6 +10,10 @@ return [
         'stage_job_timeout' => (int) env('RELAY_STAGE_JOB_TIMEOUT', 600),
     ],
 
+    'preflight' => [
+        'max_clarification_rounds' => (int) env('RELAY_PREFLIGHT_MAX_CLARIFICATION_ROUNDS', 3),
+    ],
+
     'worktree' => [
         'git_timeout' => (int) env('RELAY_WORKTREE_GIT_TIMEOUT', 60),
         'stale_lock_seconds' => (int) env('RELAY_WORKTREE_STALE_LOCK_SECONDS', 300),

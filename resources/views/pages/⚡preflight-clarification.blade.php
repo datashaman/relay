@@ -97,6 +97,8 @@ class extends Component
         return [
             'knownFacts' => $this->run->known_facts ?? [],
             'questions' => $this->run->clarification_questions ?? [],
+            'currentRound' => $this->run->preflight_round + 1,
+            'maxRounds' => (int) config('relay.preflight.max_clarification_rounds', 3),
         ];
     }
 };
@@ -114,6 +116,9 @@ class extends Component
         @if ($run->issue->external_id)
             <span class="text-outline">({{ $run->issue->external_id }})</span>
         @endif
+    </p>
+    <p class="mt-2 inline-flex items-center gap-2 rounded-full bg-surface-container-high px-3 py-1 text-xs font-medium text-on-surface-variant">
+        Round {{ $currentRound }} of {{ $maxRounds }}
     </p>
 </div>
 
