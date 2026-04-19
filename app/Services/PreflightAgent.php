@@ -159,7 +159,7 @@ PROMPT;
             'stage' => $stage->name->value,
             'iteration' => $stage->iteration,
             'preflight_round' => $run->preflight_round,
-            'has_clarification_answers' => $run->clarification_answers !== null,
+            'has_clarification_answers' => ! empty($run->clarification_answers),
         ]);
 
         // Explicit skip-to-doc shortcut (user chose "Proceed without answers").
@@ -169,9 +169,11 @@ PROMPT;
             return;
         }
 
-        // A resume with answers means we're entering a new clarification
-        // round. Enforce the round cap before invoking the model again.
-        if ($run->clarification_answers !== null) {
+        // A resume with at least one answer means we're entering a new
+        // clarification round. Enforce the round cap before invoking the
+        // model again. An empty array (form submitted with no answers)
+        // does not consume a round.
+        if (! empty($run->clarification_answers)) {
             $maxRounds = (int) config('relay.preflight.max_clarification_rounds', 3);
             $nextRound = $run->preflight_round + 1;
 
@@ -220,7 +222,7 @@ PROMPT;
 
         $this->recordEvent($stage, 'assessment_complete', 'preflight_agent', [
             'ready' => $assessment['ready'],
-            'round' => $run->fresh()->preflight_round,
+            'round' => $run->preflight_round,
             'known_facts_count' => count($assessment['known_facts']),
             'questions_count' => count($assessment['questions']),
         ]);
@@ -228,7 +230,7 @@ PROMPT;
         PipelineLogger::event($run, 'preflight.assessment_complete', [
             'stage' => $stage->name->value,
             'ready' => $assessment['ready'],
-            'round' => $run->fresh()->preflight_round,
+            'round' => $run->preflight_round,
             'known_facts_count' => count($assessment['known_facts']),
             'questions_count' => count($assessment['questions']),
         ]);
@@ -249,13 +251,13 @@ PROMPT;
         ]);
 
         $this->recordEvent($stage, 'clarification_needed', 'preflight_agent', [
-            'round' => $run->fresh()->preflight_round,
+            'round' => $run->preflight_round,
             'questions' => $assessment['questions'],
         ]);
 
         PipelineLogger::event($run, 'preflight.clarification_needed', [
             'stage' => $stage->name->value,
-            'round' => $run->fresh()->preflight_round,
+            'round' => $run->preflight_round,
             'questions_count' => count($assessment['questions']),
         ]);
 
@@ -411,7 +413,8 @@ PROMPT;
             $roundNumber = $round['round'] ?? '?';
             $content .= "\n### Round {$roundNumber}\n";
             foreach ($answers as $questionId => $answer) {
-                $questionText = $questions[$questionId]['text'] ?? $questionId;
+                $question = $questions->get($questionId);
+                $questionText = is_array($question) ? ($question['text'] ?? $questionId) : $questionId;
                 $content .= "- **{$questionText}**: {$answer}\n";
             }
         }
@@ -503,7 +506,7 @@ PROMPT;
         $issueContent .= $this->formatClarificationHistory($run);
 
         if (! empty($run->clarification_answers)) {
-            $issueContent .= "\n## Clarification Answers (current round)\n";
+            $issueContent .= "\n## Clarification Answers\n";
             $questions = $run->clarification_questions ?? [];
             foreach ($run->clarification_answers as $questionId => $answer) {
                 $question = collect($questions)->firstWhere('id', $questionId);
