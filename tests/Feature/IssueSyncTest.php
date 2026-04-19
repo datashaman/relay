@@ -714,7 +714,7 @@ class IssueSyncTest extends TestCase
         ]);
         $this->createToken($source);
 
-        $response = $this->get(route('intake.index'));
+        $response = $this->get(route('intake.sources.show', $source));
 
         $response->assertSee('Connection timed out');
         $response->assertSee('Sync Error');

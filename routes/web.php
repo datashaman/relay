@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::overview')->name('overview');
 Route::livewire('/intake', 'pages::intake')->name('intake.index');
+Route::livewire('/intake/sources/{source}', 'pages::source-detail')->name('intake.sources.show');
 Route::livewire('/intake/sources/{source}/rules', 'pages::intake-rules')->name('intake.rules.edit');
 
 Route::post('/sources/{source}/test', [SourceController::class, 'testConnection'])->name('sources.test');

@@ -209,9 +209,9 @@ class FrameworkDetectionTest extends TestCase
     {
         $source = $this->createGitHubSource();
 
-        Livewire::test('pages::intake')
-            ->call('saveFramework', $source->id, 'owner/repo', 'rails')
-            ->assertOk();
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('saveFramework', 'owner/repo', 'rails')
+            ->assertHasNoErrors();
 
         $repository = Repository::where('name', 'owner/repo')->firstOrFail();
         $this->assertSame('rails', $repository->framework);

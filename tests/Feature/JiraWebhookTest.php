@@ -253,7 +253,7 @@ class JiraWebhookTest extends TestCase
     {
         $source = $this->createSource();
 
-        $response = $this->get(route('intake.index'));
+        $response = $this->get(route('intake.sources.show', $source));
 
         $response->assertSee(route('webhooks.jira', [$source, $source->webhook_secret]), false);
     }

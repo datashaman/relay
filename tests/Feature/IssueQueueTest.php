@@ -224,11 +224,15 @@ class IssueQueueTest extends TestCase
     {
         $source = $this->createSource(['is_intake_paused' => true]);
 
+        // Intake index shows the paused badge on the summary row.
         $response = $this->get('/intake');
-
         $response->assertStatus(200);
         $response->assertSee('Paused');
-        $response->assertSee('Resume');
+
+        // The Resume action lives on the per-source detail page.
+        $detailResponse = $this->get(route('intake.sources.show', $source));
+        $detailResponse->assertStatus(200);
+        $detailResponse->assertSee('Resume');
     }
 
     public function test_queued_issues_show_accept_reject_buttons(): void
@@ -264,13 +268,14 @@ class IssueQueueTest extends TestCase
             'config' => ['repositories' => ['owner/repo1', 'owner/repo2']],
         ]);
 
-        Livewire::test('pages::intake')
-            ->call('togglePauseRepo', $source->id, 'owner/repo1');
+        // togglePauseRepo moved to the source-detail page component.
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('togglePauseRepo', 'owner/repo1');
 
         $this->assertEquals(['owner/repo1'], $source->fresh()->paused_repositories);
 
-        Livewire::test('pages::intake')
-            ->call('togglePauseRepo', $source->id, 'owner/repo1');
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('togglePauseRepo', 'owner/repo1');
 
         $this->assertEquals([], $source->fresh()->paused_repositories);
     }
@@ -282,8 +287,9 @@ class IssueQueueTest extends TestCase
             'config' => ['repositories' => ['owner/repo1']],
         ]);
 
-        Livewire::test('pages::intake')
-            ->call('togglePauseRepo', $source->id, 'owner/unknown');
+        // togglePauseRepo moved to the source-detail page component.
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('togglePauseRepo', 'owner/unknown');
 
         $this->assertNull($source->fresh()->paused_repositories);
     }
@@ -296,8 +302,9 @@ class IssueQueueTest extends TestCase
             'config' => ['repositories' => ['owner/repo1', 'owner/repo2']],
         ]);
 
-        Livewire::test('pages::intake')
-            ->call('togglePauseRepo', $source->id, 'owner/repo1');
+        // togglePauseRepo moved to the source-detail page component.
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('togglePauseRepo', 'owner/repo1');
 
         $fresh = $source->fresh();
         $this->assertFalse($fresh->is_intake_paused);

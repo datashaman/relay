@@ -303,7 +303,7 @@ class GitHubWebhookTest extends TestCase
     {
         $source = $this->createSource();
 
-        $response = $this->get(route('intake.index'));
+        $response = $this->get(route('intake.sources.show', $source));
 
         $response->assertSee(route('webhooks.github', $source), false);
         $response->assertSee($source->webhook_secret);
