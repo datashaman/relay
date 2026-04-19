@@ -19,18 +19,6 @@ parameters:
 			path: app/Jobs/ExecuteStageJob.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$iteration\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/ResolveConflictsJob.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/ResolveConflictsJob.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>iteration" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -169,12 +157,6 @@ parameters:
 			path: app/Services/JiraClient.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/MergeConflictDetector.php
-
-		-
 			message: '#^Strict comparison using \=\=\= between App\\Enums\\RunStatus and null will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
@@ -217,28 +199,10 @@ parameters:
 			path: app/Services/OauthService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$iteration\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/OrchestratorService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/OrchestratorService.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
 			path: app/Services/PushNotificationService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/WorktreeService.php
 
 		-
 			message: '#^Using nullsafe property access on non\-nullable type App\\Models\\Issue\. Use \-\> instead\.$#'
@@ -247,86 +211,8 @@ parameters:
 			path: app/Services/WorktreeService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
 			message: '#^Match expression does not handle remaining value\: string$#'
 			identifier: match.unhandled
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Method Database\\Seeders\\DemoDataSeeder\:\:stage\(\) should return App\\Models\\Stage but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesCompleted\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesFailed\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesImplementRunning\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesPreflightClarified\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesPreflightClarifying\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesReleaseAwaiting\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesStuckBlocker\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesStuckIteration\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesStuckTimeout\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesStuckUncertain\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Parameter \#1 \$run of method Database\\Seeders\\DemoDataSeeder\:\:stagesVerifyRunning\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
 			count: 1
 			path: database/seeders/DemoDataSeeder.php
 
@@ -335,12 +221,6 @@ parameters:
 			identifier: nullsafe.neverNull
 			count: 3
 			path: database/seeders/DemoDataSeeder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 19
-			path: tests/Feature/ActivityFeedTest.php
 
 		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array\<int, array\{id\: string, name\: string, arguments\: array\<string, mixed\>\}\> and class\-string\<App\\Services\\AiProviders\\AnthropicProvider\>\|class\-string\<App\\Services\\AiProviders\\GeminiProvider\>\|class\-string\<App\\Services\\AiProviders\\OpenAiProvider\> will always evaluate to true\.$#'
@@ -355,31 +235,13 @@ parameters:
 			path: tests/Feature/CoreSchemaTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$events\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 6
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$level\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
 			count: 2
 			path: tests/Feature/CoreSchemaTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$path\.$#'
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$level\.$#'
 			identifier: property.notFound
 			count: 1
 			path: tests/Feature/CoreSchemaTest.php
@@ -409,24 +271,6 @@ parameters:
 			path: tests/Feature/CoreSchemaTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$stages\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$stuck_state\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/CoreSchemaTest.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$target_level\.$#'
 			identifier: property.notFound
 			count: 1
@@ -441,7 +285,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 10
+			count: 5
 			path: tests/Feature/EscalationRuleEngineTest.php
 
 		-
@@ -469,30 +313,6 @@ parameters:
 			path: tests/Feature/EscalationRuleEngineTest.php
 
 		-
-			message: '#^Parameter \#4 \$stageModel of method App\\Services\\EscalationRuleService\:\:resolveWithEscalation\(\) expects App\\Models\\Stage\|null, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Feature/EscalationRuleEngineTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/ExecuteStageJobTest.php
-
-		-
-			message: '#^Method Tests\\Feature\\ExecuteStageJobTest\:\:runningStage\(\) should return App\\Models\\Stage but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/ExecuteStageJobTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/FilterRuleServiceTest.php
-
-		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
 			count: 1
@@ -503,12 +323,6 @@ parameters:
 			identifier: assign.propertyType
 			count: 1
 			path: tests/Feature/GitHubClientTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/ImplementAgentTest.php
 
 		-
 			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
@@ -541,40 +355,10 @@ parameters:
 			path: tests/Feature/IssueSyncTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 12
-			path: tests/Feature/IssueViewTest.php
-
-		-
 			message: '#^Property Tests\\Feature\\JiraClientTest\:\:\$token \(App\\Models\\OauthToken\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: tests/Feature/JiraClientTest.php
-
-		-
-			message: '#^Property Tests\\Feature\\MergeConflictDetectorTest\:\:\$repository \(App\\Models\\Repository\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/MergeConflictDetectorTest.php
-
-		-
-			message: '#^Property Tests\\Feature\\MergeConflictDetectorTest\:\:\$run \(App\\Models\\Run\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/MergeConflictDetectorTest.php
-
-		-
-			message: '#^Property Tests\\Feature\\MergeConflictDetectorTest\:\:\$stage \(App\\Models\\Stage\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/MergeConflictDetectorTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of class App\\Events\\RunStuck constructor expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Feature/MobileBuildTest.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$access_token\.$#'
@@ -643,214 +427,10 @@ parameters:
 			path: tests/Feature/OauthServiceTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$completed_at\.$#'
-			identifier: property.notFound
-			count: 5
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$guidance\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 40
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
-			identifier: property.notFound
-			count: 5
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$iteration\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$preflight_doc\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$run_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$started_at\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 24
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$stuck_state\.$#'
-			identifier: property.notFound
-			count: 6
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$stuck_unread\.$#'
-			identifier: property.notFound
-			count: 3
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:stages\(\)\.$#'
-			identifier: method.notFound
-			count: 11
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of method App\\Services\\OrchestratorService\:\:giveGuidance\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of method App\\Services\\OrchestratorService\:\:restart\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of class App\\Events\\StageTransitioned constructor expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of class App\\Events\\StageTransitioned constructor expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:bounce\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 8
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:complete\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 10
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:complete\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:fail\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:markStuck\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:pause\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:resume\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 4
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:resume\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Parameter \#2 \$repository of method App\\Services\\OrchestratorService\:\:startRun\(\) expects App\\Models\\Repository\|null, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Feature/OrchestratorServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/OverviewTest.php
-
-		-
-			message: '#^Method Tests\\Feature\\OverviewTest\:\:createActiveRun\(\) should return App\\Models\\Run but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/OverviewTest.php
-
-		-
 			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
 			identifier: generator.valueType
 			count: 1
 			path: tests/Feature/PipelineObservabilityTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\OrchestratorService\:\:complete\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Feature/PipelineObservabilityTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\PreflightAgent\:\:execute\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 3
-			path: tests/Feature/PipelineObservabilityTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$clarification_answers\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/PreflightAgentTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$clarification_questions\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/PreflightAgentTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/PreflightAgentTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$known_facts\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/PreflightAgentTest.php
 
 		-
 			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
@@ -859,22 +439,10 @@ parameters:
 			path: tests/Feature/PreflightAgentTest.php
 
 		-
-			message: '#^Property App\\Contracts\\AiProvider@anonymous/(?:[^:]+/)?PreflightAgentTest\.php\:\d+\:\:\$captured is never read, only written\.$#'
+			message: '#^Property App\\Contracts\\AiProvider@anonymous/tests/Feature/PreflightAgentTest\.php\:419\:\:\$captured is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Feature/PreflightAgentTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: tests/Feature/PreflightDocTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$preflight_doc_history\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/PreflightDocTest.php
 
 		-
 			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
@@ -895,32 +463,8 @@ parameters:
 			path: tests/Feature/PreflightDocTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/PushNotificationServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of method App\\Services\\PushNotificationService\:\:notifyStuck\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Feature/PushNotificationServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\PushNotificationService\:\:notifyApprovalNeeded\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Feature/PushNotificationServiceTest.php
-
-		-
-			message: '#^Parameter \#1 \$stage of method App\\Services\\PushNotificationService\:\:shouldNotify\(\) expects App\\Models\\Stage, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 4
-			path: tests/Feature/PushNotificationServiceTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
+			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
+			identifier: generator.valueType
 			count: 2
 			path: tests/Feature/ReleaseAgentTest.php
 
@@ -928,67 +472,7 @@ parameters:
 			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
 			identifier: generator.valueType
 			count: 2
-			path: tests/Feature/ReleaseAgentTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Feature/ResolveConflictsJobTest.php
-
-		-
-			message: '#^Property Tests\\Feature\\ResolveConflictsJobTest\:\:\$run \(App\\Models\\Run\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/ResolveConflictsJobTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 10
-			path: tests/Feature/RunProgressTest.php
-
-		-
-			message: '#^Method Tests\\Feature\\RunProgressTest\:\:createRunningRun\(\) should return App\\Models\\Run but returns Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: return.type
-			count: 1
-			path: tests/Feature/RunProgressTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 15
-			path: tests/Feature/RunTimelineTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
 			path: tests/Feature/VerifyAgentTest.php
-
-		-
-			message: '#^Generator expects value type array\{type\: string, content\: string\|null, tool_calls\: array\|null, usage\: array\|null\}, array\{\} given\.$#'
-			identifier: generator.valueType
-			count: 2
-			path: tests/Feature/VerifyAgentTest.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:events\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: tests/Feature/WorktreeServiceTest.php
-
-		-
-			message: '#^Property Tests\\Feature\\WorktreeServiceTest\:\:\$repository \(App\\Models\\Repository\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/WorktreeServiceTest.php
-
-		-
-			message: '#^Property Tests\\Feature\\WorktreeServiceTest\:\:\$run \(App\\Models\\Run\) does not accept Illuminate\\Database\\Eloquent\\Model\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: tests/Feature/WorktreeServiceTest.php
 
 		-
 			message: '#^Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage\:\:byDefault\(\)\.$#'
@@ -1027,43 +511,7 @@ parameters:
 			path: tests/Unit/Services/FilterRuleServiceTest.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
-
-		-
 			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
 			identifier: method.alreadyNarrowedType
 			count: 1
-			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:event\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageCompleted\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageFailed\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
-			path: tests/Unit/Support/Logging/PipelineLoggerTest.php
-
-		-
-			message: '#^Parameter \#1 \$run of static method App\\Support\\Logging\\PipelineLogger\:\:stageStarted\(\) expects App\\Models\\Run, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 2
 			path: tests/Unit/Support/Logging/PipelineLoggerTest.php

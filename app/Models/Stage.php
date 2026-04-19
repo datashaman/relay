@@ -51,6 +51,9 @@ class Stage extends Model
         return $this->belongsTo(Run::class);
     }
 
+    /**
+     * @return HasMany<StageEvent, $this>
+     */
     public function events(): HasMany
     {
         return $this->hasMany(StageEvent::class);

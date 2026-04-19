@@ -5,6 +5,9 @@ namespace Database\Factories;
 use App\Models\Repository;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Repository>
+ */
 class RepositoryFactory extends Factory
 {
     protected $model = Repository::class;

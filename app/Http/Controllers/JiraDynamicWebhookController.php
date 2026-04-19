@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessJiraIssueCommentJob;
 use App\Jobs\ProcessJiraWebhookJob;
 use App\Models\Source;
 use App\Models\WebhookDelivery;
@@ -64,6 +65,17 @@ class JiraDynamicWebhookController extends Controller
         }
 
         $handledEvents = ['jira:issue_created', 'jira:issue_updated', 'jira:issue_deleted'];
+        $commentEvents = ['comment_created'];
+
+        if (in_array($event, $commentEvents, true)) {
+            // Always dispatch — the job filters on the Run's snapshotted
+            // clarification_channel, not the Source's current setting, so a
+            // mid-flight Source toggle doesn't strand already-pinned on_issue
+            // Runs.
+            ProcessJiraIssueCommentJob::dispatch($delivery);
+
+            return response()->json(['ok' => true]);
+        }
 
         if (! in_array($event, $handledEvents, true)) {
             $delivery->update(['processed_at' => now()]);
@@ -151,8 +163,20 @@ class JiraDynamicWebhookController extends Controller
     {
         $timestamp = $payload['timestamp'] ?? null;
         $issueKey = $payload['issue']['key'] ?? $payload['issue']['id'] ?? null;
+        $commentId = $payload['comment']['id'] ?? null;
 
-        if (! $timestamp || ! $issueKey || ! $event) {
+        if (! $event) {
+            return null;
+        }
+
+        if ($commentId) {
+            // For comment events the comment id is unique per delivery; combine
+            // with the event so a single comment edit produces a distinct id
+            // from the original create.
+            return hash('sha256', $event.':comment:'.$commentId);
+        }
+
+        if (! $timestamp || ! $issueKey) {
             return null;
         }
 

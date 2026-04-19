@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessGitHubIssueCommentJob;
 use App\Jobs\ProcessGitHubWebhookJob;
 use App\Models\Source;
 use App\Models\WebhookDelivery;
@@ -66,6 +67,16 @@ class GitHubWebhookController extends Controller
         if (! $delivery->wasRecentlyCreated) {
             // Re-acking an in-flight duplicate is safe; drop.
             return response()->json(['ok' => true, 'in_flight' => true]);
+        }
+
+        if ($event === 'issue_comment') {
+            // Always dispatch — the job filters on the Run's snapshotted
+            // clarification_channel, not the Source's current setting, so a
+            // mid-flight Source toggle from on_issue → in_app doesn't strand
+            // already-pinned on_issue Runs.
+            ProcessGitHubIssueCommentJob::dispatch($delivery);
+
+            return response()->json(['ok' => true]);
         }
 
         if ($event !== 'issues') {

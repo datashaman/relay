@@ -280,7 +280,7 @@ class GitHubWebhookTest extends TestCase
     {
         $source = $this->createSource();
 
-        $response = $this->postWebhook($source, 'issue_comment', ['action' => 'created']);
+        $response = $this->postWebhook($source, 'pull_request_review', ['action' => 'submitted']);
 
         $response->assertOk();
         $response->assertJson(['ok' => true, 'ignored' => true]);

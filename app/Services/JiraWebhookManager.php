@@ -8,7 +8,28 @@ use Illuminate\Http\Client\RequestException;
 
 class JiraWebhookManager
 {
-    private const EVENTS = ['jira:issue_created', 'jira:issue_updated', 'jira:issue_deleted'];
+    private const BASE_EVENTS = ['jira:issue_created', 'jira:issue_updated', 'jira:issue_deleted'];
+
+    /**
+     * Resolve the Jira event subscription list for this source. When the
+     * preflight clarification channel is on_issue, comment events are added
+     * so reply comments can resume the clarification loop.
+     *
+     * @return array<int, string>
+     */
+    public static function eventsFor(Source $source): array
+    {
+        $events = self::BASE_EVENTS;
+
+        if ($source->clarificationChannel() === 'on_issue') {
+            // Subscribe only to comment_created — comment_updated would just
+            // re-process edits that the agent doesn't act on, generating
+            // noise in webhook_deliveries with no observable effect.
+            $events[] = 'comment_created';
+        }
+
+        return $events;
+    }
 
     public function provisionForSource(Source $source, OauthToken $token, OauthService $oauth): array
     {
@@ -27,12 +48,19 @@ class JiraWebhookManager
         $client = new JiraClient($token, $oauth, $source);
         $callbackUrl = route('webhooks.jira.dynamic', $source);
         $jql = $this->buildJql($projectKeys);
+        $events = self::eventsFor($source);
 
         $existing = $source->config['managed_jira_webhook'] ?? null;
+
+        // Backward-compat: pre-channel state lacks an `events` key. Treat it
+        // as the legacy BASE_EVENTS shape so existing managed webhooks aren't
+        // recreated unnecessarily on the first read.
+        $existingEvents = $existing['events'] ?? self::BASE_EVENTS;
 
         if (
             ($existing['state'] ?? null) === 'managed'
             && ($existing['jql'] ?? null) === $jql
+            && $existingEvents === $events
             && ! empty($existing['webhook_ids'] ?? [])
         ) {
             return $existing;
@@ -42,7 +70,7 @@ class JiraWebhookManager
             $this->deleteExistingWebhooks($client, $source);
 
             $response = $client->createWebhooks($callbackUrl, [[
-                'events' => self::EVENTS,
+                'events' => $events,
                 'jqlFilter' => $jql,
             ]]);
 
@@ -58,6 +86,7 @@ class JiraWebhookManager
                 'webhook_ids' => $created,
                 'expires_at' => now()->addDays(30)->toIso8601String(),
                 'jql' => $jql,
+                'events' => $events,
                 'updated_at' => now()->toIso8601String(),
                 'reason' => null,
             ];

@@ -12,6 +12,14 @@ return [
 
     'preflight' => [
         'max_clarification_rounds' => (int) env('RELAY_PREFLIGHT_MAX_CLARIFICATION_ROUNDS', 3),
+
+        // Fallback bot identities used when a Source has no captured
+        // bot_login / bot_account_id (e.g. during seed data or tests).
+        // The per-Source value always wins.
+        'bot_identity' => [
+            'github' => env('RELAY_PREFLIGHT_BOT_GITHUB_LOGIN'),
+            'jira' => env('RELAY_PREFLIGHT_BOT_JIRA_ACCOUNT_ID'),
+        ],
     ],
 
     'worktree' => [

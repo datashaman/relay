@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\StageName;
 use App\Enums\StuckState;
+use App\Jobs\ResumePreflightFromCommentJob;
 use App\Models\Run;
 use App\Models\Stage;
 use App\Models\StageEvent;
@@ -148,6 +149,7 @@ PROMPT;
     public function __construct(
         private AiProviderManager $providerManager,
         private OrchestratorService $orchestrator,
+        private PreflightCommentPoster $commentPoster,
     ) {}
 
     public function execute(Stage $stage, array $context = []): void
@@ -245,6 +247,11 @@ PROMPT;
         // questions, clear answers so the resume path fires a fresh round.
         $this->archiveClarificationRound($run);
 
+        // Snapshot the source's clarification channel on the Run the first
+        // time clarification opens. A mid-flight Source toggle does NOT
+        // re-route an in-flight Run between channels.
+        $channel = $this->resolveAndSnapshotChannel($run);
+
         $run->update([
             'clarification_questions' => $assessment['questions'],
             'clarification_answers' => null,
@@ -252,16 +259,40 @@ PROMPT;
 
         $this->recordEvent($stage, 'clarification_needed', 'preflight_agent', [
             'round' => $run->preflight_round,
+            'channel' => $channel,
             'questions' => $assessment['questions'],
         ]);
 
         PipelineLogger::event($run, 'preflight.clarification_needed', [
             'stage' => $stage->name->value,
             'round' => $run->preflight_round,
+            'channel' => $channel,
             'questions_count' => count($assessment['questions']),
         ]);
 
+        if ($channel === 'on_issue') {
+            $this->commentPoster->postQuestions($stage, $run, $assessment['questions']);
+        }
+
         $this->orchestrator->pause($stage);
+    }
+
+    /**
+     * Resolve the clarification channel for this Run. If not yet snapshotted,
+     * read it from the Source and persist on the Run; subsequent rounds always
+     * use the snapshot (immune to mid-flight Source toggles).
+     */
+    private function resolveAndSnapshotChannel(Run $run): string
+    {
+        if ($run->clarification_channel !== null) {
+            return $run->clarification_channel;
+        }
+
+        $channel = $run->issue->source->clarificationChannel();
+
+        $run->update(['clarification_channel' => $channel]);
+
+        return $channel;
     }
 
     /**
@@ -290,6 +321,8 @@ PROMPT;
     {
         $run = $stage->run;
 
+        $unresolvedQuestions = $run->clarification_questions ?? [];
+
         $this->archiveClarificationRound($run);
 
         $this->recordEvent($stage, 'preflight_no_consensus', 'preflight_agent', [
@@ -302,6 +335,16 @@ PROMPT;
             'attempted_round' => $attemptedRound,
             'max_rounds' => $maxRounds,
         ]);
+
+        // Snapshot the channel if it wasn't pinned earlier (e.g. an
+        // in-flight Run created before the column existed). Otherwise the
+        // final no-consensus comment never lands on Sources currently set
+        // to on_issue.
+        $channel = $run->clarification_channel ?? $this->resolveAndSnapshotChannel($run);
+
+        if ($channel === 'on_issue') {
+            $this->commentPoster->postNoConsensus($stage, $run, $attemptedRound, $maxRounds, $unresolvedQuestions);
+        }
 
         $this->orchestrator->markStuck($stage, StuckState::PreflightNoConsensus, [
             'attempted_round' => $attemptedRound,
@@ -385,13 +428,7 @@ PROMPT;
         $content .= $this->formatClarificationHistory($run);
 
         if ($run->clarification_answers) {
-            $content .= "\n## Clarification Answers\n";
-            $questions = $run->clarification_questions ?? [];
-            foreach ($run->clarification_answers as $questionId => $answer) {
-                $question = collect($questions)->firstWhere('id', $questionId);
-                $questionText = $question['text'] ?? $questionId;
-                $content .= "- **{$questionText}**: {$answer}\n";
-            }
+            $content .= $this->formatClarificationAnswers($run);
         }
 
         $messages[] = ['role' => 'user', 'content' => $content];
@@ -506,18 +543,43 @@ PROMPT;
         $issueContent .= $this->formatClarificationHistory($run);
 
         if (! empty($run->clarification_answers)) {
-            $issueContent .= "\n## Clarification Answers\n";
-            $questions = $run->clarification_questions ?? [];
-            foreach ($run->clarification_answers as $questionId => $answer) {
-                $question = collect($questions)->firstWhere('id', $questionId);
-                $questionText = $question['text'] ?? $questionId;
-                $issueContent .= "- **{$questionText}**: {$answer}\n";
-            }
+            $issueContent .= $this->formatClarificationAnswers($run);
         }
 
         $messages[] = ['role' => 'user', 'content' => $issueContent];
 
         return $messages;
+    }
+
+    /**
+     * Render clarification_answers, splitting per-question structured answers
+     * from a freeform issue-comment reply (sentinel key __comment__).
+     */
+    private function formatClarificationAnswers(Run $run): string
+    {
+        $answers = $run->clarification_answers ?? [];
+        $questions = $run->clarification_questions ?? [];
+        $output = '';
+
+        $structured = $answers;
+        $commentBody = $structured[ResumePreflightFromCommentJob::COMMENT_KEY] ?? null;
+        unset($structured[ResumePreflightFromCommentJob::COMMENT_KEY]);
+
+        if ($structured !== []) {
+            $output .= "\n## Clarification Answers\n";
+            foreach ($structured as $questionId => $answer) {
+                $question = collect($questions)->firstWhere('id', $questionId);
+                $questionText = $question['text'] ?? $questionId;
+                $output .= "- **{$questionText}**: {$answer}\n";
+            }
+        }
+
+        if ($commentBody !== null && $commentBody !== '') {
+            $output .= "\n## Reply from issue comment\n";
+            $output .= $commentBody."\n";
+        }
+
+        return $output;
     }
 
     /**

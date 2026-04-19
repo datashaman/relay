@@ -86,6 +86,56 @@ class GitHubWebhookManagerTest extends TestCase
             && str_contains((string) $request->url(), '/repos/owner/repo/hooks'));
     }
 
+    public function test_events_for_includes_issue_comment_when_channel_is_on_issue(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::GitHub,
+            'config' => ['preflight' => ['clarification_channel' => 'on_issue']],
+        ]);
+
+        $events = GitHubWebhookManager::eventsFor($source);
+
+        $this->assertContains('issues', $events);
+        $this->assertContains('issue_comment', $events);
+    }
+
+    public function test_events_for_omits_issue_comment_for_in_app_channel(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::GitHub,
+            'config' => [],
+        ]);
+
+        $events = GitHubWebhookManager::eventsFor($source);
+
+        $this->assertContains('issues', $events);
+        $this->assertNotContains('issue_comment', $events);
+    }
+
+    public function test_provisioning_subscribes_to_issue_comment_for_on_issue_channel(): void
+    {
+        [$source, $token] = $this->createSourceWithToken([
+            'preflight' => ['clarification_channel' => 'on_issue'],
+        ]);
+
+        Http::fake([
+            'api.github.com/repos/owner/repo/hooks' => Http::sequence()
+                ->push([], 200)
+                ->push(['id' => 444], 201),
+        ]);
+
+        app(GitHubWebhookManager::class)->provisionForSelectedRepositories($source, $token, app(OauthService::class));
+
+        Http::assertSent(function ($request) {
+            if ($request->method() !== 'POST') {
+                return false;
+            }
+            $body = $request->data();
+
+            return in_array('issue_comment', $body['events'] ?? [], true);
+        });
+    }
+
     public function test_provisioning_marks_permission_failures_as_needs_permission(): void
     {
         [$source, $token] = $this->createSourceWithToken();

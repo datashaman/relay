@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
  * @property bool $is_intake_paused
  * @property array<int, string>|null $paused_repositories
  * @property array<string, mixed>|null $config
+ * @property string|null $bot_login
+ * @property string|null $bot_account_id
  */
 class Source extends Model
 {
@@ -24,6 +26,8 @@ class Source extends Model
         'name',
         'type',
         'external_account',
+        'bot_login',
+        'bot_account_id',
         'last_synced_at',
         'is_active',
         'is_intake_paused',
@@ -37,6 +41,17 @@ class Source extends Model
         'webhook_last_delivery_at',
         'webhook_last_error',
     ];
+
+    /**
+     * Resolve the preflight clarification channel for this source.
+     * Stored under config.preflight.clarification_channel; defaults to 'in_app'.
+     */
+    public function clarificationChannel(): string
+    {
+        $channel = $this->config['preflight']['clarification_channel'] ?? 'in_app';
+
+        return in_array($channel, ['in_app', 'on_issue'], true) ? $channel : 'in_app';
+    }
 
     protected function casts(): array
     {

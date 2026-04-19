@@ -9,7 +9,25 @@ use Illuminate\Support\Arr;
 
 class GitHubWebhookManager
 {
-    private const EVENTS = ['issues'];
+    private const BASE_EVENTS = ['issues'];
+
+    /**
+     * Resolve the GitHub event subscription list for this source. When the
+     * preflight clarification channel is on_issue, comment events are added
+     * so reply comments can resume the clarification loop.
+     *
+     * @return array<int, string>
+     */
+    public static function eventsFor(Source $source): array
+    {
+        $events = self::BASE_EVENTS;
+
+        if ($source->clarificationChannel() === 'on_issue') {
+            $events[] = 'issue_comment';
+        }
+
+        return $events;
+    }
 
     public function provisionForSelectedRepositories(Source $source, OauthToken $token, OauthService $oauth): array
     {
@@ -27,6 +45,7 @@ class GitHubWebhookManager
         $secret = $source->ensureWebhookSecret();
         $callbackUrl = route('webhooks.github', $source);
         $client = new GitHubClient($token, $oauth);
+        $events = self::eventsFor($source);
 
         $states = Arr::wrap($source->config['managed_webhooks'] ?? []);
         $managed = 0;
@@ -36,7 +55,7 @@ class GitHubWebhookManager
         foreach ($repos as $repoFullName) {
             try {
                 [$owner, $repo] = $this->splitRepository($repoFullName);
-                $hook = $this->createOrUpdateRelayWebhook($client, $owner, $repo, $callbackUrl, $secret);
+                $hook = $this->createOrUpdateRelayWebhook($client, $owner, $repo, $callbackUrl, $secret, $events);
 
                 $managed++;
                 $states[$repoFullName] = [
@@ -93,12 +112,16 @@ class GitHubWebhookManager
         ];
     }
 
-    private function createOrUpdateRelayWebhook(GitHubClient $client, string $owner, string $repo, string $callbackUrl, string $secret): array
+    /**
+     * @param  array<int, string>  $events
+     * @return array<string, mixed>
+     */
+    private function createOrUpdateRelayWebhook(GitHubClient $client, string $owner, string $repo, string $callbackUrl, string $secret, array $events): array
     {
         $payload = [
             'name' => 'web',
             'active' => true,
-            'events' => self::EVENTS,
+            'events' => $events,
             'config' => [
                 'url' => $callbackUrl,
                 'content_type' => 'json',

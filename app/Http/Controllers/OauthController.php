@@ -63,6 +63,10 @@ class OauthController extends Controller
                 ['name' => ucfirst($provider).' Connection', 'is_active' => true],
             );
 
+            if ($provider === 'github') {
+                $this->captureGitHubBotIdentity($source, $tokenData);
+            }
+
             $this->oauth->storeToken($source, $provider, $tokenData);
 
             if ($provider === 'github' && empty($source->config['repositories'] ?? [])) {
@@ -149,6 +153,7 @@ class OauthController extends Controller
                 $source->update(['config' => ['cloud_id' => $site['id'], 'site_url' => $site['url'] ?? null]]);
             }
 
+            $this->captureJiraBotIdentity($source, $tokenData);
             $this->oauth->storeToken($source, 'jira', $tokenData);
 
             if (empty($source->config['projects'] ?? [])) {
@@ -181,6 +186,49 @@ class OauthController extends Controller
         }
 
         return $tokenData['account_name'] ?? $provider;
+    }
+
+    /**
+     * Persist the GitHub login of the OAuth subject so comment-ingestion can
+     * skip comments authored by the bot itself (avoids self-clarification loops).
+     * Best-effort — silent on fetch failure.
+     */
+    private function captureGitHubBotIdentity(Source $source, array $tokenData): void
+    {
+        try {
+            $user = $this->oauth->fetchGitHubUser($tokenData['access_token']);
+        } catch (\RuntimeException) {
+            return;
+        }
+
+        $login = $user['login'] ?? null;
+
+        if (! $login) {
+            return;
+        }
+
+        $source->update(['bot_login' => $login]);
+    }
+
+    /**
+     * Persist the Atlassian accountId of the OAuth subject so Jira comment
+     * ingestion can self-loop guard. Best-effort — silent on fetch failure.
+     */
+    private function captureJiraBotIdentity(Source $source, array $tokenData): void
+    {
+        try {
+            $me = $this->oauth->fetchJiraCurrentUser($tokenData['access_token']);
+        } catch (\RuntimeException) {
+            return;
+        }
+
+        $accountId = $me['account_id'] ?? $me['accountId'] ?? null;
+
+        if (! $accountId) {
+            return;
+        }
+
+        $source->update(['bot_account_id' => $accountId]);
     }
 
     private function getJiraPendingCacheKey(): string

@@ -11,6 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
+ * @property int $id
+ * @property int $source_id
+ * @property string $external_id
+ * @property string $title
+ * @property string|null $body
+ * @property string|null $external_url
+ * @property string|null $assignee
  * @property IssueStatus $status
  * @property array<int, string>|null $labels
  * @property bool $auto_accepted
