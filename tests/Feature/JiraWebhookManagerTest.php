@@ -136,6 +136,71 @@ class JiraWebhookManagerTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_events_for_includes_comment_events_when_channel_is_on_issue(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::Jira,
+            'config' => [
+                'cloud_id' => 'cloud-x',
+                'preflight' => ['clarification_channel' => 'on_issue'],
+            ],
+        ]);
+
+        $events = JiraWebhookManager::eventsFor($source);
+
+        $this->assertContains('jira:issue_created', $events);
+        $this->assertContains('comment_created', $events);
+        $this->assertContains('comment_updated', $events);
+    }
+
+    public function test_events_for_omits_comment_events_for_in_app_channel(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::Jira,
+            'config' => ['cloud_id' => 'cloud-x'],
+        ]);
+
+        $events = JiraWebhookManager::eventsFor($source);
+
+        $this->assertContains('jira:issue_created', $events);
+        $this->assertNotContains('comment_created', $events);
+    }
+
+    public function test_channel_change_triggers_recreate_with_new_events(): void
+    {
+        [$source, $token] = $this->createSourceWithToken([
+            'managed_jira_webhook' => [
+                'state' => 'managed',
+                'webhook_ids' => [555],
+                'expires_at' => now()->addDays(30)->toIso8601String(),
+                'jql' => 'project in ("ACME", "REL")',
+                'events' => ['jira:issue_created', 'jira:issue_updated', 'jira:issue_deleted'],
+                'updated_at' => now()->subDay()->toIso8601String(),
+                'reason' => null,
+            ],
+            'preflight' => ['clarification_channel' => 'on_issue'],
+        ]);
+
+        Http::fake([
+            'api.atlassian.com/ex/jira/cloud-123/rest/api/3/webhook' => Http::sequence()
+                ->push([], 202)
+                ->push([
+                    'webhookRegistrationResult' => [['createdWebhookId' => 666]],
+                ], 200),
+        ]);
+
+        app(JiraWebhookManager::class)->provisionForSource($source, $token, app(OauthService::class));
+
+        Http::assertSent(function ($request) {
+            if ($request->method() !== 'POST') {
+                return false;
+            }
+            $body = $request->data();
+
+            return in_array('comment_created', $body['webhooks'][0]['events'] ?? [], true);
+        });
+    }
+
     public function test_provision_marks_permission_errors(): void
     {
         [$source, $token] = $this->createSourceWithToken();

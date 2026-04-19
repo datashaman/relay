@@ -224,6 +224,89 @@ class SourceDetailPageTest extends TestCase
         $response->assertSee('Disconnect this source');
     }
 
+    public function test_source_detail_page_renders_clarification_channel_toggle(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::GitHub,
+            'is_active' => true,
+            'config' => ['repositories' => ['octocat/hello']],
+        ]);
+
+        $response = $this->get(route('intake.sources.show', $source));
+
+        $response->assertStatus(200);
+        $response->assertSee('Preflight Clarification');
+        $response->assertSee('In-app');
+        $response->assertSee('On issue');
+        $response->assertSee('clarification-channel-in-app', false);
+        $response->assertSee('clarification-channel-on-issue', false);
+    }
+
+    public function test_save_clarification_channel_updates_source_config(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::GitHub,
+            'is_active' => true,
+            'config' => ['repositories' => []],
+        ]);
+
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('saveClarificationChannel', 'on_issue');
+
+        $source->refresh();
+        $this->assertSame('on_issue', $source->config['preflight']['clarification_channel']);
+        $this->assertSame('on_issue', $source->clarificationChannel());
+    }
+
+    public function test_save_clarification_channel_rejects_invalid_value(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::GitHub,
+            'is_active' => true,
+            'config' => ['repositories' => []],
+        ]);
+
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('saveClarificationChannel', 'bogus');
+
+        $source->refresh();
+        $this->assertSame('in_app', $source->clarificationChannel());
+    }
+
+    public function test_save_clarification_channel_reprovisions_github_webhooks(): void
+    {
+        $source = Source::factory()->create([
+            'type' => SourceType::GitHub,
+            'external_account' => 'octocat',
+            'is_active' => true,
+            'config' => ['repositories' => ['owner/repo']],
+        ]);
+        OauthToken::factory()->create([
+            'source_id' => $source->id,
+            'provider' => 'github',
+            'access_token' => 'gho_test',
+            'expires_at' => now()->addHour(),
+        ]);
+
+        Http::fake([
+            'api.github.com/repos/owner/repo/hooks' => Http::sequence()
+                ->push([], 200)
+                ->push(['id' => 999], 201),
+        ]);
+
+        Livewire::test('pages::source-detail', ['source' => $source])
+            ->call('saveClarificationChannel', 'on_issue');
+
+        Http::assertSent(function ($request) {
+            if ($request->method() !== 'POST') {
+                return false;
+            }
+            $body = $request->data();
+
+            return in_array('issue_comment', $body['events'] ?? [], true);
+        });
+    }
+
     public function test_source_detail_page_shows_manage_link_back_to_intake(): void
     {
         $source = Source::factory()->create([

@@ -9,7 +9,9 @@ use App\Models\Repository;
 use App\Models\Source;
 use App\Services\FrameworkDetector;
 use App\Services\GitHubClient;
+use App\Services\GitHubWebhookManager;
 use App\Services\JiraClient;
+use App\Services\JiraWebhookManager;
 use App\Services\OauthService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -120,6 +122,52 @@ class extends Component
     public function cancelEditFramework(string $repoFullName): void
     {
         unset($this->editingFramework[$repoFullName]);
+    }
+
+    /**
+     * Persist the preflight clarification channel for this source and
+     * re-provision webhooks so the comment-event subscription is added or
+     * removed to match the new channel.
+     */
+    public function saveClarificationChannel(string $channel): void
+    {
+        if (! in_array($channel, ['in_app', 'on_issue'], true)) {
+            session()->flash('error', 'Unknown clarification channel.');
+
+            return;
+        }
+
+        $config = $this->source->config ?? [];
+        $config['preflight'] = array_merge($config['preflight'] ?? [], [
+            'clarification_channel' => $channel,
+        ]);
+        $this->source->update(['config' => $config]);
+        $this->source->refresh();
+
+        $token = OauthToken::query()
+            ->where('source_id', $this->source->id)
+            ->where('provider', $this->source->type->value)
+            ->first();
+
+        if ($token) {
+            $oauth = app(OauthService::class);
+
+            try {
+                if ($this->source->type->value === 'github') {
+                    app(GitHubWebhookManager::class)->provisionForSelectedRepositories($this->source, $token, $oauth);
+                } else {
+                    app(JiraWebhookManager::class)->provisionForSource($this->source, $token, $oauth);
+                }
+            } catch (\Throwable $e) {
+                session()->flash('error', 'Channel saved but webhook re-provision failed: '.$e->getMessage());
+
+                return;
+            }
+        }
+
+        session()->flash('success', $channel === 'on_issue'
+            ? 'Clarification questions will be posted as issue comments.'
+            : 'Clarification questions will appear in-app.');
     }
 
     public function saveFramework(string $repoFullName, string $framework): void
@@ -272,6 +320,7 @@ class extends Component
             'onlyMine' => ! empty($this->source->config['only_mine']),
             'onlyActiveSprint' => ! empty($this->source->config['only_active_sprint']),
             'jiraStatuses' => $this->source->config['statuses'] ?? [],
+            'clarificationChannel' => $this->source->clarificationChannel(),
         ];
     }
 };
@@ -497,6 +546,36 @@ class extends Component
                 @endif
             </div>
         @endif
+    </section>
+
+    {{-- Preflight clarification channel --}}
+    <section class="bg-surface-container-low rounded-xl p-4 space-y-2" data-testid="clarification-channel-section">
+        <h2 class="font-label text-[10px] text-outline uppercase tracking-widest">Preflight Clarification</h2>
+        <p class="text-xs text-on-surface-variant leading-snug">
+            Where the Preflight agent should ask follow-up questions when an issue is ambiguous.
+        </p>
+        <div class="flex flex-col gap-1.5">
+            <label class="flex items-center gap-2 text-sm text-on-surface">
+                <input type="radio"
+                       name="clarification_channel"
+                       value="in_app"
+                       wire:click="saveClarificationChannel('in_app')"
+                       @if ($clarificationChannel === 'in_app') checked @endif
+                       class="text-primary"
+                       data-testid="clarification-channel-in-app">
+                <span>In-app <span class="text-on-surface-variant">(default — answer in the Relay UI)</span></span>
+            </label>
+            <label class="flex items-center gap-2 text-sm text-on-surface">
+                <input type="radio"
+                       name="clarification_channel"
+                       value="on_issue"
+                       wire:click="saveClarificationChannel('on_issue')"
+                       @if ($clarificationChannel === 'on_issue') checked @endif
+                       class="text-primary"
+                       data-testid="clarification-channel-on-issue">
+                <span>On issue <span class="text-on-surface-variant">(post comments on the source issue)</span></span>
+            </label>
+        </div>
     </section>
 
     {{-- Webhook section --}}
