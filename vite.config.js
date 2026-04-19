@@ -16,6 +16,7 @@ export default defineConfig({
                 '**/storage/framework/views/**',
                 '**/storage/relay-repos/**',
                 '**/storage/logs/**',
+                '**/.claude/worktrees/**',
             ],
         },
     },
