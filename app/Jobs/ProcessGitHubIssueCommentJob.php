@@ -94,6 +94,7 @@ class ProcessGitHubIssueCommentJob implements ShouldQueue
     {
         return Run::query()
             ->where('issue_id', $issue->id)
+            ->where('clarification_channel', 'on_issue')
             ->whereNotNull('clarification_questions')
             ->whereHas('stages', function ($q) {
                 $q->where('name', 'preflight')

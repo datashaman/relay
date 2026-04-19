@@ -65,15 +65,13 @@ class JiraDynamicWebhookController extends Controller
         }
 
         $handledEvents = ['jira:issue_created', 'jira:issue_updated', 'jira:issue_deleted'];
-        $commentEvents = ['comment_created', 'comment_updated'];
+        $commentEvents = ['comment_created'];
 
         if (in_array($event, $commentEvents, true)) {
-            if ($source->clarificationChannel() !== 'on_issue') {
-                $delivery->update(['processed_at' => now(), 'error' => 'comment ignored: channel not on_issue']);
-
-                return response()->json(['ok' => true, 'ignored' => true]);
-            }
-
+            // Always dispatch — the job filters on the Run's snapshotted
+            // clarification_channel, not the Source's current setting, so a
+            // mid-flight Source toggle doesn't strand already-pinned on_issue
+            // Runs.
             ProcessJiraIssueCommentJob::dispatch($delivery);
 
             return response()->json(['ok' => true]);

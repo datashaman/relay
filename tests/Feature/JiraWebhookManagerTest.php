@@ -150,7 +150,7 @@ class JiraWebhookManagerTest extends TestCase
 
         $this->assertContains('jira:issue_created', $events);
         $this->assertContains('comment_created', $events);
-        $this->assertContains('comment_updated', $events);
+        $this->assertNotContains('comment_updated', $events);
     }
 
     public function test_events_for_omits_comment_events_for_in_app_channel(): void

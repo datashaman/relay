@@ -22,8 +22,10 @@ class JiraWebhookManager
         $events = self::BASE_EVENTS;
 
         if ($source->clarificationChannel() === 'on_issue') {
+            // Subscribe only to comment_created — comment_updated would just
+            // re-process edits that the agent doesn't act on, generating
+            // noise in webhook_deliveries with no observable effect.
             $events[] = 'comment_created';
-            $events[] = 'comment_updated';
         }
 
         return $events;

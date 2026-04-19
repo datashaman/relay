@@ -336,7 +336,13 @@ PROMPT;
             'max_rounds' => $maxRounds,
         ]);
 
-        if ($run->clarification_channel === 'on_issue') {
+        // Snapshot the channel if it wasn't pinned earlier (e.g. an
+        // in-flight Run created before the column existed). Otherwise the
+        // final no-consensus comment never lands on Sources currently set
+        // to on_issue.
+        $channel = $run->clarification_channel ?? $this->resolveAndSnapshotChannel($run);
+
+        if ($channel === 'on_issue') {
             $this->commentPoster->postNoConsensus($stage, $run, $attemptedRound, $maxRounds, $unresolvedQuestions);
         }
 

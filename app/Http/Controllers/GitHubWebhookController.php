@@ -70,15 +70,10 @@ class GitHubWebhookController extends Controller
         }
 
         if ($event === 'issue_comment') {
-            // Only ingest comment events when this source has opted into the
-            // on_issue clarification channel. Otherwise drop silently — we
-            // never subscribed but defense-in-depth is cheap.
-            if ($source->clarificationChannel() !== 'on_issue') {
-                $delivery->update(['processed_at' => now(), 'error' => 'comment ignored: channel not on_issue']);
-
-                return response()->json(['ok' => true, 'ignored' => true]);
-            }
-
+            // Always dispatch — the job filters on the Run's snapshotted
+            // clarification_channel, not the Source's current setting, so a
+            // mid-flight Source toggle from on_issue → in_app doesn't strand
+            // already-pinned on_issue Runs.
             ProcessGitHubIssueCommentJob::dispatch($delivery);
 
             return response()->json(['ok' => true]);

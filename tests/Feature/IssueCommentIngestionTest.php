@@ -40,7 +40,7 @@ class IssueCommentIngestionTest extends TestCase
         ]);
     }
 
-    private function setupAwaitingPreflight(Source $source, string $externalId = 'octocat/repo#1'): array
+    private function setupAwaitingPreflight(Source $source, string $externalId = 'octocat/repo#1', string $runChannel = 'on_issue'): array
     {
         $repository = Repository::factory()->create(['name' => 'octocat/repo']);
         $issue = Issue::factory()->create([
@@ -53,7 +53,7 @@ class IssueCommentIngestionTest extends TestCase
             'issue_id' => $issue->id,
             'repository_id' => $repository->id,
             'status' => RunStatus::Running,
-            'clarification_channel' => 'on_issue',
+            'clarification_channel' => $runChannel,
             'clarification_questions' => [
                 ['id' => 'q1', 'text' => 'Which?', 'type' => 'text'],
             ],
@@ -150,16 +150,42 @@ class IssueCommentIngestionTest extends TestCase
         $this->assertStringContainsString('bot', $delivery->fresh()->error);
     }
 
-    public function test_github_issue_comment_for_in_app_source_is_dropped_at_controller(): void
+    public function test_github_issue_comment_dropped_when_run_pinned_in_app(): void
     {
-        Queue::fake();
+        // Source channel is irrelevant — the controller always dispatches and
+        // the processing job filters on the Run's snapshotted channel. Here
+        // both the Source and the Run are in_app, so the resume job must
+        // never be queued even though the controller-level dispatch happens.
+        Queue::fake([ResumePreflightFromCommentJob::class]);
         $source = $this->createGitHubSource('in_app');
-        [$issue, $run, $stage] = $this->setupAwaitingPreflight($source);
+        [$issue, $run, $stage] = $this->setupAwaitingPreflight($source, runChannel: 'in_app');
 
         $response = $this->postGitHubComment($source, $this->commentPayload('hello.', 'real-user'));
 
         $response->assertOk();
-        Queue::assertNotPushed(ProcessGitHubIssueCommentJob::class);
+        $delivery = WebhookDelivery::where('source_id', $source->id)->latest('id')->first();
+        (new ProcessGitHubIssueCommentJob($delivery))->handle();
+
+        Queue::assertNotPushed(ResumePreflightFromCommentJob::class);
+    }
+
+    public function test_github_issue_comment_dispatches_when_run_pinned_on_issue_even_if_source_toggled_to_in_app(): void
+    {
+        // The Source has been toggled to in_app mid-flight, but the Run was
+        // pinned to on_issue when clarification opened. The comment must
+        // still flow through and resume the Run so the existing clarification
+        // loop isn't stranded.
+        Queue::fake([ResumePreflightFromCommentJob::class]);
+        $source = $this->createGitHubSource('in_app');
+        [$issue, $run, $stage] = $this->setupAwaitingPreflight($source, runChannel: 'on_issue');
+
+        $response = $this->postGitHubComment($source, $this->commentPayload('hello.', 'real-user'));
+
+        $response->assertOk();
+        $delivery = WebhookDelivery::where('source_id', $source->id)->latest('id')->first();
+        (new ProcessGitHubIssueCommentJob($delivery))->handle();
+
+        Queue::assertPushed(ResumePreflightFromCommentJob::class);
     }
 
     public function test_github_comment_with_no_active_run_is_dropped(): void
