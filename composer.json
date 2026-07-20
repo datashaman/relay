@@ -14,9 +14,9 @@
         "laravel/reverb": "^1.10",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.0",
-        "nativephp/electron": "*",
-        "nativephp/laravel": "*",
-        "nativephp/mobile": "*"
+        "nativephp/electron": "dev-main",
+        "nativephp/laravel": "dev-main",
+        "nativephp/mobile": "dev-main"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
