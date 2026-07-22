@@ -20,6 +20,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "infocyph/phpprobe": "^0.4",
         "larastan/larastan": "^3.9",
         "laravel/boost": "^2.4",
         "laravel/pail": "^1.2.5",
