@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e3ce56c21810dec2d32d807af1e29113",
+    "content-hash": "fcca4294a393b9b6495daf8ba3fec807",
     "packages": [
         {
             "name": "brick/math",
@@ -7674,6 +7674,68 @@
             "time": "2026-01-28T22:20:33+00:00"
         },
         {
+            "name": "infocyph/phpprobe",
+            "version": "0.4.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/infocyph/PHPProbe.git",
+                "reference": "56026ed0a1b8c9ae579973ff62d8fc91004edef7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/infocyph/PHPProbe/zipball/56026ed0a1b8c9ae579973ff62d8fc91004edef7",
+                "reference": "56026ed0a1b8c9ae579973ff62d8fc91004edef7",
+                "shasum": ""
+            },
+            "require": {
+                "nikic/php-parser": "^5.7",
+                "php": ">=8.2",
+                "phpstan/phpdoc-parser": "^2.3"
+            },
+            "require-dev": {
+                "laravel/pint": ">=1.0 <2.0",
+                "pestphp/pest": ">=3.0 <5.0",
+                "rector/rector": ">=2.0 <3.0",
+                "squizlabs/php_codesniffer": ">=3.9 <5.0"
+            },
+            "bin": [
+                "bin/phpprobe"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Infocyph\\PHPProbe\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "infocyph",
+                    "email": "infocyph@gmail.com"
+                },
+                {
+                    "name": "abmmhasan",
+                    "email": "abmmhasan@gmail.com"
+                }
+            ],
+            "description": "Standalone PHP syntax and duplicate code checker.",
+            "keywords": [
+                "copy-paste-detection",
+                "duplicate-code",
+                "infocyph",
+                "php",
+                "syntax"
+            ],
+            "support": {
+                "issues": "https://github.com/infocyph/PHPProbe/issues",
+                "source": "https://github.com/infocyph/PHPProbe/tree/0.4.4"
+            },
+            "time": "2026-05-16T16:07:02+00:00"
+        },
+        {
             "name": "larastan/larastan",
             "version": "v3.9.6",
             "source": {
@@ -8467,6 +8529,53 @@
                 "source": "https://github.com/phar-io/version/tree/3.2.1"
             },
             "time": "2022-02-21T01:04:05+00:00"
+        },
+        {
+            "name": "phpstan/phpdoc-parser",
+            "version": "2.3.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpstan/phpdoc-parser.git",
+                "reference": "fb19eedd2bb67ff8cf7a5502ad329e701d6398a3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/fb19eedd2bb67ff8cf7a5502ad329e701d6398a3",
+                "reference": "fb19eedd2bb67ff8cf7a5502ad329e701d6398a3",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "doctrine/annotations": "^2.0",
+                "nikic/php-parser": "^5.3.0",
+                "php-parallel-lint/php-parallel-lint": "^1.2",
+                "phpstan/extension-installer": "^1.0",
+                "phpstan/phpstan": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^9.6",
+                "symfony/process": "^5.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PHPStan\\PhpDocParser\\": [
+                        "src/"
+                    ]
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHPDoc parser with support for nullable, intersection and generic types",
+            "support": {
+                "issues": "https://github.com/phpstan/phpdoc-parser/issues",
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/2.3.3"
+            },
+            "time": "2026-07-08T07:01:06+00:00"
         },
         {
             "name": "phpstan/phpstan",
