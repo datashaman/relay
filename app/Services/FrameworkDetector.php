@@ -6,6 +6,7 @@ use App\Enums\FrameworkSource;
 use App\Models\Repository;
 use App\Services\AiProviders\AiProviderManager;
 use Illuminate\Support\Facades\Log;
+use JsonException;
 use Throwable;
 
 class FrameworkDetector
@@ -195,7 +196,7 @@ class FrameworkDetector
     {
         try {
             $json = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
-        } catch (Throwable) {
+        } catch (JsonException) {
             return null;
         }
 
@@ -219,7 +220,7 @@ class FrameworkDetector
     {
         try {
             $json = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
-        } catch (Throwable) {
+        } catch (JsonException) {
             return null;
         }
 
